@@ -1,0 +1,346 @@
+import json
+from datetime import date,datetime 
+
+from kubernetes.client.models.v1_taint import V1Taint
+from kubernetes.client.models.v1_node_system_info import V1NodeSystemInfo
+from kubernetes.client.models.v1_label_selector import V1LabelSelector
+from kubernetes.client.models.v1_deployment_strategy import V1DeploymentStrategy
+from kubernetes.client.models.v1_rolling_update_deployment import V1RollingUpdateDeployment
+from kubernetes.client.models.v1_local_object_reference import V1LocalObjectReference
+from kubernetes.client.models.v1_container import V1Container
+from kubernetes.client.models.v1_container_port import V1ContainerPort
+from kubernetes.client.models.v1_volume_mount import V1VolumeMount
+from kubernetes.client.models.v1_env_var import V1EnvVar
+from kubernetes.client.models.v1_env_var_source import V1EnvVarSource
+from kubernetes.client.models.v1_secret_key_selector import V1SecretKeySelector
+from kubernetes.client.models.v1_probe import V1Probe
+from kubernetes.client.models.v1_tcp_socket_action import V1TCPSocketAction
+from kubernetes.client.models.v1_http_get_action import V1HTTPGetAction
+from kubernetes.client.models.v1_affinity import V1Affinity
+from kubernetes.client.models.v1_node_affinity import V1NodeAffinity
+from kubernetes.client.models.v1_node_selector import V1NodeSelector
+from kubernetes.client.models.v1_node_selector_term import V1NodeSelectorTerm
+from kubernetes.client.models.v1_node_selector_requirement import V1NodeSelectorRequirement
+from kubernetes.client.models.v1_object_field_selector import V1ObjectFieldSelector
+from kubernetes.client.models.v1_toleration import V1Toleration
+
+from kubernetes.client.models.v1_nfs_volume_source import V1NFSVolumeSource
+from kubernetes.client.models.v1_object_reference import V1ObjectReference
+from kubernetes.client.models.v1_persistent_volume_claim_status import V1PersistentVolumeClaimStatus
+from kubernetes.client.models.v1_resource_requirements import V1ResourceRequirements
+from kubernetes.client.models.v1_service_port import V1ServicePort
+from kubernetes.client.models.v1_service_status import V1ServiceStatus
+from kubernetes.client.models.v1_load_balancer_status import V1LoadBalancerStatus
+from kubernetes.client.models.v1_pod_security_context import V1PodSecurityContext
+from kubernetes.client.models.extensions_v1beta1_ingress_rule import ExtensionsV1beta1IngressRule
+from kubernetes.client.models.extensions_v1beta1_http_ingress_rule_value import ExtensionsV1beta1HTTPIngressRuleValue
+from kubernetes.client.models.extensions_v1beta1_http_ingress_path import ExtensionsV1beta1HTTPIngressPath
+from kubernetes.client.models.extensions_v1beta1_ingress_backend import ExtensionsV1beta1IngressBackend
+from kubernetes.client.models.extensions_v1beta1_ingress_tls import ExtensionsV1beta1IngressTLS
+
+class DateEncoder(json.JSONEncoder):  
+    def default(self, obj):  
+        if isinstance(obj, datetime):  
+            return obj.strftime('%Y-%m-%d %H:%M:%S')  
+        elif isinstance(obj, date):  
+            return obj.strftime("%Y-%m-%d")  
+        
+        elif isinstance(obj,ExtensionsV1beta1IngressTLS):
+            return {
+                "hosts": obj.hosts,
+                "secret_name": obj.secret_name,
+            }
+            
+            
+            
+            
+        elif isinstance(obj,V1Taint):
+            return {
+                "effect": obj.effect,
+                "key": obj.key,
+                "value": obj._value ,
+            }
+        elif isinstance(obj,V1NodeSystemInfo):
+            return {
+                "architecture": obj.architecture,
+                "docker_version": obj.container_runtime_version,
+                "kernel_version": obj.kernel_version ,
+                "kube_proxy_version": obj.kube_proxy_version,
+                "operating_system": obj.operating_system,
+                "os_image": obj.os_image ,
+            }
+        elif isinstance(obj,V1LabelSelector):
+            return {
+                "_match_labels": obj._match_labels,
+            }
+        # {'rolling_update': {'max_surge': '25%', 'max_unavailable': '25%'},
+        # 'type': 'RollingUpdate'}
+        elif isinstance(obj,V1DeploymentStrategy):
+            return {
+                "rolling_update": obj.rolling_update,
+                "type": obj.type,
+            }    
+        elif isinstance(obj,V1RollingUpdateDeployment):
+            return {
+                "max_surge": obj.max_surge,
+                "max_unavailable": obj.max_unavailable,
+            }  
+        elif isinstance(obj,V1LocalObjectReference):
+            return {
+                "name": obj.name,
+            }    
+        elif isinstance(obj,V1Container):
+            return {
+                "image": obj.image,
+                "image_pull_policy": obj.image_pull_policy,
+                "liveness_probe": obj.liveness_probe,
+                "ports": obj.ports,
+                "readiness_probe": obj.readiness_probe,
+                "env": obj.env,
+                "env_from": obj.env_from,
+                "volume_mounts": obj.volume_mounts,
+                "security_context": obj.security_context,
+            }    
+        elif isinstance(obj,V1ContainerPort):
+            return {
+                "container_port": obj.container_port,
+                "host_ip": obj.host_ip,
+                "host_port": obj.host_port,
+                "name": obj.name,
+                "protocol": obj.protocol,
+            }   
+        elif isinstance(obj,V1ServicePort):
+            return {
+                "name": obj.name,
+                "node_port": obj.node_port,
+                "port": obj.port,
+                "protocol": obj.protocol,
+                "target_port": obj.target_port,
+            }   
+        elif isinstance(obj,V1ServiceStatus):
+            return {
+                "load_balancer": obj.load_balancer,
+            }   
+        elif isinstance(obj,V1VolumeMount):
+            return {
+                "mount_path": obj.mount_path,
+                "name": obj.name,
+                "read_only": obj.read_only,
+                "sub_path": obj.sub_path,
+            }  
+        elif isinstance(obj,V1EnvVar):
+            return {
+                "name": obj.name,
+                "value": obj.value,
+                "value_from": obj.value_from ,
+            }
+        elif isinstance(obj,V1EnvVarSource):
+            return {
+                "config_map_key_ref": obj.config_map_key_ref,
+                "field_ref": obj.field_ref,
+                "resource_field_ref": obj.resource_field_ref ,
+                "secret_key_ref": obj.secret_key_ref ,
+            }
+        elif isinstance(obj,V1SecretKeySelector):
+            return {
+                "key": obj.key,
+                "name": obj.name,
+            }
+        elif isinstance(obj,V1Probe):
+            return {
+                "_exec": obj._exec,
+                "failure_threshold": obj.failure_threshold,
+                "http_get": obj.http_get,
+                "initial_delay_seconds": obj.initial_delay_seconds,
+                "success_threshold": obj.success_threshold,
+                "tcp_socket": obj.tcp_socket,
+                "timeout_seconds": obj.timeout_seconds,
+            }      
+        elif isinstance(obj,V1TCPSocketAction):
+            return {
+                "host": obj.host,
+                "port": obj.port,
+            }   
+        elif isinstance(obj,V1HTTPGetAction):
+            return {
+                "host": obj.host,
+                "http_headers": obj.http_headers,
+                "path": obj.path,
+                "port": obj.port,
+                "scheme": obj.scheme,
+            }     
+        elif isinstance(obj,V1Affinity):
+            return {
+                "node_affinity": obj.node_affinity,
+                "pod_affinity": obj.pod_affinity,
+                "pod_anti_affinity": obj.pod_anti_affinity,
+            } 
+        elif isinstance(obj,V1NodeAffinity):
+            return {
+                "preferred_during_scheduling_ignored_during_execution": obj.preferred_during_scheduling_ignored_during_execution,
+                "required_during_scheduling_ignored_during_execution": obj.required_during_scheduling_ignored_during_execution,
+            }  
+        elif isinstance(obj,V1NodeSelector):
+            return {
+                "node_selector_terms": obj.node_selector_terms,
+            }        
+        elif isinstance(obj,V1NodeSelectorTerm):
+            return {
+                "match_expressions": obj.match_expressions,
+                "match_fields": obj.match_fields,
+            }     
+        elif isinstance(obj,V1NodeSelectorRequirement):
+            return {
+                "key": obj.key,
+                "operator": obj.operator,
+                "values": obj.values,
+            }   
+        elif isinstance(obj,V1ObjectFieldSelector):
+            return {
+                "api_version": obj.api_version,
+                "field_path": obj.field_path,
+            }   
+        elif isinstance(obj,V1Toleration):
+            return {
+                "effect": obj.effect,
+                "key": obj.key,
+                "operator": obj.operator,
+                "toleration_seconds": obj.toleration_seconds,
+                "value": obj._value ,
+            }  
+        elif isinstance(obj,V1NFSVolumeSource):
+            return {
+                "path": obj.path,
+                "read_only": obj.read_only,
+                "server": obj.server ,
+            }
+        elif isinstance(obj,V1ObjectReference):
+            return {
+                "api_version": obj.api_version,
+                "field_path": obj.field_path,
+                "kind": obj.kind ,
+                "name": obj.name,
+                "namespace": obj.namespace,
+            }          
+        elif isinstance(obj,V1PersistentVolumeClaimStatus):
+            return {
+                "access_modes": obj.access_modes[0],
+                "capacity": obj.capacity['storage'],
+                "phase": obj.phase ,
+            }   
+        elif isinstance(obj,V1ResourceRequirements):
+            return {
+                "limits": obj.limits,
+                "requests": obj.requests,
+            }  
+        elif isinstance(obj,V1LoadBalancerStatus):
+            return {
+                "ingress": obj.ingress,
+            }     
+        elif isinstance(obj,V1PodSecurityContext):
+            return {
+                "fs_group": obj.fs_group,
+                "run_as_group": obj.run_as_group,
+                "run_as_non_root": obj.run_as_non_root ,
+                "run_as_user": obj.run_as_user,
+                "se_linux_options": obj.se_linux_options,
+            }      
+        elif isinstance(obj,ExtensionsV1beta1IngressRule):
+            return {
+                "host": obj.host,
+                "http": obj.http,
+            }  
+        elif isinstance(obj,ExtensionsV1beta1HTTPIngressRuleValue):
+            return {
+                "paths": obj.paths,
+            }    
+        elif isinstance(obj,ExtensionsV1beta1HTTPIngressPath):
+            return {
+                "path": obj.path,
+                "backend": obj.backend,
+            }            
+        elif isinstance(obj,ExtensionsV1beta1IngressBackend):
+            return {
+                "service_name": obj.service_name,
+                "service_port": obj.service_port,
+            }    
+        else:  
+            return json.JSONEncoder.default(self, obj)
+    
+    
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# #格式化字典数组(ports专用)
+# def format_obj_list(obj_list):
+#     results = ""
+
+#     for obj in obj_list:
+#         name = obj.name
+#         node_port = obj.node_port
+#         port = obj.port 
+#         protocol = obj.protocol 
+#         target_port = obj.target_port
+        
+#         tmp = "[name:{}\nnode_port:{}\nport:{}\nprotocol:{}\ntarget_port:{}\n]".\
+#                 format(name,node_port,port,protocol,target_port)
+        
+#         # print(tmp)
+#         results = results +"\n\n" +tmp
+#     # print(results)
+#     return results
+
+# def format_pod_port_list(obj_list):
+#     results = ""
+
+#     for obj in obj_list:
+#         name = obj.name
+#         # node_port = obj.node_port
+#         container_port = obj.container_port 
+#         protocol = obj.protocol 
+#         host_ip = obj.host_ip
+#         host_port = obj.host_port
+#         tmp = "[name:{}\ncontainer_port:{}\nhost_ip:{}\nprotocol:{}\nhost_port:{}\n]".\
+#                 format(name,container_port,host_ip,protocol,host_port)
+        
+#         # print(tmp)
+#         results = results +"\n\n" +tmp
+#     # print(results)
+#     return results
+
+# def convert_to_dicts(objs):
+#     print(type(objs))
+#     '''把对象列表转换为字典列表'''
+#     obj_arr = []
+#     for o in objs:
+#         #把Object对象转换成Dict对象
+#         dict = {}
+#         dict.update(o.__dict__)
+#         obj_arr.append(dict)
+#     return obj_arr
+
+# #格式化字典
+# def format_dict(dict_obj):
+#     if dict_obj == None:
+#         return ""
+#     else:
+#         s  = ""
+#         for k,v in dict_obj.items():
+#             t  = "{}:{}\n".format(k,v)
+#             s = s+t
+#         return s

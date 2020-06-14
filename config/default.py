@@ -1,0 +1,24 @@
+import  os
+import logging
+from redis import Redis
+from datetime import timedelta
+
+DEBUG = True
+
+# SESSION_TYPE = 'redis'
+# SESSION_USE_SIGNER = True
+# SESSION_PERMANENT = False
+# PERMANENT_SESSION_LIFETIME = 86400
+
+# SQLALCHEMY_COMMIT_ON_TEARDOWN = True
+# SQLALCHEMY_TRACK_MODIFICATIONS = True
+# SQLALCHEMY_POOL_SIZE = 100
+# SQLALCHEMY_MAX_OVERFLOW = 30
+# SQLALCHEMY_POOL_RECYCLE = 10
+LOG_LEVEL = logging.DEBUG
+
+#设置缓存时间
+SEND_FILE_MAX_AGE_DEFAULT = timedelta(seconds=1)
+
+#返回数据支持中文
+JSON_AS_ASCII=False

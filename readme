@@ -1,0 +1,54 @@
+flask返回json数据
+
+jsonify:
+对数组直接可以使用
+Content-Type: application/json
+
+json.dumps()
+返回类型:Content-Type: text/html; charset=utf-8
+
+#方法1
+# return jsonify(list_dict)
+#方法2
+# return  json.dumps(list_dict)
+#方法3
+# return Response(json.dumps(list_dict),content_type='application/json')
+#方法4 同时返回状态
+#return make_response(jsonify(list_dict),201)
+
+
+
+
+restful访问istio的api
+在kubernetes的apigroup中有以下个与istio有关，分别是
+
+authentication.istio.io, config.istio.io, networking.istio.io
+
+其中config.istio.io为最主要的，istio流量控制相关的
+
+routerule, egressrule, destinationpolicie
+
+策略执行相关的
+
+memquota，quota，rule，QuotaSpec，QuotaSpecBinding
+
+监控与日志配置相关的
+
+metric, logentrie
+
+http调用相关的
+
+httpapispecbinding, tracespan, httpapispec
+
+node =>namesapce => (环境) => 项目 => 应用=> deployment/pod/service(volume,probe,secret,configmap,env,image,label,selector,ports,tolent,taints,status,stragedy) => ingress/gateway 
+
+
+rbac=>storageclass=>job=>statefulset=>
+
+
+ctrl+space 提示快捷键
+
+
+apiVersion: networking.istio.io/v1alpha3
+http://192.168.11.51:1900/apis/networking.istio.io/v1alpha3/gateways
+
