@@ -41,8 +41,6 @@ http调用相关的
 httpapispecbinding, tracespan, httpapispec
 
 node =>namesapce => (环境) => 项目 => 应用=> deployment/pod/service(volume,probe,secret,configmap,env,image,label,selector,ports,tolent,taints,status,stragedy) => ingress/gateway 
-
-
 rbac=>storageclass=>job=>statefulset=>
 
 
@@ -52,3 +50,9 @@ ctrl+space 提示快捷键
 apiVersion: networking.istio.io/v1alpha3
 http://192.168.11.51:1900/apis/networking.istio.io/v1alpha3/gateways
 
+
+2、把其他例子一并搞完(deployment,patch,watch)
+
+3、模仿sparrow例子(写个蓝绿，灰度，(AB的例子))
+
+4、正式写案例

@@ -10,44 +10,49 @@ from datetime import datetime,date
 import math
 from .k8s_decode import DateEncoder
 import requests
+import time 
+import pytz
+import ssl
+
 
 k8s = Blueprint('k8s',__name__,url_prefix='/k8s')
-# app = Flask(__name__)
+
+dir_path = os.path.dirname(os.path.abspath(__file__))
+
 def takename(e):
     return e['name']
-# dir_path = os.path.dirname(os.path.abspath(__file__))
 #参数是datetime
 def time_to_string(dt):
-    tz_sh = tz.gettz('Asia/Shanghai')
+    tz_sh = pytz.timezone('Asia/Shanghai')
     return  dt.astimezone(tz_sh).strftime("%Y-%m-%d %H:%M:%S") 
 
-
-
-
+def utc_to_local(utc_time_str, utc_format='%Y-%m-%dT%H:%M:%S.%fZ'):
+    local_tz = pytz.timezone('Asia/Shanghai')
+    local_format = "%Y-%m-%d %H:%M:%S"
+    utc_dt = datetime.strptime(utc_time_str, utc_format)
+    local_dt = utc_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
+    time_str = local_dt.strftime(local_format)
+    return time_str
+    # return datetime.fromtimestamp(int(time.mktime(time.strptime(time_str, local_format))))
+    
 #列出gateway
 @k8s.route('/get_gateway_list')
 def get_gateway_list():
     myclient = client.CustomObjectsApi()
     obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="gateways")
-    # print(type(gateways))
-    # print(gateways)
-
     gateways = obj['items']
-    # print(type(gateways))
     gateway_list = []
     i = 0
     for gateway in gateways:
         if(i>=0):
-            # print(type(gateway))
-            # print(gateway)
             meta = gateway['metadata'] 
             spec = gateway['spec']
-            # print(type(meta))
-            # print(spec)
             name = meta['name']
             namespace = meta['namespace']
-            # create_time = time_to_string(meta['creationTimestamp'])
-            create_time = meta['creationTimestamp']
+            time_str= meta['creationTimestamp']
+            create_time = utc_to_local(time_str, utc_format='%Y-%m-%dT%H:%M:%SZ')
+            # Unixtime = time.mktime(time.strptime(time_str, '%Y-%m-%dT%H:%M:%SZ'))
+            # create_time = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(Unixtime))
             selector = spec['selector']
             servers = spec['servers']
             
@@ -61,7 +66,6 @@ def get_gateway_list():
             gateway_list.append(mygateway)
         i = i + 1
     return json.dumps(gateway_list,indent=4,cls=DateEncoder)
-    # return jsonify({"a":1})
 
 
 #列出vs
@@ -71,21 +75,16 @@ def get_virtual_service_list():
     myclient = client.CustomObjectsApi()
     obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="virtualservices")
     virtual_services = obj['items']
-    # print(type(virtual_services))
     virtual_service_list = []
     i = 0
     for virtual_service in virtual_services:
         if(i>=0):
-            # print(type(virtual_service))
-            # print(virtual_service)
             meta = virtual_service['metadata'] 
             spec = virtual_service['spec']
-            # print(type(meta))
-            # print(spec)
             name = meta['name']
             namespace = meta['namespace']
-            # create_time = time_to_string(meta['creationTimestamp'])
-            create_time = meta['creationTimestamp']
+            time_str= meta['creationTimestamp']
+            create_time = utc_to_local(time_str, utc_format='%Y-%m-%dT%H:%M:%SZ')
             try:
                 gateways = spec['gateways']
             except Exception as e: 
@@ -98,7 +97,6 @@ def get_virtual_service_list():
             
         i = i + 1
     return json.dumps(virtual_service_list,indent=4,cls=DateEncoder)
-    # return jsonify({"a":1})
 
 #列出vs
 @k8s.route('/get_destination_rule_list')
@@ -107,21 +105,17 @@ def get_destination_rule_list():
     obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="destinationrules")
     #obj是一个字典
     destination_rules = obj['items']
-    # print(type(destination_rules))
     destination_rule_list = []
     i = 0
     for destination_rule in destination_rules:
         if(i>=0):
-            # print(type(destination_rule))
-            print(destination_rule)
+            # print(destination_rule)
             meta = destination_rule['metadata'] 
             spec = destination_rule['spec']
-            # print(type(meta))
-            # print(spec)
             name = meta['name']
             namespace = meta['namespace']
-            # create_time = time_to_string(meta['creationTimestamp'])
-            create_time = meta['creationTimestamp']
+            time_str= meta['creationTimestamp']
+            create_time = utc_to_local(time_str, utc_format='%Y-%m-%dT%H:%M:%SZ')
 
             host = spec['host']
             subsets = spec['subsets']
@@ -130,7 +124,6 @@ def get_destination_rule_list():
             
         i = i + 1
     return json.dumps(destination_rule_list,indent=4,cls=DateEncoder)
-    # return jsonify({"a":1})
 
 @k8s.route('/get_api_version',methods=['GET','POST'])
 def get_api_version():

@@ -1,3 +1,45 @@
+@k8s.route('/get_gw_list')
+def get_gw_list():
+    gw_url = "https://192.168.11.51:6443/apis/networking.istio.io/v1alpha3/gateways"
+    
+    public_cert = os.path.join(dir_path,'admin.pem')
+    private_cert = os.path.join(dir_path,'admin-key.pem')
+    ca_cert =  os.path.join(dir_path,'ca.pem')
+    result = requests.get(gw_url,cert=(public_cert,private_cert),verify=ca_cert)
+    # result = requests.get(gw_url,verify=False)
+    print(result.status_code)
+    obj = json.loads(result.content)
+    #obj是一个字典
+    # print(type(obj))
+    gateways = obj['items']
+    # print(type(gateways))
+    gateway_list = []
+    i = 0
+    for gateway in gateways:
+        if(i>=0):
+            # print(type(gateway))
+            # print(gateway)
+            meta = gateway['metadata'] 
+            spec = gateway['spec']
+            print(type(meta))
+            print(spec)
+            name = meta['name']
+            namespace = meta['namespace']
+            # create_time = time_to_string(meta['creationTimestamp'])
+            create_time = meta['creationTimestamp']
+            selector = spec['selector']
+            servers = spec['servers']
+            domain_list = []
+            for server in servers:
+                domain = server['hosts']
+                domain_list.append(domain)
+            
+            mygateway = {"name":name,"namespace":namespace,"selector":selector,"servers":servers,"domain_list":domain_list,"create_time":create_time,}
+            gateway_list.append(mygateway)
+        i = i + 1
+    return json.dumps(gateway_list,indent=4,cls=DateEncoder)
+
+
 #列出gateway
 @k8s.route('/get_gateway_list')
 def get_gateway_list():

@@ -9,6 +9,7 @@ import re
 import os
 
 from .k8s import k8s
+from .k8s_op import k8s_op
 from flask_cors import *
 from kubernetes import client,config
 
@@ -139,6 +140,7 @@ def create_app():
     
     #加载蓝图
     app.register_blueprint(k8s)
+    app.register_blueprint(k8s_op)
     # app.add_url_rule('/',endpoint='index')
     
     #调试信息

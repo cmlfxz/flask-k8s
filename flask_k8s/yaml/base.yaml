@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: base
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: base
+      version: '1.16.1'
+  template:
+    metadata:
+      labels:
+        app: base
+        version: '1.16.1'
+    spec:
+      imagePullSecrets:
+      - name: harborsecret
+      containers:
+      - name: base
+        image: myhub.mydocker.com/base/alpine-nginx:1.16.1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
