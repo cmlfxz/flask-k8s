@@ -1,11 +1,11 @@
-namespace: default
+namespace: $namespace
 resources:
 - namespace.yaml
 - gateway.yaml
 - gateway-vs.yaml
-- flask-tutorial-v1.yaml
-- flask-tutorial-vs.yaml
-- flask-tutorial-dr.yaml
+- $service-development.yaml
+- $service-vs.yaml
+- $service-dr.yaml
 - configmap.yaml
 patchesStrategicMerge:
 - healthcheck_patch.yaml
