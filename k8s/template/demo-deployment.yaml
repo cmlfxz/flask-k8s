@@ -22,7 +22,7 @@ metadata:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: $service-v1
+  name: $service
   labels:
     app: $service
     version: v1

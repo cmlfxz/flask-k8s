@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: $service-v1
+  name: $service
 spec:
   template:
     spec:
