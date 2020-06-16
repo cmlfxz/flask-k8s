@@ -1,0 +1,42 @@
+sed  -i 's/productpage/flask-tutorial/' flask-tutorial-v1.yaml
+sed -i   's/bookinfo/default/' flask-tutorial-v1.yaml 
+
+改端口：  - port: 8081
+          - containerPort: 8081
+
+改image： image: docker.io/istio/examples-default-flask-tutorial-v1:1.15.0
+          => myhub.mydocker.com/flask/flask-tutorial:0.3
+加拉取镜像密码：      
+     imagePullSecrets: 
+     - name: harborsecret
+
+加载配置: configmap.yaml
+             volumeMounts:
+        - name: flask-tutorial-configmap
+          mountPath: /opt/microservices/instance
+      volumes:
+      - name: "flask-tutorial-configmap"
+        configMap:
+          name: "flask-tutorial-configmap"
+
+---------------
+vim flask-tutorial-vs.yaml
+sed  -i 's/productpage/flask-tutorial/' flask-tutorial-vs.yaml
+sed -i   's/bookinfo/default/' flask-tutorial-vs.yaml
+
+-----------
+gateway.yaml
+
+sed -i 's/bookinfo/default/' gateway.yaml 
+端口： number: 80 (这里是80，而不是容器或者service端口)
+
+hosts: flask-tutorial.kkkk.com
+------------
+ mv bookinfo-vs.yaml gateway-vs.yaml
+sed -i 's/bookinfo/default/' gateway-vs.yaml 
+
+
+----------
+flask-tutorial-dr.yaml
+
+sed -i 's/productpage/flask-tutorial/g' flask-tutorial-dr.yaml

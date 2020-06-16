@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: $service-v1
+spec:
+  template:
+    spec:
+      containers:
+        - name: $service
+          livenessProbe:
+            #httpGet:
+            #  path: /
+            tcpSocket:
+              port: $port
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            timeoutSeconds: 5
+          readinessProbe:
+            #httpGet:
+            #  path: /
+            tcpSocket:
+              port: $port
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+

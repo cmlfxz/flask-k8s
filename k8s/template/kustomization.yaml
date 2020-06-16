@@ -1,0 +1,17 @@
+namespace: default
+resources:
+- namespace.yaml
+- gateway.yaml
+- gateway-vs.yaml
+- flask-tutorial-v1.yaml
+- flask-tutorial-vs.yaml
+- flask-tutorial-dr.yaml
+- configmap.yaml
+patchesStrategicMerge:
+- healthcheck_patch.yaml
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+images:
+- name: myhub.mydocker.com/flask/flask-tutorial
+  newName: myhub.mydocker.com/flask/flask-tutorial
+  newTag: "0.6"

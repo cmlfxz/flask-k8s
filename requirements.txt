@@ -16,3 +16,4 @@ opentracing-instrumentation==3.2.1
 requests==2.20.0
 simplejson==3.17.0
 kubernetes==10.0.1
+pyyaml=5.3

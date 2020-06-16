@@ -1,0 +1,9 @@
+namespace: ms-dev
+resources:
+- namespace.yaml
+- flask-k8s-deployment.yaml
+- flask-tutorial-vs.yaml
+- flask-tutorial-dr.yaml
+# - configmap.yaml
+patchesStrategicMerge:
+- healthcheck_patch.yaml

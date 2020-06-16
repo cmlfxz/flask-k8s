@@ -1,0 +1,30 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: $namespace-gateway
+spec:
+  selector:
+    istio: ingressgateway # use istio default controller
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "flask-tutorial.kkkk.com"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: $namespace-vs
+spec:
+  hosts:
+  - "flask-tutorial.kkkk.com"
+  gateways:
+  - $namespace-gateway
+  http:
+  - route:
+    - destination:
+        host: flask-tutorial
+        port:
+          number: $port
