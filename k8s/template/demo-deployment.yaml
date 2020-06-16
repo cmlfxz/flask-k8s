@@ -4,7 +4,6 @@ metadata:
   name: $service
   labels:
     app: $service
-    service: $service
 spec:
   type: NodePort
   ports:

@@ -1,10 +1,9 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: flask-k8s
+  name: flask-k8s-v1
   labels:
     app: flask-k8s
-    service: flask-k8s
 spec:
   type: NodePort
   ports:
