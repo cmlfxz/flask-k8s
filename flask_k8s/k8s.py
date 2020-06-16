@@ -89,7 +89,7 @@ def get_virtual_service_list():
                 gateways = spec['gateways']
             except Exception as e: 
                 gateways = None
-                print(e)
+                # print(e)
             hosts = spec['hosts']
             http = spec['http']
             myvirtual_service = {"name":name,"namespace":namespace,"gateways":gateways,"hosts":hosts,"http":http,"create_time":create_time,}
@@ -201,7 +201,7 @@ def get_pod_list():
     pod_list = []
     for pod in pods.items:
         if (i ==0):
-            print(pod)
+            # print(pod)
             meta = pod.metadata
             name = meta.name
             create_time = time_to_string(meta.creation_timestamp)
@@ -272,7 +272,7 @@ def get_deployment_list():
             cluster_name = meta.cluster_name
             # labels = format_dict(meta.labels)
             labels = meta.labels
-            print(labels)
+            # print(labels)
             namespace = meta.namespace 
             
             spec = deployment.spec
@@ -320,14 +320,13 @@ def get_daemonset_list():
     daemonset_list = []
     for daemonset in daemonsets.items:
         if (i==0):
-            print(daemonset)
+            # print(daemonset)
             meta = daemonset.metadata
             name = meta.name
             create_time = time_to_string(meta.creation_timestamp)
             cluster_name = meta.cluster_name
             # labels = format_dict(meta.labels)
             labels = meta.labels
-            print(labels)
             namespace = meta.namespace      
             spec = daemonset.spec
             template = spec.template
@@ -399,7 +398,7 @@ def get_node_list():
             mynode = {"name":name,"create_time":create_time,"cluster_name":cluster_name,"labels":labels,"pod_cidr":pod_cidr,"taints":taints,\
                 "unschedulable":unschedulable,"address":address,"capacity":mycapacity,"images_num":images_num,"node_info":node_info,"phase":phase}
             
-            print(mynode)
+            # print(mynode)
             node_list.append(mynode)
         i = i + 1
     return json.dumps(node_list,indent=4,cls=DateEncoder)
@@ -416,13 +415,12 @@ def get_configmap_list():
     i = 0 
     for configmap in configmaps.items:
         if (i >=0):
-            print(configmap)
+            # print(configmap)
             meta = configmap.metadata
             name = meta.name 
             create_time = time_to_string(meta.creation_timestamp)
             cluster_name = meta.cluster_name
             labels = meta.labels
-            print(labels)
             namespace = meta.namespace 
             data = configmap.data    
             
@@ -446,9 +444,7 @@ def get_secret_list():
             name = meta.name 
             create_time = time_to_string(meta.creation_timestamp)
             cluster_name = meta.cluster_name
-            # labels = format_dict(meta.labels)
             labels = meta.labels
-            # print(labels)
             namespace = meta.namespace 
             data = secret.data    
             
@@ -471,12 +467,9 @@ def get_job_list():
             name = meta.name 
             create_time = time_to_string(meta.creation_timestamp)
             cluster_name = meta.cluster_name
-            # labels = format_dict(meta.labels)
             labels = meta.labels
-            # print(labels)
             namespace = meta.namespace 
-            
-            
+                   
             status = job.status
             active = status.active
             succeeded = status.succeeded
@@ -500,14 +493,12 @@ def get_cronjob_list():
     i = 0 
     for cronjob in cronjobs.items:
         if (i >=0):
-            print(cronjob)
+            # print(cronjob)
             meta = cronjob.metadata
             name = meta.name 
             create_time = time_to_string(meta.creation_timestamp)
             cluster_name = meta.cluster_name
-            # labels = format_dict(meta.labels)
             labels = meta.labels
-            # print(labels)
             namespace = meta.namespace 
             
             spec = cronjob.spec
@@ -561,7 +552,7 @@ def get_pv_list():
     i = 0 
     for pv in pvs.items:
         if (i >= 0):
-            print(pv)
+            # print(pv)
             meta = pv.metadata
             name = meta.name 
             create_time = time_to_string(meta.creation_timestamp)
@@ -595,7 +586,7 @@ def get_pvc_list():
     i = 0 
     for pvc in pvcs.items:
         if (i >= 0):
-            print(pvc)
+            # print(pvc)
             meta = pvc.metadata
             name = meta.name 
             create_time = time_to_string(meta.creation_timestamp)
@@ -631,7 +622,6 @@ def get_statefulset_list():
             name = meta.name
             create_time = time_to_string(meta.creation_timestamp)
             cluster_name = meta.cluster_name
-            # labels = format_dict(meta.labels)
             labels = meta.labels
             namespace = meta.namespace      
             spec = statefulset.spec
@@ -687,14 +677,12 @@ def get_ingress_list():
     i = 0 
     for ingress in ingresss.items:
         if (i >=0):
-            print(ingress)
+            # print(ingress)
             meta = ingress.metadata
             name = meta.name 
             create_time = time_to_string(meta.creation_timestamp)
             cluster_name = meta.cluster_name
-            # labels = format_dict(meta.labels)
             labels = meta.labels
-            # print(labels)
             namespace = meta.namespace 
             
             spec = ingress.spec

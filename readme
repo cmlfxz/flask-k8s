@@ -56,3 +56,30 @@ http://192.168.11.51:1900/apis/networking.istio.io/v1alpha3/gateways
 3、模仿sparrow例子(写个蓝绿，灰度，(AB的例子))
 
 4、正式写案例
+
+
+
+// 配置服务健康检查使用的
+type HealthData struct {
+	// 检查类型
+	HealthType string
+	// 检查端口
+	HealthPort string
+	// http访问路径
+	HealthPath string
+	// 服务启动预计时间
+	HealthInitialDelay string
+	// 检查间隔
+	HealthInterval string
+	// 失败阈值
+	HealthFailureThreshold string
+	// 检查超时
+	HealthTimeout string
+	// 通过命令检查
+	HealthCmd string
+}
+
+
+jsontoyaml https://www.json2yaml.com/
+
+1、先创建名称空间

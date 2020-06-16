@@ -1,0 +1,58 @@
+api_version: apps/v1
+kind: Deployment
+metadata:
+  labels: null
+  name: flask-tutorial
+  namespace: demo-dev
+spec:
+  min_ready_seconds: null
+  replicas: 1
+  revision_history_limit: null
+  selector:
+    matchLabels:
+      env: dev
+      version: '0.8'
+  strategy: null
+  template:
+    metadata:
+      labels:
+        env: dev
+        version: '0.8'
+    spec:
+      affinity: null
+      containers:
+      - env: null
+        image: myhub.mydocker.com/demo-dev/flask-tutorial:0.8
+        image_pull_policy: Always
+        liveness_probe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          tcpSocket:
+            port: 8081
+          timeoutSeconds: 10
+        ports:
+        - container_port: 8081
+          name: webport
+          protocol: TCP
+        readiness_probe:
+          failureThreshold: 3
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          tcpSocket:
+            port: 8081
+          timeoutSeconds: 10
+        resources:
+          limits:
+            cpu: 250m
+            memory: 256Mi
+          requests:
+            cpu: 125m
+            memory: 128Mi
+        volume_mounts: null
+      image_pull_secrets:
+      - name: harborsecret
+      node_selector: null
+      service_account_name: null
+      tolerations: null
+      volumes: null
