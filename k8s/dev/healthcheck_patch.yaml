@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flask-k8s-v1
+  name: flask-k8s
 spec:
   template:
     spec:
