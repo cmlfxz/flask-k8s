@@ -17,3 +17,4 @@ requests==2.20.0
 simplejson==3.17.0
 kubernetes==10.0.1
 pyyaml==5.3
+pytz==2019.3
