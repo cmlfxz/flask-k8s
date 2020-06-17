@@ -23,7 +23,6 @@ from kubernetes.client.models.v1_node_selector_term import V1NodeSelectorTerm
 from kubernetes.client.models.v1_node_selector_requirement import V1NodeSelectorRequirement
 from kubernetes.client.models.v1_object_field_selector import V1ObjectFieldSelector
 from kubernetes.client.models.v1_toleration import V1Toleration
-
 from kubernetes.client.models.v1_nfs_volume_source import V1NFSVolumeSource
 from kubernetes.client.models.v1_object_reference import V1ObjectReference
 from kubernetes.client.models.v1_persistent_volume_claim_status import V1PersistentVolumeClaimStatus
@@ -37,7 +36,6 @@ from kubernetes.client.models.extensions_v1beta1_http_ingress_rule_value import 
 from kubernetes.client.models.extensions_v1beta1_http_ingress_path import ExtensionsV1beta1HTTPIngressPath
 from kubernetes.client.models.extensions_v1beta1_ingress_backend import ExtensionsV1beta1IngressBackend
 from kubernetes.client.models.extensions_v1beta1_ingress_tls import ExtensionsV1beta1IngressTLS
-
 from kubernetes.client.models.v1_deployment import V1Deployment
 from kubernetes.client.models.v1_object_meta import V1ObjectMeta
 from kubernetes.client.models.v1_deployment_spec import V1DeploymentSpec

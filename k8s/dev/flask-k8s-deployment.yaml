@@ -4,6 +4,7 @@ metadata:
   name: flask-k8s
   labels:
     app: flask-k8s
+    service: flask-k8s
 spec:
   type: NodePort
   ports:
