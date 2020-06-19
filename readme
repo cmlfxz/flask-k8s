@@ -83,3 +83,12 @@ type HealthData struct {
 jsontoyaml https://www.json2yaml.com/
 
 1、先创建名称空间
+
+
+问题 表单创建
+标签和 service的标签对不上导致 一直503
+
+# 序列化后的表单数据:{"project":"","environment":"dev","cluster":"k8s-cluster1","imageRepo":"myhub.mydocker.com","imageName":"",\
+#     "imageTag":"","imagePullPolicy":"IfNotPresent","containerPort":"","replicas":"","cpu":"0.25","memory":"0.25","label_key1":"","label_value1":"",\
+#     "label_key2":"","label_value2":"","probeType":"http","httpPort":"","healthPath":"","tcpPort":"8080","healthCmd":"ls /tmp","initialDelaySeconds":"30",\
+#     "periodSeconds":"20","failureThreshold":"3","healthTimeout":"10","env":"","volumeMount":"","updateType":""}

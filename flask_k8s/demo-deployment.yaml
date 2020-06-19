@@ -2,45 +2,44 @@ api_version: apps/v1
 kind: Deployment
 metadata:
   labels: null
-  name: flask-tutorial
-  namespace: demo-dev
+  name: flask-k8s
+  namespace: ms-dev
 spec:
   min_ready_seconds: null
   replicas: 1
   revision_history_limit: null
   selector:
     matchLabels:
-      env: dev
-      version: '0.8'
+      app: flask-k8s
   strategy: null
   template:
     metadata:
       labels:
-        env: dev
-        version: '0.8'
+        app: flask-k8s
     spec:
       affinity: null
       containers:
-      - env: null
-        image: myhub.mydocker.com/demo-dev/flask-tutorial:0.8
+      - image: myhub.mydocker.com/ms-dev/flask-k8s:241391a
         image_pull_policy: Always
         liveness_probe:
           failureThreshold: 3
+          httpGet: null
           initialDelaySeconds: 30
           periodSeconds: 20
           tcpSocket:
-            port: 8081
+            port: 8082
           timeoutSeconds: 10
         ports:
-        - container_port: 8081
-          name: webport
+        - container_port: 8082
+          name: web
           protocol: TCP
         readiness_probe:
           failureThreshold: 3
+          httpGet: null
           initialDelaySeconds: 30
           periodSeconds: 20
           tcpSocket:
-            port: 8081
+            port: 8082
           timeoutSeconds: 10
         resources:
           limits:
@@ -49,10 +48,19 @@ spec:
           requests:
             cpu: 125m
             memory: 128Mi
-        volume_mounts: null
+        volume_mounts:
+        - mount_path: /opt/microservices/logs
+          name: log
+          read_only: null
+          sub_path: null
       image_pull_secrets:
       - name: harborsecret
       node_selector: null
       service_account_name: null
       tolerations: null
-      volumes: null
+      volumes:
+      - cephfs: null
+        empty_dir: {}
+        host_path: null
+        name: log
+        nfs: null

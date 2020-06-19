@@ -41,7 +41,11 @@ from kubernetes.client.models.v1_object_meta import V1ObjectMeta
 from kubernetes.client.models.v1_deployment_spec import V1DeploymentSpec
 from kubernetes.client.models.v1_pod_template_spec import V1PodTemplateSpec
 from kubernetes.client.models.v1_pod_spec import V1PodSpec
-
+from kubernetes.client.models.v1_volume import V1Volume
+from kubernetes.client.models.v1_empty_dir_volume_source import V1EmptyDirVolumeSource
+from kubernetes.client.models.extensions_v1beta1_ingress_list import ExtensionsV1beta1IngressList
+from kubernetes.client.models.v1_preferred_scheduling_term import V1PreferredSchedulingTerm
+from kubernetes.client.models.v1_config_map_key_selector import V1ConfigMapKeySelector
 class DateEncoder(json.JSONEncoder):  
     def default(self, obj):  
         
@@ -54,7 +58,38 @@ class DateEncoder(json.JSONEncoder):
             return {
                 "metadata": obj.metadata,
                 "spec": obj.spec,
-            }     
+            } 
+        elif isinstance(obj,V1PreferredSchedulingTerm):
+            return {
+                "preference": obj.preference,
+                "weight": obj.weight,
+            } 
+        elif isinstance(obj,V1ConfigMapKeySelector):
+            return {
+                "name": obj.name,
+                "optional": obj.optional,
+            } 
+        elif isinstance(obj,V1PodTemplateSpec):
+            return {
+                "api_version": obj.api_version,
+                "items": obj.items,
+                "kind": obj.kind,
+                "metadata": obj.metadata,
+            }       
+            
+        elif isinstance(obj,V1EmptyDirVolumeSource):
+            return {
+                # "medium": obj.medium,
+                # "size_limit": obj.size_limit,
+            }    
+        elif isinstance(obj,V1Volume):
+            return {
+                "name": obj.name,
+                "nfs":obj.nfs,
+                "cephfs":obj.cephfs,
+                "empty_dir": obj.empty_dir,
+                "host_path": obj.host_path,
+            }      
         elif isinstance(obj,V1PodSpec):
             return {
                 "affinity": obj.affinity,
@@ -151,7 +186,7 @@ class DateEncoder(json.JSONEncoder):
                 "image": obj.image,
                 "image_pull_policy": obj.image_pull_policy,
                 "ports": obj.ports,
-                "env": obj.env,
+                # "env": obj.env,
                 "readiness_probe": obj.readiness_probe,
                 "liveness_probe": obj.liveness_probe,
                 "resources": obj.resources,
@@ -187,50 +222,74 @@ class DateEncoder(json.JSONEncoder):
                 "sub_path": obj.sub_path,
             }  
         elif isinstance(obj,V1EnvVar):
-            return {
-                "name": obj.name,
-                "value": obj.value,
-                "value_from": obj.value_from ,
-            }
+            if obj.value:
+                return {
+                    "name": obj.name,
+                    "value": obj.value,
+                }
+            else:
+                return {
+                    "name": obj.name,
+                    "value_from": obj.value_from ,                
+                }
+
         elif isinstance(obj,V1EnvVarSource):
-            return {
-                "config_map_key_ref": obj.config_map_key_ref,
-                "field_ref": obj.field_ref,
-                "resource_field_ref": obj.resource_field_ref ,
-                "secret_key_ref": obj.secret_key_ref ,
-            }
+            if obj.secret_key_ref:
+                return {
+                    "secret_key_ref": obj.secret_key_ref , 
+                }
+            elif obj.config_map_key_ref:
+                return {
+                    "config_map_key_ref": obj.config_map_key_ref,  
+                }
+            elif obj.field_ref:
+                return {
+                    "field_ref": obj.field_ref,
+                }
+            else:
+                return {
+                    "resource_field_ref": obj.resource_field_ref ,
+                }
         elif isinstance(obj,V1SecretKeySelector):
             return {
                 "key": obj.key,
                 "name": obj.name,
             }
         elif isinstance(obj,V1Probe):
-            if obj.tcp_socket:
-                return {
+            return {
+                    "httpGet": obj.http_get,
                     "tcpSocket": obj.tcp_socket,
                     "initialDelaySeconds": obj.initial_delay_seconds,
                     "periodSeconds": obj.period_seconds,
                     "failureThreshold": obj.failure_threshold,
-                    "timeoutSeconds": obj.timeout_seconds,
-                }      
-            elif obj.http_get:
-                return {
-                    "httpGet": obj.http_get,
-                    "initialDelaySeconds": obj.initial_delay_seconds,
-                    "periodSeconds": obj.period_seconds,
-                    "failureThreshold": obj.failure_threshold,
-                    "timeoutSeconds": obj.timeout_seconds,
-                }      
-            elif obj._exec:
-                return {
-                    "exec": obj._exec,
-                    "initialDelaySeconds": obj.initial_delay_seconds,
-                    "periodSeconds": obj.period_seconds,
-                    "failureThreshold": obj.failure_threshold,
-                    "timeoutSeconds": obj.timeout_seconds,
-                }      
-            else:
-                pass   
+                    "timeoutSeconds": obj.timeout_seconds,                
+            }
+            # if obj.tcp_socket:
+            #     return {
+            #         "tcpSocket": obj.tcp_socket,
+            #         "initialDelaySeconds": obj.initial_delay_seconds,
+            #         "periodSeconds": obj.period_seconds,
+            #         "failureThreshold": obj.failure_threshold,
+            #         "timeoutSeconds": obj.timeout_seconds,
+            #     }      
+            # elif obj.http_get:
+            #     return {
+            #         "httpGet": obj.http_get,
+            #         "initialDelaySeconds": obj.initial_delay_seconds,
+            #         "periodSeconds": obj.period_seconds,
+            #         "failureThreshold": obj.failure_threshold,
+            #         "timeoutSeconds": obj.timeout_seconds,
+            #     }      
+            # elif obj._exec:
+            #     return {
+            #         "exec": obj._exec,
+            #         "initialDelaySeconds": obj.initial_delay_seconds,
+            #         "periodSeconds": obj.period_seconds,
+            #         "failureThreshold": obj.failure_threshold,
+            #         "timeoutSeconds": obj.timeout_seconds,
+            #     }      
+            # else:
+            #     pass   
         elif isinstance(obj,V1TCPSocketAction):
             return {
                 # "host": obj.host,
