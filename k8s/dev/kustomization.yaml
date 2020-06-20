@@ -1,6 +1,6 @@
 namespace: ms-dev
 resources:
-- namespace.yaml
+# - namespace.yaml
 - flask-k8s-deployment.yaml
 - flask-k8s-vs.yaml
 - flask-k8s-dr.yaml

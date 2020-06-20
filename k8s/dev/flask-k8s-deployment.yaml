@@ -28,7 +28,7 @@ metadata:
     app: flask-k8s
     version: v1
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: flask-k8s
@@ -40,11 +40,38 @@ spec:
         version: v1
     spec:
       serviceAccountName: ms-dev-flask-k8s
+      tolerations:
+        - key: "key"
+          operator: "Exists"
+          effect: "NoSchedule"  
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - flask-k8s
+            topologyKey: "kubernetes.io/hostname"
+
+      # affinity:
+      #   podAntiAffinity:
+      #     preferredDuringSchedulingIgnoredDuringExecution:
+      #     - podAffinityTerm:
+      #         labelSelector:
+      #           matchExpressions:
+      #           - key: app
+      #             operator: In
+      #             values:
+      #             - flask-k8s
+      #         topologyKey: "kubernetes.io/hostname"
+      #       weight: 100
       imagePullSecrets: 
       - name: harborsecret 
       containers:
       - name: flask-k8s
-        image: myhub.mydocker.com/ms-dev/flask-k8s:0.6
+        image: myhub.mydocker.com/ms-dev/flask-k8s:241391a
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8082
@@ -61,5 +88,3 @@ spec:
       volumes:
       - name: log
         emptyDir: {}
-        
-
