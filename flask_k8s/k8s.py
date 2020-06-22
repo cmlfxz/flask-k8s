@@ -2,7 +2,7 @@
 Reads the list of available API versions and prints them. Similar to running
 `kubectl api-versions`.
 """
-from flask import Flask,jsonify,Response,make_response,Blueprint,request
+from flask import Flask,jsonify,Response,make_response,Blueprint,request,g
 from kubernetes import client,config
 from dateutil import tz, zoneinfo
 import json,os
@@ -13,8 +13,8 @@ import requests
 import time 
 import pytz
 import ssl
-
-
+from .util import get_db_conn,my_decode,my_encode,str_to_int,str_to_float
+from .util import SingletonDBPool
 k8s = Blueprint('k8s',__name__,url_prefix='/k8s')
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
@@ -34,7 +34,145 @@ def utc_to_local(utc_time_str, utc_format='%Y-%m-%dT%H:%M:%S.%fZ'):
     time_str = local_dt.strftime(local_format)
     return time_str
     # return datetime.fromtimestamp(int(time.mktime(time.strptime(time_str, local_format))))
+# http://192.168.11.51:1900/apis/metrics.k8s.io/v1beta1/nodes 
+
+# class NodeInfo(object):
+
+@k8s.before_app_request
+def load_header():
+    if request.method == 'OPTIONS':
+        print('options请求方式')
+        pass
+    if request.method == 'POST':
+        print('POST请求方式')
+        try:
+            cluster_name = request.headers.get('cluster_name').strip()
+            print("load_header: 集群名字:{}".format(cluster_name))
+            if cluster_name == None:
+                print("没有设置cluster_name header")
+                pass
+            else:
+                g.cluster_name = cluster_name
+                cluster_config = get_cluster_config(cluster_name)
+                set_k8s_config(cluster_config)
+        except Exception as e:
+            print(e)
+
+def get_node_usage_detail(): 
+    myclient = client.CustomObjectsApi()
+    nodes = myclient.list_cluster_custom_object(group="metrics.k8s.io",version="v1beta1",plural="nodes")
     
+    i = 0
+    node_usage_list = []
+    for node in nodes['items']:
+        if i >= 0:
+            # print(node)
+            node_name = node['metadata']['name']
+            cpu = str_to_int(node['usage']['cpu'].split('n')[0])/1000/1000
+            node_cpu_usage = "{}m".format(math.ceil(cpu))
+            memory = str_to_int(node['usage']['memory'].split('Ki')[0])/1024/1024
+            node_memory_usage = "{}G".format(float('%.2f' % memory))
+            node_usage = {"node_name":node_name,"node_cpu_usage":node_cpu_usage,"node_memory_usage":node_memory_usage}
+            node_usage_list.append(node_usage)
+        i = i +1
+    return node_usage_list
+        
+def get_cluster_config(cluster_name):
+    cluster_config = None
+    # conn = get_db_conn()
+    pool = SingletonDBPool()
+    conn = pool.connect()
+    if conn == None:
+        print("无法获取数据库连接")
+    else:
+        cursor = conn.cursor()
+        sql = "select cluster_config from cluster where cluster_name = \'{}\' ".format(cluster_name)
+        try:
+            cursor.execute(sql)
+            results  =  cursor.fetchone()
+            cluster_config = results[0]
+        except Exception as e:
+            print("查询不到数据")
+    conn.close()
+    return cluster_config
+
+def set_k8s_config(cluster_config):
+    if cluster_config == None:
+        print("获取不到集群配置")
+    else:
+        cluster_config  = my_decode(cluster_config)
+        # print("集群配置: \n{}".format(cluster_config))
+        tmp_filename = "kubeconfig"
+        with open(tmp_filename,'w+',encoding='UTF-8') as file:
+            file.write(cluster_config)
+        #这里需要一个文件
+        config.load_kube_config(config_file=tmp_filename)
+
+@k8s.route('/get_node_usage', methods=('GET','POST'))
+def get_node_usage():
+    # data = json.loads(request.get_data().decode('UTF-8'))
+    # print("get_node_usage接受到的数据:{}".format(data))
+    # cluster_name =  data.get('cluster_name').strip()
+    # cluster_config = get_cluster_config(cluster_name)
+    # set_k8s_config(cluster_config)
+    node_usage_list = get_node_usage_detail()
+    return json.dumps(node_usage_list,indent=4)
+
+def get_pod_usage_detail(namespace=None):
+    myclient = client.CustomObjectsApi()
+    if namespace:
+        pods = myclient.list_namespaced_custom_object(namespace=namespace,group="metrics.k8s.io", version="v1beta1", plural="pods")
+    else:
+        pods = myclient.list_cluster_custom_object(group="metrics.k8s.io",version="v1beta1",plural="pods")
+    
+    i = 0
+    pod_usage_list = []
+    for pod in pods['items']:
+        if i >= 0:
+            # print(pod)
+            namespace = pod['metadata']['namespace']
+            pod_name = pod['metadata']['name']
+
+            containers =  pod['containers']
+            container_list = []
+            # pod_all_container_usage
+            j = 0
+            cpu_all = 0
+            memory_all = 0
+
+            for container in containers:
+                container_name = container['name']
+                cpu = str_to_int(container['usage']['cpu'].split('n')[0])/1000/1000
+                container_cpu_usage = "{}m".format(math.ceil(cpu))
+                memory = str_to_int(container['usage']['memory'].split('Ki')[0])/1024/1024
+                container_memory_usage = "{}G".format(float('%.2f' % memory))
+                container_usage = {"name":container_name,"cpu":container_cpu_usage,"memory":container_memory_usage}
+                container_list.append(container_usage)
+
+                #汇总容器数据
+                cpu_all = cpu_all + cpu
+                memory_all = memory_all + memory
+                cpu_all_usage =  "{}m".format(math.ceil(cpu_all))
+                memory_all_usage = "{}G".format(float('%.2f' % memory_all))
+
+                j = j + 1
+
+            pod_usage = {"pod_name":pod_name,"namespace":namespace,"cpu_all_usage":cpu_all_usage,"memory_all_usage":memory_all_usage,"container_list":container_list}
+            pod_usage_list.append(pod_usage)
+        i = i +1
+    return pod_usage_list
+
+@k8s.route('/get_pod_usage', methods=('GET','POST'))
+def get_pod_usage():
+    namespace = None
+    try:
+        data = json.loads(request.get_data().decode('UTF-8'))
+        namespace = data.get('namespace').strip()
+    except Exception as e:
+        print("没有收到namespace:{}".format(e))
+    pod_usage_list = get_pod_usage_detail(namespace=namespace)
+    return json.dumps(pod_usage_list,indent=4)
+
 #列出gateway
 @k8s.route('/get_gateway_list',methods=('GET','POST'))
 def get_gateway_list():
@@ -73,7 +211,6 @@ def get_gateway_list():
             gateway_list.append(mygateway)
         i = i + 1
     return json.dumps(gateway_list,indent=4,cls=DateEncoder)
-
 
 #列出vs
 @k8s.route('/get_virtual_service_list',methods=('GET','POST'))
@@ -149,7 +286,6 @@ def get_destination_rule_list():
 @k8s.route('/get_api_version',methods=['GET','POST'])
 def get_api_version():
     list_dict = []
-    
     for api in client.ApisApi().get_api_versions().groups:
         versions = []
         for v in api.versions:
@@ -172,11 +308,12 @@ def get_namespace_list():
     for ns in myclient.list_namespace().items:
         meta = ns.metadata
         create_time = time_to_string(meta.creation_timestamp)
-        namespace= {"name":meta.name,"cluster_name":meta.cluster_name,"create_time":create_time,"labels":meta.labels}
+        status = ns.status.phase
+        namespace= {"name":meta.name,"status":status,"cluster_name":meta.cluster_name,"create_time":create_time,"labels":meta.labels}
         namespace_list.append(namespace)
     # return jsonify(namespace_list)
-    return json.dumps(namespace_list,default=lambda obj: obj.__dict__,sort_keys=True,indent=4)
-
+    return json.dumps(namespace_list,indent=4)
+    # return json.dumps(namespace_list,default=lambda obj: obj.__dict__,sort_keys=True,indent=4)
 
 @k8s.route('/get_service_list',methods=('GET','POST'))
 def get_service_list():
@@ -286,7 +423,7 @@ def get_pod_list():
             host_ip = status.host_ip
             pod_ip = status.pod_ip
             
-            pod_info = {"create_time":create_time,"namespace":namespace,"pod_ip":pod_ip,"node":host_ip,"phase":phase,"affinity":affinity}
+            pod_info = {"create_time":create_time,"namespace":namespace,"pod_ip":pod_ip,"node":host_ip,"status":phase,"affinity":affinity}
             others={"image_pull_secrets":image_pull_secrets,"restart_policy":restart_policy,"node_selector":node_selector,\
                 "service_account_name":service_account_name,"host_network":host_network}
             
@@ -298,14 +435,17 @@ def get_pod_list():
 
             pod_list.append(mypod)
         i = i + 1
+    # return json.dumps(pod_list,default=lambda obj: obj.__dict__,indent=4)
     return json.dumps(pod_list,indent=4,cls=DateEncoder)
 
 
 @k8s.route('/get_deployment_list',methods=('GET','POST'))
 def get_deployment_list():
+    print('get_deployment_list')
     data = json.loads(request.get_data().decode("utf-8"))
     namespace = data.get("namespace").strip()
     myclient = client.AppsV1Api()
+    print(namespace)
     if namespace == "" or namespace == "all": 
         deployments = myclient.list_deployment_for_all_namespaces(watch=False)
     else:
@@ -359,7 +499,6 @@ def get_deployment_list():
     # return json.dumps(deployment_list,indent=4,cls=DateEncoder)
     # return json.dumps(deployment_list,default=lambda obj: obj.__dict__,indent=4)
 
-
 @k8s.route('/get_daemonset_list',methods=('GET','POST'))
 def get_daemonset_list():
     myclient = client.AppsV1Api()
@@ -405,7 +544,6 @@ def get_daemonset_list():
         i = i +1       
     return json.dumps(daemonset_list,indent=4,cls=DateEncoder)
 
-        
 @k8s.route('/get_node_list',methods=('GET','POST'))
 def get_node_list():
     myclient = client.CoreV1Api()
@@ -543,7 +681,6 @@ def get_job_list():
             job_list.append(myjob) 
         i = i +1
     return json.dumps(job_list,indent=4,cls=DateEncoder)
-
 
 #列出job
 @k8s.route('/get_cronjob_list',methods=('GET','POST'))
@@ -739,7 +876,6 @@ def get_statefulset_list():
         i = i +1       
     return json.dumps(statefulset_list,indent=4,cls=DateEncoder)
 
-
 #列出ingress
 @k8s.route('/get_ingress_list',methods=('GET','POST'))
 def get_ingress_list():
@@ -780,7 +916,6 @@ def get_ingress_list():
             ingress_list.append(myingress) 
         i = i +1
     return json.dumps(ingress_list,indent=4,cls=DateEncoder)
-
 
 @k8s.route('/get_deployment_name_list',methods=('GET','POST'))
 def get_deployment_name_list():

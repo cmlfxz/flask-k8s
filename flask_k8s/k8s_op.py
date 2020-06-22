@@ -123,13 +123,42 @@ def get_deployment_by_name(namespace,deploy_name):
 
 
            
-def update_deployment(deploy_name,namespace,image=None,replicas=None):
+def update_deployment(deploy_name,namespace,image=None,replicas=None,pod_anti_affinity_type=None,anti_affinity_key=None,anti_affinity_value=None):
     # '/apis/apps/v1/namespaces/{namespace}/deployments/{name}', 'PATCH'
+    print(pod_anti_affinity_type,anti_affinity_key,anti_affinity_value)
     deployment = get_deployment_by_name(namespace,deploy_name)
     if (deployment == None):
         return jsonify({"error":"1003","msg":"找不到该deployment"})
-    deployment.spec.template.spec.containers[0].image=image
-    deployment.spec.replicas = replicas
+    if image:
+        deployment.spec.template.spec.containers[0].image=image
+    if replicas:
+        deployment.spec.replicas = replicas
+    affinity = None
+    if pod_anti_affinity_type:
+        if pod_anti_affinity_type == "required":
+            # anti_affinity_type = "requiredDuringSchedulingIgnoredDuringExecution"
+            label_selector = client.V1LabelSelector(match_expressions=[
+                                client.V1LabelSelectorRequirement(key=anti_affinity_key,operator='In',values=[anti_affinity_value])
+                             ])
+            # label_selector = client.V1LabelSelector(match_expressions=[ client.V1LabelSelectorRequirement(key='app',operator=None)])
+            # # label_selector = None
+            affinity=client.V1Affinity(
+                pod_anti_affinity = client.V1PodAntiAffinity(
+                    required_during_scheduling_ignored_during_execution=[
+                        # client.re V1PreferredSchedulingTerm
+                        # client.V1Pod
+                        client.V1PodAffinityTerm(
+                            label_selector = label_selector,
+                            topology_key = 'kubernetes.io/hostname'
+                        )
+                    ]
+                )
+            )
+            print("{}".format(affinity))
+        else:
+            pass 
+    if affinity:
+        deployment.spec.template.spec.affinity = affinity
     api_response =  client.AppsV1Api().patch_namespaced_deployment(
         name=deploy_name,
         namespace=namespace,
@@ -147,7 +176,6 @@ def create_deploy():
         project = json_data.get("project").strip()
         environment = json_data.get("environment").strip()
         cluster = json_data.get("cluster").strip()
-        project = json_data.get("project").strip()
         
         imageRepo = json_data.get("imageRepo").strip()
         imageName = json_data.get("imageName").strip()
@@ -249,6 +277,8 @@ def create_deploy():
         #     print('发生了异常:', e)
     return jsonify({'a':1})   
 
+# {"namespace":"bookinfo","project":"ms","env":"dev","replicas":"3","imageRepo":"myhub.mydocker.com","imageName":"flask-dev","imageTag":"",
+    # "pod_anti_affinity_type":"required","affinity_key":"","affinity_value":""}: 
 @k8s_op.route('/update_deploy',methods=('GET','POST'))  
 def update_deploy():
     data = json.loads(request.get_data().decode('UTF-8'))
@@ -262,8 +292,12 @@ def update_deploy():
     imageName = data.get('imageName').strip()
     imageTag = data.get('imageTag').strip()
     image = "{}/{}-{}/{}:{}".format(imageRepo,project,env,imageName,imageTag)
+    pod_anti_affinity_type = data.get('pod_anti_affinity_type').strip()
+    anti_affinity_key = data.get('anti_affinity_key').strip()
+    anti_affinity_value = data.get('anti_affinity_value').strip()
     print(image)
-    return update_deployment(deploy_name=deploy_name,namespace=namespace,replicas=replicas,image=image)
+    return update_deployment(deploy_name=deploy_name,namespace=namespace,replicas=replicas,image=image,
+                             pod_anti_affinity_type=pod_anti_affinity_type,anti_affinity_key=anti_affinity_key,anti_affinity_value=anti_affinity_value)
 
 def delete_deployment(namespace,deploy_name=None):
     api_response =  client.AppsV1Api().delete_namespaced_deployment(
@@ -349,34 +383,16 @@ def get_vs_by_name(namespace,vs_name):
             break 
     return virtual_service
             
-	# 'spec': {
-	# 	'hosts': ['flask-tutorial'],
-	# 	'http': [{
-	# 		'route': [{
-	# 			'destination': {
-	# 				'host': 'flask-tutorial',
-	# 				'subset': 'prod'
-	# 			},
-	# 			'weight': 0
-	# 		}, {
-	# 			'destination': {
-	# 				'host': 'flask-tutorial',
-	# 				'subset': 'canary'
-	# 			},
-	# 			'weight': 100
-	# 		}]
-	# 	}]
-	# } 
 def update_virtual_service(vs_name,namespace,prod_weight,canary_weight):
     myclient = client.CustomObjectsApi()
     #先获取到对应的vs名称
     vs = get_vs_by_name(namespace,vs_name)
     if vs == None:
         return jsonify({"error":"1003","msg":"找不到该vs"})
-    print(vs)
+    # print(vs)
     #这样必须规定第一条route是生产版本，第二条是灰度版本
-    print(vs['spec']['http'][0]['route'][0]['weight'])
-    print(vs['spec']['http'][0]['route'][1]['weight'])
+    # print(vs['spec']['http'][0]['route'][0]['weight'])
+    # print(vs['spec']['http'][0]['route'][1]['weight'])
     vs['spec']['http'][0]['route'][0]['weight'] = prod_weight
     vs['spec']['http'][0]['route'][1]['weight'] = canary_weight
     api_response = myclient.patch_namespaced_custom_object( group="networking.istio.io",
@@ -385,16 +401,7 @@ def update_virtual_service(vs_name,namespace,prod_weight,canary_weight):
                                                             name=vs_name,
                                                             namespace=namespace,
                                                             body=vs)
-    # deployment.spec.template.spec.containers[0].image=image
-    # deployment.spec.replicas = replicas
-    # api_response =  client.AppsV1Api().patch_namespaced_deployment(
-    #     name=deploy_name,
-    #     namespace=namespace,
-    #     body=deployment
-    # )
-    # # print("Deployment updated. status='%s'\n" % str(api_response.status))
-    # {'hosts': ['flask-tutorial'], 'http': [{'route': [{'destination': {'host': 'flask-tutorial', 'subset': 'prod'}, 'weight': 80}, {'destination': {'host': 'flask-tutorial', 'subset': 'canary'}, 'weight': 20}]}]}
-    print(api_response['spec'])
+    # print(api_response['spec'])
     status="{}".format(api_response['spec']['http'])
     
     return jsonify({"update_status":status})

@@ -46,6 +46,12 @@ from kubernetes.client.models.v1_empty_dir_volume_source import V1EmptyDirVolume
 from kubernetes.client.models.extensions_v1beta1_ingress_list import ExtensionsV1beta1IngressList
 from kubernetes.client.models.v1_preferred_scheduling_term import V1PreferredSchedulingTerm
 from kubernetes.client.models.v1_config_map_key_selector import V1ConfigMapKeySelector
+from kubernetes.client.models.v1_pod_anti_affinity import V1PodAntiAffinity
+from kubernetes.client.models.v1_pod_affinity_term import V1PodAffinityTerm
+from kubernetes.client.models.v1_weighted_pod_affinity_term import V1WeightedPodAffinityTerm
+from kubernetes.client.models.v1_label_selector import V1LabelSelector
+from kubernetes.client.models.v1_label_selector_requirement import V1LabelSelectorRequirement
+
 class DateEncoder(json.JSONEncoder):  
     def default(self, obj):  
         
@@ -53,17 +59,48 @@ class DateEncoder(json.JSONEncoder):
             return obj.strftime('%Y-%m-%d %H:%M:%S')  
         elif isinstance(obj, date):  
             return obj.strftime("%Y-%m-%d")  
+        elif isinstance(obj, V1LabelSelectorRequirement):  
+            return {
+                "key": obj.key,
+                "operator": obj.operator,
+                "values": obj.values,
+            }
         
         elif isinstance(obj,V1PodTemplateSpec):
             return {
                 "metadata": obj.metadata,
                 "spec": obj.spec,
             } 
+        elif isinstance(obj,V1LabelSelector):
+            if  obj.match_expressions:
+                return { "match_expressions": obj.match_expressions,} 
+            else:       
+                return { "match_labels": obj.match_labels,} 
+        elif isinstance(obj,V1WeightedPodAffinityTerm):
+            return {
+                "pod_affinity_term": obj.pod_affinity_term,
+                "weight": obj.weight,
+            } 
+        elif isinstance(obj,V1PodAffinityTerm):
+            return {
+                "label_selector": obj.label_selector,
+                "topology_key": obj.topology_key,
+            } 
+        elif isinstance(obj,V1PodAntiAffinity):
+            if obj.preferred_during_scheduling_ignored_during_execution:
+                return {
+                    "preferred_during_scheduling_ignored_during_execution": obj.preferred_during_scheduling_ignored_during_execution,
+                }            
+            else:     
+                return {
+                    "required_during_scheduling_ignored_during_execution": obj.required_during_scheduling_ignored_during_execution,
+                } 
         elif isinstance(obj,V1PreferredSchedulingTerm):
             return {
                 "preference": obj.preference,
                 "weight": obj.weight,
             } 
+        
         elif isinstance(obj,V1ConfigMapKeySelector):
             return {
                 "name": obj.name,
@@ -310,10 +347,14 @@ class DateEncoder(json.JSONEncoder):
                 "pod_anti_affinity": obj.pod_anti_affinity,
             } 
         elif isinstance(obj,V1NodeAffinity):
-            return {
-                "preferred_during_scheduling_ignored_during_execution": obj.preferred_during_scheduling_ignored_during_execution,
-                "required_during_scheduling_ignored_during_execution": obj.required_during_scheduling_ignored_during_execution,
-            }  
+            if  obj.preferred_during_scheduling_ignored_during_execution:
+                return {
+                    "preferred_during_scheduling_ignored_during_execution": obj.preferred_during_scheduling_ignored_during_execution,
+                }
+            else:                
+                return {
+                    "required_during_scheduling_ignored_during_execution": obj.required_during_scheduling_ignored_during_execution,
+                }  
         elif isinstance(obj,V1NodeSelector):
             return {
                 "node_selector_terms": obj.node_selector_terms,

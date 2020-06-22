@@ -1,6 +1,6 @@
 namespace: $namespace
 resources:
-- namespace.yaml
+# - namespace.yaml
 - gateway.yaml
 - gateway-vs.yaml
 - $service-development.yaml
