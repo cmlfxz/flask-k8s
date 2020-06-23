@@ -12,8 +12,8 @@ COPY config /opt/microservices/config
 EXPOSE 8082
 WORKDIR /opt/microservices
 
-ENTRYPOINT [ "python","manage.py","runserver","-h","0.0.0.0","-p","8082" ]
+#ENTRYPOINT [ "python","manage.py","runserver","-h","0.0.0.0","-p","8082" ]
 # CMD [ "python","manage.py","runserver","-h","0.0.0.0","-p","8081" ]
-# ADD cmd.sh /root/
-# RUN chmod +x /root/cmd.sh
-# CMD ["/root/cmd.sh","arg1"]
+ADD cmd.sh /root/
+RUN chmod +x /root/cmd.sh
+CMD ["/root/cmd.sh","arg1"]
