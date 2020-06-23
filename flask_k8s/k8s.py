@@ -8,35 +8,20 @@ from dateutil import tz, zoneinfo
 import json,os
 from datetime import datetime,date
 import math
-from .k8s_decode import DateEncoder
+from .k8s_decode import MyEncoder
 import requests
-import time 
-import pytz
+import time
 import ssl
 from .util import get_db_conn,my_decode,my_encode,str_to_int,str_to_float
 from .util import SingletonDBPool
-k8s = Blueprint('k8s',__name__,url_prefix='/k8s')
+from .util import time_to_string,utc_to_local
 
-dir_path = os.path.dirname(os.path.abspath(__file__))
+k8s = Blueprint('k8s',__name__,url_prefix='/k8s')
 
 def takename(e):
     return e['name']
-#参数是datetime
-def time_to_string(dt):
-    tz_sh = pytz.timezone('Asia/Shanghai')
-    return  dt.astimezone(tz_sh).strftime("%Y-%m-%d %H:%M:%S") 
 
-def utc_to_local(utc_time_str, utc_format='%Y-%m-%dT%H:%M:%S.%fZ'):
-    local_tz = pytz.timezone('Asia/Shanghai')
-    local_format = "%Y-%m-%d %H:%M:%S"
-    utc_dt = datetime.strptime(utc_time_str, utc_format)
-    local_dt = utc_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
-    time_str = local_dt.strftime(local_format)
-    return time_str
-    # return datetime.fromtimestamp(int(time.mktime(time.strptime(time_str, local_format))))
 # http://192.168.11.51:1900/apis/metrics.k8s.io/v1beta1/nodes 
-
-# class NodeInfo(object):
 
 @k8s.before_app_request
 def load_header():
@@ -210,7 +195,7 @@ def get_gateway_list():
             mygateway = {"name":name,"namespace":namespace,"selector":selector,"servers":servers,"domain_list":domain_list,"create_time":create_time,}
             gateway_list.append(mygateway)
         i = i + 1
-    return json.dumps(gateway_list,indent=4,cls=DateEncoder)
+    return json.dumps(gateway_list,indent=4,cls=MyEncoder)
 
 #列出vs
 @k8s.route('/get_virtual_service_list',methods=('GET','POST'))
@@ -247,7 +232,7 @@ def get_virtual_service_list():
             virtual_service_list.append(myvirtual_service)
             
         i = i + 1
-    return json.dumps(virtual_service_list,indent=4,cls=DateEncoder)
+    return json.dumps(virtual_service_list,indent=4,cls=MyEncoder)
 
 #列出vs
 @k8s.route('/get_destination_rule_list',methods=('GET','POST'))
@@ -281,7 +266,7 @@ def get_destination_rule_list():
             destination_rule_list.append(mydestination_rule)
             
         i = i + 1
-    return json.dumps(destination_rule_list,indent=4,cls=DateEncoder)
+    return json.dumps(destination_rule_list,indent=4,cls=MyEncoder)
 
 @k8s.route('/get_api_version',methods=['GET','POST'])
 def get_api_version():
@@ -355,7 +340,7 @@ def get_service_list():
         service_list.append(service)
     
     # return json.dumps(service_list,default=lambda obj: obj.__dict__,sort_keys=True,indent=4)
-    return json.dumps(service_list,indent=4,cls=DateEncoder)
+    return json.dumps(service_list,indent=4,cls=MyEncoder)
 
 # from flask_k8s.util import *
 @k8s.route('/get_pod_list',methods=('GET','POST'))
@@ -436,7 +421,7 @@ def get_pod_list():
             pod_list.append(mypod)
         i = i + 1
     # return json.dumps(pod_list,default=lambda obj: obj.__dict__,indent=4)
-    return json.dumps(pod_list,indent=4,cls=DateEncoder)
+    return json.dumps(pod_list,indent=4,cls=MyEncoder)
 
 
 @k8s.route('/get_deployment_list',methods=('GET','POST'))
@@ -496,7 +481,7 @@ def get_deployment_list():
             
         i = i +1   
     return json.dumps(deployment_list,indent=4)    
-    # return json.dumps(deployment_list,indent=4,cls=DateEncoder)
+    # return json.dumps(deployment_list,indent=4,cls=MyEncoder)
     # return json.dumps(deployment_list,default=lambda obj: obj.__dict__,indent=4)
 
 @k8s.route('/get_daemonset_list',methods=('GET','POST'))
@@ -542,7 +527,7 @@ def get_daemonset_list():
             daemonset_list.append(mydaemonset)
             
         i = i +1       
-    return json.dumps(daemonset_list,indent=4,cls=DateEncoder)
+    return json.dumps(daemonset_list,indent=4,cls=MyEncoder)
 
 @k8s.route('/get_node_list',methods=('GET','POST'))
 def get_node_list():
@@ -586,7 +571,7 @@ def get_node_list():
             # print(mynode)
             node_list.append(mynode)
         i = i + 1
-    return json.dumps(node_list,indent=4,cls=DateEncoder)
+    return json.dumps(node_list,indent=4,cls=MyEncoder)
     # return jsonify({'a':1})
 
 #列出namespace
@@ -612,7 +597,7 @@ def get_configmap_list():
             myconfigmap = {"name":name,"create_time":create_time,"labels":labels,"namespace":namespace,"data":data}    
             configmap_list.append(myconfigmap) 
         i = i +1
-    return json.dumps(configmap_list,indent=4,cls=DateEncoder)
+    return json.dumps(configmap_list,indent=4,cls=MyEncoder)
     # return jsonify({'a':1})
         
 #列出namespace
@@ -643,7 +628,7 @@ def get_secret_list():
             mysecret = {"name":name,"create_time":create_time,"cluster_name":cluster_name,"namespace":namespace,"data":data}    
             secret_list.append(mysecret) 
         i = i +1
-    return json.dumps(secret_list,indent=4,cls=DateEncoder)
+    return json.dumps(secret_list,indent=4,cls=MyEncoder)
 
 #列出job
 @k8s.route('/get_job_list',methods=('GET','POST'))
@@ -680,7 +665,7 @@ def get_job_list():
             myjob = {"name":name,"create_time":create_time,"cluster_name":cluster_name,"labels":labels,"namespace":namespace,"status":mystatus}    
             job_list.append(myjob) 
         i = i +1
-    return json.dumps(job_list,indent=4,cls=DateEncoder)
+    return json.dumps(job_list,indent=4,cls=MyEncoder)
 
 #列出job
 @k8s.route('/get_cronjob_list',methods=('GET','POST'))
@@ -718,7 +703,7 @@ def get_cronjob_list():
                 "successful_jobs_history_limit":successful_jobs_history_limit, "suspend":suspend}    
             cronjob_list.append(mycronjob) 
         i = i +1
-    return json.dumps(cronjob_list,indent=4,cls=DateEncoder)
+    return json.dumps(cronjob_list,indent=4,cls=MyEncoder)
 
 #列出storageclass
 @k8s.route('/get_storageclass_list',methods=('GET','POST'))
@@ -744,7 +729,7 @@ def get_storageclass_list():
                 "mount_options":mount_options,"parameters":parameters,"reclaim_policy":reclaim_policy}    
             storageclass_list.append(mystorageclass) 
         i = i +1
-    return json.dumps(storageclass_list,indent=4,cls=DateEncoder)
+    return json.dumps(storageclass_list,indent=4,cls=MyEncoder)
 
 #列出pv
 @k8s.route('/get_pv_list',methods=('GET','POST'))
@@ -778,7 +763,7 @@ def get_pv_list():
 
             pv_list.append(mypv) 
         i = i +1
-    return json.dumps(pv_list,indent=4,cls=DateEncoder)
+    return json.dumps(pv_list,indent=4,cls=MyEncoder)
 
 #列出pvc
 @k8s.route('/get_pvc_list',methods=('GET','POST'))
@@ -818,7 +803,7 @@ def get_pvc_list():
 
             pvc_list.append(mypvc) 
         i = i +1
-    return json.dumps(pvc_list,indent=4,cls=DateEncoder)
+    return json.dumps(pvc_list,indent=4,cls=MyEncoder)
 
 @k8s.route('/get_statefulset_list',methods=('GET','POST'))
 def get_statefulset_list():
@@ -874,7 +859,7 @@ def get_statefulset_list():
             statefulset_list.append(mystatefulset)
             
         i = i +1       
-    return json.dumps(statefulset_list,indent=4,cls=DateEncoder)
+    return json.dumps(statefulset_list,indent=4,cls=MyEncoder)
 
 #列出ingress
 @k8s.route('/get_ingress_list',methods=('GET','POST'))
@@ -915,7 +900,7 @@ def get_ingress_list():
                 "domain_list":domain_list,"rule":rule,"tls":tls}    
             ingress_list.append(myingress) 
         i = i +1
-    return json.dumps(ingress_list,indent=4,cls=DateEncoder)
+    return json.dumps(ingress_list,indent=4,cls=MyEncoder)
 
 @k8s.route('/get_deployment_name_list',methods=('GET','POST'))
 def get_deployment_name_list():

@@ -3,11 +3,11 @@ from flask_migrate import Migrate
 from flask_migrate import MigrateCommand
 
 from flask_k8s import create_app
-from flask_k8s import models
+# from flask_k8s import models
 
 app = create_app()
 manager = Manager(app)
-migrate = Migrate(app,models.db)
+# migrate = Migrate(app,models.db)
 
 #python manager.py server  取代runserver
 #黑科技段
@@ -18,7 +18,7 @@ migrate = Migrate(app,models.db)
 
 #
 manager.add_command("server", Server(host='0.0.0.0', port=8082))
-manager.add_command("db", MigrateCommand)
+# manager.add_command("db", MigrateCommand)
 
 if __name__ == "__main__":
     manager.run()

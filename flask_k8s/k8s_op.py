@@ -4,7 +4,7 @@ from dateutil import tz, zoneinfo
 import json,os
 from datetime import datetime,date
 import math
-from .k8s_decode import DateEncoder
+from .k8s_decode import MyEncoder
 import requests
 import time 
 import pytz
@@ -12,40 +12,29 @@ import ssl
 import yaml
 import math
 from kubernetes.client.rest import ApiException
+from .util import get_db_conn,my_decode,my_encode,str_to_int,str_to_float
+from .util import SingletonDBPool
+from .util import time_to_string,utc_to_local
+from .util import dir_path
 
 k8s_op = Blueprint('k8s_op',__name__,url_prefix='/k8s_op')
-dir_path = os.path.dirname(os.path.abspath(__file__))
 
-def utc_to_local(utc_time_str, utc_format='%Y-%m-%dT%H:%M:%S.%fZ'):
-    local_tz = pytz.timezone('Asia/Shanghai')
-    local_format = "%Y-%m-%d %H:%M:%S"
-    utc_dt = datetime.strptime(utc_time_str, utc_format)
-    local_dt = utc_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
-    time_str = local_dt.strftime(local_format)
-    return time_str
-    # return datetime.fromtimestamp(int(time.mktime(time.strptime(time_str, local_format))))
-def str_to_int(str):    
-    # return str=="" ? 1 : int(str)  
-    return 1 if str=="" else int(str)
-def str_to_float(str):    
-    return 1 if str=="" else float(str)
-
-@k8s_op.route('/create_deploy_by_yaml',methods=('GET','POST'))
+@k8s_op.route('/create_deploy_by_yaml', methods=('GET', 'POST'))
 def create_deploy_by_yaml():
     if request.method == "POST":
         data = request.get_data()
         json_data = json.loads(data.decode("utf-8"))
         yaml_name = json_data.get("yaml_name")
         if yaml_name == None or yaml_name == "":
-            msg = "需要提供yaml文件" 
-            return jsonify({"error":"1001","msg":msg})
-        yaml_dir = os.path.join(dir_path,"yaml")
-        file_path = os.path.join(yaml_dir,yaml_name)
+            msg = "需要提供yaml文件"
+            return jsonify({"error": "1001", "msg": msg})
+        yaml_dir = os.path.join(dir_path, "yaml")
+        file_path = os.path.join(yaml_dir, yaml_name)
         if not os.path.exists(file_path):
             msg = "找不到此文件{}".format(file_path)
-            return jsonify({"error":"1001","msg":msg})
-        
-        with open(file_path,encoding='utf-8') as f:
+            return jsonify({"error": "1001", "msg": msg})
+
+        with open(file_path, encoding='utf-8') as f:
             cfg = f.read()
             obj = yaml.safe_load(cfg)  # 用load方法转字典
             try:
@@ -54,9 +43,9 @@ def create_deploy_by_yaml():
                 # print(resp)
                 print("Deployment created. name='%s' " % resp.metadata.name)
             except ApiException as e:
-                return make_response(json.dumps({"error":"1001","msg":str(e)},indent=4, cls=DateEncoder),1001)
+                return make_response(json.dumps({"error": "1001", "msg": str(e)}, indent=4, cls=MyEncoder), 1001)
 
-    return jsonify({"msg":"创建deployment成功"})
+    return jsonify({"msg": "创建deployment成功"})
 
 def create_deployment_object(name=None,namespace=None,image=None,port=None,image_pull_policy=None,\
     imagePullSecret=None,labels=None,replicas=None,cpu=None,memory=None,liveness_probe=None,readiness_probe=None):
@@ -104,25 +93,116 @@ def create_deployment_object(name=None,namespace=None,image=None,port=None,image
     )
     return deployment
 
-
 def create_deployment(api_instance,deployment,namespace):
     api_response = api_instance.create_namespaced_deployment(namespace=namespace,body=deployment)
     print("Deployment created. status='%s'\n" % str(api_response.status))
     print(api_response)
     return api_response.status
-def get_deployment_by_name(namespace,deploy_name):
+
+@k8s_op.route('/create_deploy',methods=('GET','POST'))
+def create_deploy():
+    error = ""
+    if request.method == "POST":
+        data = request.get_data()
+        json_data = json.loads(data.decode("utf-8"))
+        project = json_data.get("project").strip()
+        environment = json_data.get("environment").strip()
+        cluster = json_data.get("cluster").strip()
+        
+        imageRepo = json_data.get("imageRepo").strip()
+        imageName = json_data.get("imageName").strip()
+        imageTag = json_data.get("imageTag").strip()
+        
+        imagePullPolicy = json_data.get("imagePullPolicy").strip()
+        imagePullSecret = json_data.get("imagePullSecret").strip()
+        containerPort = str_to_int(json_data.get("containerPort").strip())
+        replicas = json_data.get("replicas").strip()
+        cpu = json_data.get("cpu").strip()
+        memory = json_data.get("memory").strip()
+        label_key1 = json_data.get("label_key1").strip()
+        label_value1 = json_data.get("label_value1").strip()
+        label_key2 = json_data.get("label_key2").strip()
+        label_value2 = json_data.get("label_value2").strip()
+
+        env = json_data.get("env").strip()
+        volumeMount = json_data.get("volumeMount").strip()
+        updateType = json_data.get("updateType").strip()
+        
+        probeType = json_data.get("probeType").strip()
+        healthCheck = json_data.get("healthCheck").strip()
+        healthPath = json_data.get("healthPath").strip() 
+        initialDelaySeconds = str_to_int(json_data.get("initialDelaySeconds").strip())
+        periodSeconds = str_to_int(json_data.get("periodSeconds").strip())
+        failureThreshold = str_to_int(json_data.get("failureThreshold").strip())
+        healthTimeout = str_to_int(json_data.get("healthTimeout").strip())
+        healthCmd = json_data.get("healthCmd").strip()
+        liveness_probe = None
+        readiness_probe = None
+        if (healthCheck=="true"):
+            if(probeType=="tcp"):
+                liveness_probe = client.V1Probe(initial_delay_seconds=initialDelaySeconds,\
+                    period_seconds = periodSeconds,\
+                    timeout_seconds   = healthTimeout ,\
+                    failure_threshold = failureThreshold,\
+                    tcp_socket=client.V1TCPSocketAction(port=containerPort))
+                readiness_probe = liveness_probe
+            elif(probeType=="http"):
+                liveness_probe = client.V1Probe(initial_delay_seconds=initialDelaySeconds,\
+                    period_seconds = periodSeconds,\
+                    timeout_seconds   = healthTimeout ,\
+                    failure_threshold = failureThreshold,\
+                    http_get=client.V1HTTPGetAction(path=healthPath,port=containerPort))
+                readiness_probe = liveness_probe
+            elif(probeType=="cmd"):
+                pass
+            
+            else:
+                pass
+        if(containerPort == 1):
+            error = "容器端口不能为空"
+        if(imageRepo=="" or project=="" or environment=="" or imageName=="" or imageTag==""):
+            error = "镜像相关不能为空"
+        if(label_key1== "" or label_value1 == ""):
+            error = "label相关数据不能为空（至少输入一对key/value）"
+        replicas=str_to_int(replicas) 
+        
+        cpu = int(1000*(str_to_float(cpu)))
+        memory = int(1024*(str_to_float(memory)))
+          
+        if(error != "" ):
+            print(error)
+            return jsonify({"error":1002,"msg":error})
+        #ms-dev
+        namespace = project+"-"+environment
+        # myhub.mydocker.com/ms-dev/base:v1.0
+        image = imageRepo+"/"+project+"-"+environment+"/"+imageName+":"+imageTag
+        labels = { label_key1:label_value1 }    
+        if(label_key2 !="" and label_value2 != ""):
+            labels[label_key2] = label_value2
+        myclient = client.AppsV1Api()
+        deployment = create_deployment_object(name=imageName,namespace=namespace,image=image,port=containerPort,\
+            image_pull_policy=imagePullPolicy,imagePullSecret=imagePullSecret ,labels=labels,replicas=replicas,cpu=cpu,memory=memory,\
+            liveness_probe=liveness_probe,readiness_probe=readiness_probe)
+        print(type(deployment))
+        to_yaml = yaml.load(json.dumps(deployment,indent=4,cls=MyEncoder))
+        file = os.path.join(dir_path,"demo-deployment.yaml")
+        stream = open(file,'w')
+        yaml.safe_dump(to_yaml,stream,default_flow_style=False)
+        status = create_deployment(api_instance=myclient,namespace=namespace,deployment=deployment)
+        return json.dumps(deployment,indent=4,cls=MyEncoder)
+
+    return jsonify({'a':1})
+
+def get_deployment_by_name(namespace, deploy_name):
     deployments = client.AppsV1Api().list_namespaced_deployment(namespace=namespace)
-    
+
     deployment = None
-    for  deploy in deployments.items:
+    for deploy in deployments.items:
         if deploy.metadata.name == deploy_name:
             deployment = deploy
             break
     return deployment
 
-
-
-           
 def update_deployment(deploy_name,namespace,image=None,replicas=None,pod_anti_affinity_type=None,anti_affinity_key=None,anti_affinity_value=None):
     # '/apis/apps/v1/namespaces/{namespace}/deployments/{name}', 'PATCH'
     print(pod_anti_affinity_type,anti_affinity_key,anti_affinity_value)
@@ -156,7 +236,7 @@ def update_deployment(deploy_name,namespace,image=None,replicas=None,pod_anti_af
             )
             print("{}".format(affinity))
         else:
-            pass 
+            pass
     if affinity:
         deployment.spec.template.spec.affinity = affinity
     api_response =  client.AppsV1Api().patch_namespaced_deployment(
@@ -167,118 +247,7 @@ def update_deployment(deploy_name,namespace,image=None,replicas=None,pod_anti_af
     # print("Deployment updated. status='%s'\n" % str(api_response.status))
     status="{}".format(api_response.status)
     return jsonify({"update_status":status})
-@k8s_op.route('/create_deploy',methods=('GET','POST'))
-def create_deploy():
-    error = ""
-    if request.method == "POST":
-        data = request.get_data()
-        json_data = json.loads(data.decode("utf-8"))
-        project = json_data.get("project").strip()
-        environment = json_data.get("environment").strip()
-        cluster = json_data.get("cluster").strip()
-        
-        imageRepo = json_data.get("imageRepo").strip()
-        imageName = json_data.get("imageName").strip()
-        imageTag = json_data.get("imageTag").strip()
-        
-        imagePullPolicy = json_data.get("imagePullPolicy").strip()
-        imagePullSecret = json_data.get("imagePullSecret").strip()
-        containerPort = str_to_int(json_data.get("containerPort").strip())
-        replicas = json_data.get("replicas").strip()
-        cpu = json_data.get("cpu").strip()
-        memory = json_data.get("memory").strip()
-        label_key1 = json_data.get("label_key1").strip()
-        label_value1 = json_data.get("label_value1").strip()
-        label_key2 = json_data.get("label_key2").strip()
-        label_value2 = json_data.get("label_value2").strip()
-        
-        
-        env = json_data.get("env").strip()
-        volumeMount = json_data.get("volumeMount").strip()
-        updateType = json_data.get("updateType").strip()
-        
-        probeType = json_data.get("probeType").strip()
-        healthCheck = json_data.get("healthCheck").strip()
-        healthPath = json_data.get("healthPath").strip() 
-        initialDelaySeconds = str_to_int(json_data.get("initialDelaySeconds").strip())
-        periodSeconds = str_to_int(json_data.get("periodSeconds").strip())
-        failureThreshold = str_to_int(json_data.get("failureThreshold").strip())
-        healthTimeout = str_to_int(json_data.get("healthTimeout").strip())
-        healthCmd = json_data.get("healthCmd").strip()
 
-        liveness_probe = None
-        readiness_probe = None
-        if (healthCheck=="true"):
-            if(probeType=="tcp"):
-                liveness_probe = client.V1Probe(initial_delay_seconds=initialDelaySeconds,\
-                    period_seconds = periodSeconds,\
-                    timeout_seconds   = healthTimeout ,\
-                    failure_threshold = failureThreshold,\
-                    tcp_socket=client.V1TCPSocketAction(port=containerPort))
-                readiness_probe = liveness_probe
-            elif(probeType=="http"):
-                liveness_probe = client.V1Probe(initial_delay_seconds=initialDelaySeconds,\
-                    period_seconds = periodSeconds,\
-                    timeout_seconds   = healthTimeout ,\
-                    failure_threshold = failureThreshold,\
-                    http_get=client.V1HTTPGetAction(path=healthPath,port=containerPort))
-                readiness_probe = liveness_probe
-            elif(probeType=="cmd"):
-                pass
-            
-            else:
-                pass
-            
-        if(containerPort == 1):
-            error = "容器端口不能为空"
-            
-        if(imageRepo=="" or project=="" or environment=="" or imageName=="" or imageTag==""):
-            error = "镜像相关不能为空"
-        
-        if(label_key1== "" or label_value1 == ""):
-            error = "label相关数据不能为空（至少输入一对key/value）"
-
-        replicas=str_to_int(replicas) 
-        
-        cpu = int(1000*(str_to_float(cpu)))
-        memory = int(1024*(str_to_float(memory)))
-          
-        if(error != "" ):
-            print(error)
-            return jsonify({"error":1002,"msg":error})
-        #ms-dev
-        namespace = project+"-"+environment
-        # myhub.mydocker.com/ms-dev/base:v1.0
-        image = imageRepo+"/"+project+"-"+environment+"/"+imageName+":"+imageTag
-        
-        
-        labels = { label_key1:label_value1 }    
-        if(label_key2 !="" and label_value2 != ""):
-            labels[label_key2] = label_value2
-        # print(labels)
-        myclient = client.AppsV1Api()
-        deployment = create_deployment_object(name=imageName,namespace=namespace,image=image,port=containerPort,\
-            image_pull_policy=imagePullPolicy,imagePullSecret=imagePullSecret ,labels=labels,replicas=replicas,cpu=cpu,memory=memory,\
-            liveness_probe=liveness_probe,readiness_probe=readiness_probe)
-        print(type(deployment))
-        to_yaml = yaml.load(json.dumps(deployment,indent=4,cls=DateEncoder))
-        file = os.path.join(dir_path,"demo-deployment.yaml")
-        stream = open(file,'w')
-        yaml.safe_dump(to_yaml,stream,default_flow_style=False)
-        
-        status = create_deployment(api_instance=myclient,namespace=namespace,deployment=deployment)
-        
-        # return jsonify({'status':'status'})
-        return json.dumps(deployment,indent=4,cls=DateEncoder)
-        
-        # try:
-        #     create_deployment(myclient, deployment)
-        # except Exception as e:
-        #     print('发生了异常:', e)
-    return jsonify({'a':1})   
-
-# {"namespace":"bookinfo","project":"ms","env":"dev","replicas":"3","imageRepo":"myhub.mydocker.com","imageName":"flask-dev","imageTag":"",
-    # "pod_anti_affinity_type":"required","affinity_key":"","affinity_value":""}: 
 @k8s_op.route('/update_deploy',methods=('GET','POST'))  
 def update_deploy():
     data = json.loads(request.get_data().decode('UTF-8'))
@@ -316,7 +285,6 @@ def delete_deploy():
     namespace = data.get('namespace').strip()
     deploy_name = data.get('deploy_name').strip()
     return delete_deployment(deploy_name=deploy_name,namespace=namespace)
-
 
 def create_service(namespace,service_name,type,selector,port,target_port):
     myclient = client.CoreV1Api()
@@ -370,7 +338,6 @@ def delete_ingress(ingress_name,namespace):
         name=ingress_name,
         namespace=namespace
     )
-    
 
 def get_vs_by_name(namespace,vs_name):
     virtual_services = client.CustomObjectsApi().list_namespaced_custom_object(group="networking.istio.io",

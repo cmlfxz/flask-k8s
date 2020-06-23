@@ -1,37 +1,15 @@
-import json
+import os,json
 from datetime import date, datetime
 import decimal
 import pymysql 
 from flask import current_app
 import base64
+import threading
+import pytz
+from DBUtils.PooledDB import PooledDB
 
-class DecimalEncoder(json.JSONEncoder):
-    def default(self, o):
-        if isinstance(o, decimal.Decimal):
-            return float(o)
-        return super(DecimalEncoder, self).default(o)
+dir_path = os.path.dirname(os.path.abspath(__file__))
 
-class JsonUtil:
-    
-    def __default(self,obj):      
-        if isinstance(obj, datetime):
-            return obj.strftime('%Y-%m-%d %H:%M:%S')
-        elif isinstance(obj, date):
-            return obj.strftime('%Y-%m-%d')        
-        else:
-            raise TypeError('%r is not JSON serializable' % obj)
-
-      
-    def parseJsonObj(self,obj):
-        jsonstr=json.dumps(obj,default=self.__default,ensure_ascii=False) #cls=DecimalEncoder
-        return jsonstr
-    
-    def parseJsonString(self,jsonstring):
-        obj=json.loads(jsonstring)
-        return obj
-
-
-        
 def get_db_conn():
     conn = None
     try:
@@ -61,9 +39,18 @@ def str_to_int(str):
 def str_to_float(str):    
     return 1 if str=="" else float(str)
 
+#参数是datetime
+def time_to_string(dt):
+    tz_sh = pytz.timezone('Asia/Shanghai')
+    return  dt.astimezone(tz_sh).strftime("%Y-%m-%d %H:%M:%S")
 
-import threading
-from DBUtils.PooledDB import PooledDB
+def utc_to_local(utc_time_str, utc_format='%Y-%m-%dT%H:%M:%S.%fZ'):
+    local_tz = pytz.timezone('Asia/Shanghai')
+    local_format = "%Y-%m-%d %H:%M:%S"
+    utc_dt = datetime.strptime(utc_time_str, utc_format)
+    local_dt = utc_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
+    time_str = local_dt.strftime(local_format)
+    return time_str
 
 class SingletonDBPool(object):
     _instance_lock = threading.Lock()
@@ -97,10 +84,6 @@ class SingletonDBPool(object):
                 if not hasattr(SingletonDBPool, "_instance"):
                     SingletonDBPool._instance = object.__new__(cls, *args, **kwargs)
         return SingletonDBPool._instance
-    # def __new__(cls,*args,**kwargs):
-    #     if not hasattr(SingletonDBPool, "_instance"):
-    #         SingletonDBPool._instance = object.__new__(cls, *args, **kwargs)
-    #     return SingletonDBPool._instance
 
     def connect(self):
         return self.pool.connection()

@@ -52,7 +52,7 @@ from kubernetes.client.models.v1_weighted_pod_affinity_term import V1WeightedPod
 from kubernetes.client.models.v1_label_selector import V1LabelSelector
 from kubernetes.client.models.v1_label_selector_requirement import V1LabelSelectorRequirement
 
-class DateEncoder(json.JSONEncoder):  
+class MyEncoder(json.JSONEncoder):
     def default(self, obj):  
         
         if isinstance(obj, datetime):  
