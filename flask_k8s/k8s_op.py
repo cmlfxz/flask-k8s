@@ -16,8 +16,40 @@ from .util import get_db_conn,my_decode,my_encode,str_to_int,str_to_float
 from .util import SingletonDBPool
 from .util import time_to_string,utc_to_local
 from .util import dir_path
+from flask_cors import *
 
 k8s_op = Blueprint('k8s_op',__name__,url_prefix='/k8s_op')
+
+CORS(k8s_op, suppors_credentials=True, resources={r'/*'})
+
+@k8s_op.before_app_request
+def load_header():
+    if request.method == 'OPTIONS':
+        print('options请求方式')
+        pass
+    if request.method == 'POST':
+        print('POST请求方式')
+        try:
+            cluster_name = request.headers.get('cluster_name').strip()
+            print("load_header: 集群名字:{}".format(cluster_name))
+            if cluster_name == None:
+                print("没有设置cluster_name header")
+                pass
+            else:
+                g.cluster_name = cluster_name
+                cluster_config = get_cluster_config(cluster_name)
+                set_k8s_config(cluster_config)
+        except Exception as e:
+            print(e)
+
+@k8s_op.after_request
+def after(resp):
+    print("after is called,set cross")
+    resp = make_response(resp)
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
+    resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
+    return resp
 
 @k8s_op.route('/create_deploy_by_yaml', methods=('GET', 'POST'))
 def create_deploy_by_yaml():

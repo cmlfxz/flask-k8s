@@ -119,7 +119,8 @@ def create_app():
 
     Session(app)
     # r'/*' 是通配符，让本服务器所有的URL 都允许跨域请求
-    CORS(app, resources=r'/*')
+    CORS(app, supports_credentials=True,resources=r'/*')
+    # CORS(app, supports_credentials=True,resources=r'/*',methods='GET,POST,OPTIONS',allow_headers="cluster_name,x-requested-with,content-type")
 
     # # app初始化
     # db.init_app(app)

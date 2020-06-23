@@ -15,8 +15,11 @@ import ssl
 from .util import get_db_conn,my_decode,my_encode,str_to_int,str_to_float
 from .util import SingletonDBPool
 from .util import time_to_string,utc_to_local
+from flask_cors import *
 
 k8s = Blueprint('k8s',__name__,url_prefix='/k8s')
+
+CORS(k8s, suppors_credentials=True, resources={r'/*'})
 
 def takename(e):
     return e['name']
@@ -42,6 +45,15 @@ def load_header():
                 set_k8s_config(cluster_config)
         except Exception as e:
             print(e)
+
+@k8s.after_request
+def after(resp):
+    print("after is called,set cross")
+    resp = make_response(resp)
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
+    resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
+    return resp
 
 def get_node_usage_detail(): 
     myclient = client.CustomObjectsApi()
@@ -127,9 +139,18 @@ def get_pod_usage_detail(namespace=None):
 
             for container in containers:
                 container_name = container['name']
-                cpu = str_to_int(container['usage']['cpu'].split('n')[0])/1000/1000
+                print("我靠我靠我靠我靠我靠 {}".format(container['usage']['cpu']))
+                container_cpu = container['usage']['cpu'] 
+                if container_cpu == "0":
+                    cpu = 0
+                else:
+                    cpu = str_to_int(container_cpu.split('n')[0])/1000/1000
                 container_cpu_usage = "{}m".format(math.ceil(cpu))
-                memory = str_to_int(container['usage']['memory'].split('Ki')[0])/1024/1024
+                container_memory = container['usage']['memory']
+                if container == "0":
+                    memory = 0
+                else:
+                    memory = str_to_int(container_memory.split('Ki')[0])/1024/1024
                 container_memory_usage = "{}G".format(float('%.2f' % memory))
                 container_usage = {"name":container_name,"cpu":container_cpu_usage,"memory":container_memory_usage}
                 container_list.append(container_usage)
