@@ -147,7 +147,7 @@ def get_pod_usage_detail(namespace=None):
                     cpu = str_to_int(container_cpu.split('n')[0])/1000/1000
                 container_cpu_usage = "{}m".format(math.ceil(cpu))
                 container_memory = container['usage']['memory']
-                if container == "0":
+                if container_memory == "0":
                     memory = 0
                 else:
                     memory = str_to_int(container_memory.split('Ki')[0])/1024/1024
