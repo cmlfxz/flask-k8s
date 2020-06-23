@@ -85,6 +85,11 @@ spec:
         volumeMounts:
         - name: log
           mountPath: /opt/microservices/logs
+        - name: file_config
+          mountPath: /opt/microservices/instance
       volumes:
       - name: log
         emptyDir: {}
+      - name: file_config
+        configMap:
+          name: flask-k8s-configmap
