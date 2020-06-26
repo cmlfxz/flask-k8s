@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 from flask import Flask,jsonify,Response,make_response,Blueprint,request,g
-=======
-from flask import Flask,jsonify,Response,make_response,Blueprint,request
->>>>>>> develop
 from kubernetes import client,config
 from dateutil import tz, zoneinfo
 import json,os
@@ -45,7 +41,6 @@ def load_header():
                 set_k8s_config(cluster_config)
         except Exception as e:
             print(e)
-<<<<<<< HEAD
 
 def get_cluster_config(cluster_name):
     cluster_config = None
@@ -87,18 +82,6 @@ def after(resp):
     resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
     return resp
 
-=======
-
-@k8s_op.after_request
-def after(resp):
-    print("after is called,set cross")
-    resp = make_response(resp)
-    resp.headers['Access-Control-Allow-Origin'] = '*'
-    resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
-    resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
-    return resp
-
->>>>>>> develop
 @k8s_op.route('/create_deploy_by_yaml', methods=('GET', 'POST'))
 def create_deploy_by_yaml():
     if request.method == "POST":
@@ -328,7 +311,6 @@ def update_deployment(deploy_name,namespace,image=None,replicas=None,pod_anti_af
     status="{}".format(api_response.status)
     return jsonify({"update_status":status})
 
-<<<<<<< HEAD
 # 处理接收的json数据，如果前端传的不是整形数据，进一步转化需要再调用str_to_int()
 def handle_input(obj):
     # print("{}数据类型{}".format(obj,type(obj)))
@@ -341,13 +323,10 @@ def handle_input(obj):
     else:
         print("未处理类型{}".format(type(obj)))
         return(obj.strip())
-=======
->>>>>>> develop
 @k8s_op.route('/update_deploy',methods=('GET','POST'))  
 def update_deploy():
     data = json.loads(request.get_data().decode('UTF-8'))
     print("接受到的数据:{}".format(data))
-<<<<<<< HEAD
     namespace = handle_input(data.get('namespace'))
     deploy_name =handle_input(data.get('deploy_name'))
     replicas = handle_input(data.get('replicas'))
@@ -364,21 +343,6 @@ def update_deploy():
     anti_affinity_key = handle_input(data.get('anti_affinity_key'))
     anti_affinity_value = handle_input(data.get('anti_affinity_value'))
     print("image值{}".format(image))
-=======
-    namespace = data.get('namespace').strip()
-    deploy_name = data.get('deploy_name').strip()
-    replicas = str_to_int(data.get('replicas').strip())
-    project = data.get('project').strip()
-    env = data.get('env').strip()
-    imageRepo = data.get('imageRepo').strip()
-    imageName = data.get('imageName').strip()
-    imageTag = data.get('imageTag').strip()
-    image = "{}/{}-{}/{}:{}".format(imageRepo,project,env,imageName,imageTag)
-    pod_anti_affinity_type = data.get('pod_anti_affinity_type').strip()
-    anti_affinity_key = data.get('anti_affinity_key').strip()
-    anti_affinity_value = data.get('anti_affinity_value').strip()
-    print(image)
->>>>>>> develop
     return update_deployment(deploy_name=deploy_name,namespace=namespace,replicas=replicas,image=image,
                              pod_anti_affinity_type=pod_anti_affinity_type,anti_affinity_key=anti_affinity_key,anti_affinity_value=anti_affinity_value)
 
@@ -474,7 +438,6 @@ def update_virtual_service(vs_name,namespace,prod_weight,canary_weight):
     #这样必须规定第一条route是生产版本，第二条是灰度版本
     # print(vs['spec']['http'][0]['route'][0]['weight'])
     # print(vs['spec']['http'][0]['route'][1]['weight'])
-<<<<<<< HEAD
     try:
         vs['spec']['http'][0]['route'][0]['weight'] = prod_weight
         vs['spec']['http'][0]['route'][1]['weight'] = canary_weight
@@ -490,26 +453,12 @@ def update_virtual_service(vs_name,namespace,prod_weight,canary_weight):
         print(e)
         return jsonify({"异常":"可能非生产环境，没有设置灰度"})
 
-=======
-    vs['spec']['http'][0]['route'][0]['weight'] = prod_weight
-    vs['spec']['http'][0]['route'][1]['weight'] = canary_weight
-    api_response = myclient.patch_namespaced_custom_object( group="networking.istio.io",
-                                                            version="v1alpha3",
-                                                            plural="virtualservices",
-                                                            name=vs_name,
-                                                            namespace=namespace,
-                                                            body=vs)
-    # print(api_response['spec'])
-    status="{}".format(api_response['spec']['http'])
-    
->>>>>>> develop
     return jsonify({"update_status":status})
 
 @k8s_op.route('/update_vs',methods=('GET','POST'))
 def update_vs():
     data = json.loads(request.get_data().decode('UTF-8'))
     print("接受到的数据:{}".format(data))
-<<<<<<< HEAD
     namespace = handle_input(data.get('namespace'))
     vs_name = handle_input(data.get('vs_name'))
     print(type(data.get('canary_weight')))
@@ -541,12 +490,3 @@ def delete_vs():
     virtual_service_name = handle_input(data.get('virtual_service_name'))
     return delete_virtual_service(namespace=namespace,virtual_service_name=virtual_service_name)
     
-=======
-    namespace = data.get('namespace').strip()
-    vs_name = data.get('vs_name').strip()
-    canary_weight = math.ceil( str_to_int(data.get('canary_weight').strip()))
-    if(canary_weight < 0 or canary_weight > 100):
-        return jsonify({"error":1003,"msg":"灰度值需在1-100之间"})
-    prod_weight = 100 - canary_weight
-    return update_virtual_service(vs_name=vs_name,namespace=namespace,prod_weight=prod_weight,canary_weight=canary_weight)
->>>>>>> develop

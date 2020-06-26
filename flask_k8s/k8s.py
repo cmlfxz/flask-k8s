@@ -58,7 +58,6 @@ def after(resp):
 def get_node_usage_detail(): 
     myclient = client.CustomObjectsApi()
     nodes = myclient.list_cluster_custom_object(group="metrics.k8s.io",version="v1beta1",plural="nodes")
-<<<<<<< HEAD
     
     i = 0
     node_usage_list = []
@@ -125,73 +124,6 @@ def get_pod_usage_detail(namespace=None):
 
     
     i = 0
-=======
-    
-    i = 0
-    node_usage_list = []
-    for node in nodes['items']:
-        if i >= 0:
-            # print(node)
-            node_name = node['metadata']['name']
-            cpu = str_to_int(node['usage']['cpu'].split('n')[0])/1000/1000
-            node_cpu_usage = "{}m".format(math.ceil(cpu))
-            memory = str_to_int(node['usage']['memory'].split('Ki')[0])/1024/1024
-            node_memory_usage = "{}G".format(float('%.2f' % memory))
-            node_usage = {"node_name":node_name,"node_cpu_usage":node_cpu_usage,"node_memory_usage":node_memory_usage}
-            node_usage_list.append(node_usage)
-        i = i +1
-    return node_usage_list
-        
-def get_cluster_config(cluster_name):
-    cluster_config = None
-    # conn = get_db_conn()
-    pool = SingletonDBPool()
-    conn = pool.connect()
-    if conn == None:
-        print("无法获取数据库连接")
-    else:
-        cursor = conn.cursor()
-        sql = "select cluster_config from cluster where cluster_name = \'{}\' ".format(cluster_name)
-        try:
-            cursor.execute(sql)
-            results  =  cursor.fetchone()
-            cluster_config = results[0]
-        except Exception as e:
-            print("查询不到数据")
-    conn.close()
-    return cluster_config
-
-def set_k8s_config(cluster_config):
-    if cluster_config == None:
-        print("获取不到集群配置")
-    else:
-        cluster_config  = my_decode(cluster_config)
-        # print("集群配置: \n{}".format(cluster_config))
-        tmp_filename = "kubeconfig"
-        with open(tmp_filename,'w+',encoding='UTF-8') as file:
-            file.write(cluster_config)
-        #这里需要一个文件
-        config.load_kube_config(config_file=tmp_filename)
-
-@k8s.route('/get_node_usage', methods=('GET','POST'))
-def get_node_usage():
-    # data = json.loads(request.get_data().decode('UTF-8'))
-    # print("get_node_usage接受到的数据:{}".format(data))
-    # cluster_name =  data.get('cluster_name').strip()
-    # cluster_config = get_cluster_config(cluster_name)
-    # set_k8s_config(cluster_config)
-    node_usage_list = get_node_usage_detail()
-    return json.dumps(node_usage_list,indent=4)
-
-def get_pod_usage_detail(namespace=None):
-    myclient = client.CustomObjectsApi()
-    if namespace:
-        pods = myclient.list_namespaced_custom_object(namespace=namespace,group="metrics.k8s.io", version="v1beta1", plural="pods")
-    else:
-        pods = myclient.list_cluster_custom_object(group="metrics.k8s.io",version="v1beta1",plural="pods")
-    
-    i = 0
->>>>>>> develop
     pod_usage_list = []
     for pod in pods['items']:
         if i >= 0:
@@ -322,12 +254,8 @@ def get_virtual_service_list():
             virtual_service_list.append(myvirtual_service)
             
         i = i + 1
-<<<<<<< HEAD
     return json.dumps(virtual_service_list, indent=4)
     # return json.dumps(virtual_service_list,indent=4,cls=MyEncoder)
-=======
-    return json.dumps(virtual_service_list,indent=4,cls=MyEncoder)
->>>>>>> develop
 
 #列出vs
 @k8s.route('/get_destination_rule_list',methods=('GET','POST'))
