@@ -56,3 +56,47 @@ http://192.168.11.51:1900/apis/networking.istio.io/v1alpha3/gateways
 3、模仿sparrow例子(写个蓝绿，灰度，(AB的例子))
 
 4、正式写案例
+
+
+
+// 配置服务健康检查使用的
+type HealthData struct {
+	// 检查类型
+	HealthType string
+	// 检查端口
+	HealthPort string
+	// http访问路径
+	HealthPath string
+	// 服务启动预计时间
+	HealthInitialDelay string
+	// 检查间隔
+	HealthInterval string
+	// 失败阈值
+	HealthFailureThreshold string
+	// 检查超时
+	HealthTimeout string
+	// 通过命令检查
+	HealthCmd string
+}
+
+
+jsontoyaml https://www.json2yaml.com/
+
+1、先创建名称空间
+
+
+问题 表单创建
+标签和 service的标签对不上导致 一直503
+
+# 序列化后的表单数据:{"project":"","environment":"dev","cluster":"k8s-cluster1","imageRepo":"myhub.mydocker.com","imageName":"",\
+#     "imageTag":"","imagePullPolicy":"IfNotPresent","containerPort":"","replicas":"","cpu":"0.25","memory":"0.25","label_key1":"","label_value1":"",\
+#     "label_key2":"","label_value2":"","probeType":"http","httpPort":"","healthPath":"","tcpPort":"8080","healthCmd":"ls /tmp","initialDelaySeconds":"30",\
+#     "periodSeconds":"20","failureThreshold":"3","healthTimeout":"10","env":"","volumeMount":"","updateType":""}
+
+1、创建集群 (集群名称,集群的配置文件config,云类型:私有云/公有云)
+2、创建环境     
+3、创建harbor,仓库
+4、创建项目，创建命名空间，选择注入（可以删除）
+5、创建应用
+   集群 环境 所属项目 端口 容器镜像
+6、应用灰度,回滚,

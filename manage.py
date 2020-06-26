@@ -1,9 +1,9 @@
 from flask_script import Manager,Server,Shell
-# from flask_migrate import Migrate
+from flask_migrate import Migrate
 from flask_migrate import MigrateCommand
 
 from flask_k8s import create_app
-# from flaskr import models
+# from flask_k8s import models
 
 app = create_app()
 manager = Manager(app)
@@ -12,7 +12,7 @@ manager = Manager(app)
 #python manager.py server  取代runserver
 #黑科技段
 # def make_shell_context():
-#     return dict(app=app, db=models.db, User=models.User)
+#     return dict(app=app, db=models.db, Cluster=models.Cluster)
 
 # manager.add_command("shell", Shell(make_context=make_shell_context))
 
