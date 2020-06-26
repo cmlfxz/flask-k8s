@@ -2,44 +2,196 @@
 Reads the list of available API versions and prints them. Similar to running
 `kubectl api-versions`.
 """
-from flask import Flask,jsonify,Response,make_response,Blueprint
+from flask import Flask,jsonify,Response,make_response,Blueprint,request,g
 from kubernetes import client,config
 from dateutil import tz, zoneinfo
 import json,os
 from datetime import datetime,date
 import math
-from .k8s_decode import DateEncoder
+from .k8s_decode import MyEncoder
 import requests
-import time 
-import pytz
+import time
 import ssl
-
+from .util import get_db_conn,my_decode,my_encode,str_to_int,str_to_float
+from .util import SingletonDBPool
+from .util import time_to_string,utc_to_local
+from flask_cors import *
 
 k8s = Blueprint('k8s',__name__,url_prefix='/k8s')
 
-dir_path = os.path.dirname(os.path.abspath(__file__))
+CORS(k8s, suppors_credentials=True, resources={r'/*'})
 
 def takename(e):
     return e['name']
-#参数是datetime
-def time_to_string(dt):
-    tz_sh = pytz.timezone('Asia/Shanghai')
-    return  dt.astimezone(tz_sh).strftime("%Y-%m-%d %H:%M:%S") 
 
-def utc_to_local(utc_time_str, utc_format='%Y-%m-%dT%H:%M:%S.%fZ'):
-    local_tz = pytz.timezone('Asia/Shanghai')
-    local_format = "%Y-%m-%d %H:%M:%S"
-    utc_dt = datetime.strptime(utc_time_str, utc_format)
-    local_dt = utc_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
-    time_str = local_dt.strftime(local_format)
-    return time_str
-    # return datetime.fromtimestamp(int(time.mktime(time.strptime(time_str, local_format))))
-    
-#列出gateway
-@k8s.route('/get_gateway_list')
-def get_gateway_list():
+# http://192.168.11.51:1900/apis/metrics.k8s.io/v1beta1/nodes 
+
+@k8s.before_app_request
+def load_header():
+    if request.method == 'OPTIONS':
+        print('options请求方式')
+        pass
+    if request.method == 'POST':
+        print('POST请求方式')
+        try:
+            cluster_name = request.headers.get('cluster_name').strip()
+            print("load_header: 集群名字:{}".format(cluster_name))
+            if cluster_name == None:
+                print("没有设置cluster_name header")
+                pass
+            else:
+                g.cluster_name = cluster_name
+                cluster_config = get_cluster_config(cluster_name)
+                set_k8s_config(cluster_config)
+        except Exception as e:
+            print(e)
+
+@k8s.after_request
+def after(resp):
+    print("after is called,set cross")
+    resp = make_response(resp)
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
+    resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
+    return resp
+
+def get_node_usage_detail(): 
     myclient = client.CustomObjectsApi()
-    obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="gateways")
+    nodes = myclient.list_cluster_custom_object(group="metrics.k8s.io",version="v1beta1",plural="nodes")
+    
+    i = 0
+    node_usage_list = []
+    for node in nodes['items']:
+        if i >= 0:
+            # print(node)
+            node_name = node['metadata']['name']
+            cpu = str_to_int(node['usage']['cpu'].split('n')[0])/1000/1000
+            node_cpu_usage = "{}m".format(math.ceil(cpu))
+            memory = str_to_int(node['usage']['memory'].split('Ki')[0])/1024/1024
+            node_memory_usage = "{}G".format(float('%.2f' % memory))
+            node_usage = {"node_name":node_name,"node_cpu_usage":node_cpu_usage,"node_memory_usage":node_memory_usage}
+            node_usage_list.append(node_usage)
+        i = i +1
+    return node_usage_list
+        
+def get_cluster_config(cluster_name):
+    cluster_config = None
+    # conn = get_db_conn()
+    pool = SingletonDBPool()
+    conn = pool.connect()
+    if conn == None:
+        print("无法获取数据库连接")
+    else:
+        cursor = conn.cursor()
+        sql = "select cluster_config from cluster where cluster_name = \'{}\' ".format(cluster_name)
+        try:
+            cursor.execute(sql)
+            results  =  cursor.fetchone()
+            cluster_config = results[0]
+        except Exception as e:
+            print("查询不到数据")
+    conn.close()
+    return cluster_config
+
+def set_k8s_config(cluster_config):
+    if cluster_config == None:
+        print("获取不到集群配置")
+    else:
+        cluster_config  = my_decode(cluster_config)
+        # print("集群配置: \n{}".format(cluster_config))
+        tmp_filename = "kubeconfig"
+        with open(tmp_filename,'w+',encoding='UTF-8') as file:
+            file.write(cluster_config)
+        #这里需要一个文件
+        config.load_kube_config(config_file=tmp_filename)
+
+@k8s.route('/get_node_usage', methods=('GET','POST'))
+def get_node_usage():
+    # data = json.loads(request.get_data().decode('UTF-8'))
+    # print("get_node_usage接受到的数据:{}".format(data))
+    # cluster_name =  data.get('cluster_name').strip()
+    # cluster_config = get_cluster_config(cluster_name)
+    # set_k8s_config(cluster_config)
+    node_usage_list = get_node_usage_detail()
+    return json.dumps(node_usage_list,indent=4)
+
+def get_pod_usage_detail(namespace=None):
+    myclient = client.CustomObjectsApi()
+    if namespace == "" or namespace=='all':    
+        pods = myclient.list_cluster_custom_object(group="metrics.k8s.io",version="v1beta1",plural="pods")
+    else:
+        pods = myclient.list_namespaced_custom_object(namespace=namespace,group="metrics.k8s.io", version="v1beta1", plural="pods")
+
+    
+    i = 0
+    pod_usage_list = []
+    for pod in pods['items']:
+        if i >= 0:
+            # print(pod)
+            namespace = pod['metadata']['namespace']
+            pod_name = pod['metadata']['name']
+
+            containers =  pod['containers']
+            container_list = []
+            # pod_all_container_usage
+            j = 0
+            cpu_all = 0
+            memory_all = 0
+
+            for container in containers:
+                container_name = container['name']
+                print("我靠我靠我靠我靠我靠 {}".format(container['usage']['cpu']))
+                container_cpu = container['usage']['cpu'] 
+                if container_cpu == "0":
+                    cpu = 0
+                else:
+                    cpu = str_to_int(container_cpu.split('n')[0])/1000/1000
+                container_cpu_usage = "{}m".format(math.ceil(cpu))
+                container_memory = container['usage']['memory']
+                if container_memory == "0":
+                    memory = 0
+                else:
+                    memory = str_to_int(container_memory.split('Ki')[0])/1024/1024
+                container_memory_usage = "{}G".format(float('%.2f' % memory))
+                container_usage = {"name":container_name,"cpu":container_cpu_usage,"memory":container_memory_usage}
+                container_list.append(container_usage)
+
+                #汇总容器数据
+                cpu_all = cpu_all + cpu
+                memory_all = memory_all + memory
+                cpu_all_usage =  "{}m".format(math.ceil(cpu_all))
+                memory_all_usage = "{}G".format(float('%.2f' % memory_all))
+
+                j = j + 1
+
+            pod_usage = {"pod_name":pod_name,"namespace":namespace,"cpu_all_usage":cpu_all_usage,"memory_all_usage":memory_all_usage,"container_list":container_list}
+            pod_usage_list.append(pod_usage)
+        i = i +1
+    return pod_usage_list
+
+@k8s.route('/get_pod_usage', methods=('GET','POST'))
+def get_pod_usage():
+    namespace = None
+    try:
+        data = json.loads(request.get_data().decode('UTF-8'))
+        namespace = data.get('namespace').strip()
+    except Exception as e:
+        print("没有收到namespace:{}".format(e))
+    pod_usage_list = get_pod_usage_detail(namespace=namespace)
+    return json.dumps(pod_usage_list,indent=4)
+
+#列出gateway
+@k8s.route('/get_gateway_list',methods=('GET','POST'))
+def get_gateway_list():
+    # myclient = client.CustomObjectsApi()
+    # obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="gateways")
+    data = json.loads(request.get_data().decode("utf-8"))
+    namespace = data.get("namespace").strip()
+    myclient = client.CustomObjectsApi()
+    if namespace == "" or namespace == "all": 
+        obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="gateways")
+    else:
+        obj = myclient.list_namespaced_custom_object(namespace=namespace,group="networking.istio.io",version="v1alpha3",plural="gateways")  
     gateways = obj['items']
     gateway_list = []
     i = 0
@@ -65,15 +217,21 @@ def get_gateway_list():
             mygateway = {"name":name,"namespace":namespace,"selector":selector,"servers":servers,"domain_list":domain_list,"create_time":create_time,}
             gateway_list.append(mygateway)
         i = i + 1
-    return json.dumps(gateway_list,indent=4,cls=DateEncoder)
-
+    return json.dumps(gateway_list,indent=4,cls=MyEncoder)
 
 #列出vs
-@k8s.route('/get_virtual_service_list')
+@k8s.route('/get_virtual_service_list',methods=('GET','POST'))
 def get_virtual_service_list():
-
+    # myclient = client.CustomObjectsApi()
+    # obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="virtualservices")
+    data = json.loads(request.get_data().decode("utf-8"))
+    namespace = data.get("namespace").strip()
     myclient = client.CustomObjectsApi()
-    obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="virtualservices")
+    if namespace == "" or namespace == "all": 
+        obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="virtualservices")
+    else:
+        obj = myclient.list_namespaced_custom_object(namespace=namespace,group="networking.istio.io",version="v1alpha3",plural="virtualservices")
+
     virtual_services = obj['items']
     virtual_service_list = []
     i = 0
@@ -89,20 +247,28 @@ def get_virtual_service_list():
                 gateways = spec['gateways']
             except Exception as e: 
                 gateways = None
-                print(e)
+                # print(e)
             hosts = spec['hosts']
             http = spec['http']
             myvirtual_service = {"name":name,"namespace":namespace,"gateways":gateways,"hosts":hosts,"http":http,"create_time":create_time,}
             virtual_service_list.append(myvirtual_service)
             
         i = i + 1
-    return json.dumps(virtual_service_list,indent=4,cls=DateEncoder)
+    return json.dumps(virtual_service_list, indent=4)
+    # return json.dumps(virtual_service_list,indent=4,cls=MyEncoder)
 
 #列出vs
-@k8s.route('/get_destination_rule_list')
+@k8s.route('/get_destination_rule_list',methods=('GET','POST'))
 def get_destination_rule_list():
+    # myclient = client.CustomObjectsApi()
+    # obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="destinationrules")
+    data = json.loads(request.get_data().decode("utf-8"))
+    namespace = data.get("namespace").strip()
     myclient = client.CustomObjectsApi()
-    obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="destinationrules")
+    if namespace == "" or namespace == "all": 
+        obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="destinationrules")
+    else:
+        obj = myclient.list_namespaced_custom_object(namespace=namespace,group="networking.istio.io",version="v1alpha3",plural="destinationrules")
     #obj是一个字典
     destination_rules = obj['items']
     destination_rule_list = []
@@ -123,12 +289,11 @@ def get_destination_rule_list():
             destination_rule_list.append(mydestination_rule)
             
         i = i + 1
-    return json.dumps(destination_rule_list,indent=4,cls=DateEncoder)
+    return json.dumps(destination_rule_list,indent=4,cls=MyEncoder)
 
 @k8s.route('/get_api_version',methods=['GET','POST'])
 def get_api_version():
     list_dict = []
-    
     for api in client.ApisApi().get_api_versions().groups:
         versions = []
         for v in api.versions:
@@ -144,25 +309,34 @@ def get_api_version():
     return jsonify(list_dict)
 
 #列出namespace
-@k8s.route('/get_namespace_list')
+@k8s.route('/get_namespace_list',methods=('GET','POST'))
 def get_namespace_list():
     myclient = client.CoreV1Api()
     namespace_list = []
     for ns in myclient.list_namespace().items:
         meta = ns.metadata
         create_time = time_to_string(meta.creation_timestamp)
-        namespace= {"名字":meta.name,"集群":meta.cluster_name,"创建时间":create_time,"标签":meta.labels}
+        status = ns.status.phase
+        namespace= {"name":meta.name,"status":status,"cluster_name":meta.cluster_name,"create_time":create_time,"labels":meta.labels}
         namespace_list.append(namespace)
     # return jsonify(namespace_list)
-    return json.dumps(namespace_list,default=lambda obj: obj.__dict__,sort_keys=True,indent=4)
+    return json.dumps(namespace_list,indent=4)
+    # return json.dumps(namespace_list,default=lambda obj: obj.__dict__,sort_keys=True,indent=4)
 
-
-@k8s.route('/get_service_list')
+@k8s.route('/get_service_list',methods=('GET','POST'))
 def get_service_list():
+    # get_data = request.get_data()
+    # print(type(get_data))
+    # print("{}".format(get_data))
+    data = json.loads(request.get_data().decode("utf-8"))
+    namespace = data.get("namespace").strip()
+    # print(namespace)
     myclient = client.CoreV1Api()
-    # services = myclient.list_service_for_all_namespaces(watch=False)
-    #/api/v1/namespaces/{namespace}/services
-    services = myclient.list_namespaced_service(namespace='ms-prod')
+    if namespace == "" or namespace == "all": 
+        services = myclient.list_service_for_all_namespaces(watch=False)
+    else:
+        #/api/v1/namespaces/{namespace}/services
+        services = myclient.list_namespaced_service(namespace=namespace)
     service_list = []
     for service in services.items:
         # print(service)
@@ -189,19 +363,23 @@ def get_service_list():
         service_list.append(service)
     
     # return json.dumps(service_list,default=lambda obj: obj.__dict__,sort_keys=True,indent=4)
-    return json.dumps(service_list,indent=4,cls=DateEncoder)
+    return json.dumps(service_list,indent=4,cls=MyEncoder)
 
 # from flask_k8s.util import *
-@k8s.route('/get_pod_list')
+@k8s.route('/get_pod_list',methods=('GET','POST'))
 def get_pod_list():
+    data = json.loads(request.get_data().decode("utf-8"))
+    namespace = data.get("namespace").strip()
     myclient = client.CoreV1Api()
-    # pods = myclient.list_pod_for_all_namespaces(watch=False)
-    pods = myclient.list_namespaced_pod('ms-prod')
+    if namespace == "" or namespace == "all": 
+        pods = myclient.list_pod_for_all_namespaces(watch=False)
+    else:
+        pods = myclient.list_namespaced_pod(namespace=namespace)
     i = 0
     pod_list = []
     for pod in pods.items:
-        if (i ==0):
-            print(pod)
+        if (i >=0):
+            # print(pod)
             meta = pod.metadata
             name = meta.name
             create_time = time_to_string(meta.creation_timestamp)
@@ -213,55 +391,74 @@ def get_pod_list():
             spec = pod.spec
             affinity = spec.affinity
             host_network = spec.host_network
-            image_pull_secrets = spec.image_pull_secrets[0]
+            image_pull_secrets = spec.image_pull_secrets
             node_selector = spec.node_selector
             restart_policy = spec.restart_policy
             security_context = spec.security_context
             service_account_name = spec.service_account_name
             tolerations = spec.tolerations
+
             
             containers = spec.containers
-            container_list = []
-            for c in containers: 
-                cname = c.name
-                args = c.args 
-                command = c.command 
-                env = c.env 
-                image = c.image
-                image_pull_policy  = c.image_pull_policy
-                liveness_probe = c.liveness_probe
-                readiness_probe = c.readiness_probe
-                resources = c.resources
-                volume_mounts = c.volume_mounts
-                ports = c.ports
-                
-                container = {"name":cname,"image":image,"image_pull_policy":image_pull_policy, "resources":resources,"ports":ports,"liveness_probe":liveness_probe,\
-                    "readiness_probe":readiness_probe,"env":env,"volume_mounts":volume_mounts}
-                container_list.append(container)
             
+            container_name = image = image_pull_policy = ""
+            container_info=""
+            args = command = ""
+            env = ""
+            liveness_probe = readiness_probe = ""
+            resources = ""
+            volume_mounts = ""
+            ports = ""
+            i = 0
+            for c in containers: 
+                if (i==0):
+                    container_name = c.name
+                    args = c.args 
+                    command = c.command 
+                    env = c.env 
+                    image = c.image
+                    image_pull_policy  = c.image_pull_policy
+                    liveness_probe = c.liveness_probe
+                    readiness_probe = c.readiness_probe
+                    resources = c.resources
+                    volume_mounts = c.volume_mounts
+                    ports = c.ports
+                    container_info = {"container_name":container_name,"image":image,"image_pull_policy":image_pull_policy,"ports":ports}
+
+                i = i+1
             status = pod.status
             phase = status.phase 
             host_ip = status.host_ip
             pod_ip = status.pod_ip
             
-            mypod = {"name":name,"pod_ip":pod_ip,"labels":labels,"namespace":namespace,"affinity":affinity,"host_network":host_network,"image_pull_secrets":image_pull_secrets,\
-                "node_selector":node_selector,"restart_policy":restart_policy,"security_context":security_context,"container_list":container_list,"phase":phase,"host_ip":host_ip,\
-                "create_time":create_time}
+            pod_info = {"create_time":create_time,"namespace":namespace,"pod_ip":pod_ip,"node":host_ip,"status":phase,"affinity":affinity}
+            others={"image_pull_secrets":image_pull_secrets,"restart_policy":restart_policy,"node_selector":node_selector,\
+                "service_account_name":service_account_name,"host_network":host_network}
+            
+            mypod = {"name":name,"pod_info":pod_info,\
+                    "others":others,"container_info":container_info,\
+                    "readiness_probe":readiness_probe,"resources":resources,"volume_mounts":volume_mounts,\
+                    "env":env
+                }            
 
             pod_list.append(mypod)
         i = i + 1
-    # jsonUtil=JsonUtil()  
-    # retstr=jsonUtil.parseJsonObj(pod_list)
-    return json.dumps(pod_list,indent=4,cls=DateEncoder)
     # return json.dumps(pod_list,default=lambda obj: obj.__dict__,indent=4)
+    return json.dumps(pod_list,indent=4,cls=MyEncoder)
 
 
-@k8s.route('/get_deployment_list')
+@k8s.route('/get_deployment_list',methods=('GET','POST'))
 def get_deployment_list():
+    print('get_deployment_list')
+    data = json.loads(request.get_data().decode("utf-8"))
+    namespace = data.get("namespace").strip()
     myclient = client.AppsV1Api()
-    deployments = myclient.list_namespaced_deployment("ms-prod")
+    print(namespace)
+    if namespace == "" or namespace == "all": 
+        deployments = myclient.list_deployment_for_all_namespaces(watch=False)
+    else:
+        deployments = myclient.list_namespaced_deployment(namespace=namespace)
     i = 0
-    
     deployment_list = []
     for deployment in deployments.items:
         if (i>=0):
@@ -270,48 +467,47 @@ def get_deployment_list():
             name = meta.name
             create_time = time_to_string(meta.creation_timestamp)
             cluster_name = meta.cluster_name
-            # labels = format_dict(meta.labels)
             labels = meta.labels
-            print(labels)
             namespace = meta.namespace 
             
             spec = deployment.spec
             replicas = spec.replicas
-            selector = spec.selector
-            
-            strategy = spec.strategy
-            # print(strategy)
+            selector = spec.selector  
+            # strategy = spec.strategy
             template = spec.template
             template_labels = template.metadata.labels
-            # print(template_labels)
+
             
             template_spec = template.spec 
             affinity = template_spec.affinity
             containers = template_spec.containers
-            # env = containers.env
-            image_pull_secrets = template_spec.image_pull_secrets[0]
-            host_network = template_spec.host_network
-            node_selector = template_spec.node_selector
             
-            service_account_name = template_spec.service_account_name
+            container_names = []
+            container_images = []
+            for container in containers:
+                c_name  = container.name 
+                c_image = container.image
+                container_names.append(c_name)
+                container_images.append(c_image)
+            # node_selector = template_spec.node_selector
             tolerations = template_spec.tolerations
             
             status = deployment.status
-            mystatus = {"replicas":status.replicas,"available_replicas":status.available_replicas,\
-                "unavailable_replicas":status.unavailable_replicas,"ready_replicas":status.ready_replicas}
+            ready = "{}/{}".format(status.ready_replicas,status.replicas)
+            mystatus = {"ready":ready,"available_replicas":status.available_replicas,\
+            "up-to-date":status.updated_replicas}
             
-            mydeployment = {"name":name,"namespace":namespace,"status":mystatus,"labels":labels,"replicas":replicas,"labels":template_labels,"containers":containers,\
-                "affinity":affinity,"tolerations":tolerations,"node_selector":node_selector,"host_network":host_network,"strategy":strategy,"image_pull_secrets":image_pull_secrets,\
-                "service_account_name":service_account_name,"create_time":create_time}
+            mydeployment = {"name":name,"replicas":replicas,"namespace":namespace,"container_names":container_names,\
+                "container_images":container_images,"status":mystatus,"labels":labels,"labels":template_labels,"create_time":create_time}
             
             deployment_list.append(mydeployment)
             
-        i = i +1       
-    return json.dumps(deployment_list,indent=4,cls=DateEncoder)
+        i = i +1   
+    return json.dumps(deployment_list,indent=4)    
+    # return json.dumps(deployment_list,indent=4,cls=MyEncoder)
     # return json.dumps(deployment_list,default=lambda obj: obj.__dict__,indent=4)
 
-
-@k8s.route('/get_daemonset_list')
+@k8s.route('/get_daemonset_list',methods=('GET','POST'))
 def get_daemonset_list():
     myclient = client.AppsV1Api()
     daemonsets = myclient.list_daemon_set_for_all_namespaces()
@@ -320,14 +516,13 @@ def get_daemonset_list():
     daemonset_list = []
     for daemonset in daemonsets.items:
         if (i==0):
-            print(daemonset)
+            # print(daemonset)
             meta = daemonset.metadata
             name = meta.name
             create_time = time_to_string(meta.creation_timestamp)
             cluster_name = meta.cluster_name
             # labels = format_dict(meta.labels)
             labels = meta.labels
-            print(labels)
             namespace = meta.namespace      
             spec = daemonset.spec
             template = spec.template
@@ -355,16 +550,13 @@ def get_daemonset_list():
             daemonset_list.append(mydaemonset)
             
         i = i +1       
-    return json.dumps(daemonset_list,indent=4,cls=DateEncoder)
+    return json.dumps(daemonset_list,indent=4,cls=MyEncoder)
 
-        
-@k8s.route('/get_node_list')
+@k8s.route('/get_node_list',methods=('GET','POST'))
 def get_node_list():
     myclient = client.CoreV1Api()
     nodes = myclient.list_node()
-    
     i = 0
-    
     node_list = []
     for node in nodes.items:
         if (i>=0):
@@ -399,14 +591,14 @@ def get_node_list():
             mynode = {"name":name,"create_time":create_time,"cluster_name":cluster_name,"labels":labels,"pod_cidr":pod_cidr,"taints":taints,\
                 "unschedulable":unschedulable,"address":address,"capacity":mycapacity,"images_num":images_num,"node_info":node_info,"phase":phase}
             
-            print(mynode)
+            # print(mynode)
             node_list.append(mynode)
         i = i + 1
-    return json.dumps(node_list,indent=4,cls=DateEncoder)
+    return json.dumps(node_list,indent=4,cls=MyEncoder)
     # return jsonify({'a':1})
 
 #列出namespace
-@k8s.route('/get_configmap_list')
+@k8s.route('/get_configmap_list',methods=('GET','POST'))
 def get_configmap_list():
     myclient = client.CoreV1Api()
     # myclient = client.AppsV1Api()
@@ -416,27 +608,33 @@ def get_configmap_list():
     i = 0 
     for configmap in configmaps.items:
         if (i >=0):
-            print(configmap)
+            # print(configmap)
             meta = configmap.metadata
             name = meta.name 
             create_time = time_to_string(meta.creation_timestamp)
             cluster_name = meta.cluster_name
             labels = meta.labels
-            print(labels)
             namespace = meta.namespace 
             data = configmap.data    
             
             myconfigmap = {"name":name,"create_time":create_time,"labels":labels,"namespace":namespace,"data":data}    
             configmap_list.append(myconfigmap) 
         i = i +1
-    return json.dumps(configmap_list,indent=4,cls=DateEncoder)
+    return json.dumps(configmap_list,indent=4,cls=MyEncoder)
     # return jsonify({'a':1})
         
 #列出namespace
-@k8s.route('/get_secret_list')
+@k8s.route('/get_secret_list',methods=('GET','POST'))
 def get_secret_list():
+    data = json.loads(request.get_data().decode("utf-8"))
+    namespace = data.get("namespace").strip()
     myclient = client.CoreV1Api()
-    secrets = myclient.list_namespaced_secret("ms-prod")
+    if namespace == "" or namespace == "all": 
+        secrets = myclient.list_secret_for_all_namespaces(watch=False)
+    else:
+        secrets = myclient.list_namespaced_secret(namespace=namespace)
+    # myclient = client.CoreV1Api()
+    # secrets = myclient.list_namespaced_secret("ms-prod")
     secret_list = []
     i = 0 
     for secret in secrets.items:
@@ -446,22 +644,27 @@ def get_secret_list():
             name = meta.name 
             create_time = time_to_string(meta.creation_timestamp)
             cluster_name = meta.cluster_name
-            # labels = format_dict(meta.labels)
             labels = meta.labels
-            # print(labels)
             namespace = meta.namespace 
             data = secret.data    
             
             mysecret = {"name":name,"create_time":create_time,"cluster_name":cluster_name,"namespace":namespace,"data":data}    
             secret_list.append(mysecret) 
         i = i +1
-    return json.dumps(secret_list,indent=4,cls=DateEncoder)
+    return json.dumps(secret_list,indent=4,cls=MyEncoder)
 
 #列出job
-@k8s.route('/get_job_list')
+@k8s.route('/get_job_list',methods=('GET','POST'))
 def get_job_list():
+    data = json.loads(request.get_data().decode("utf-8"))
+    namespace = data.get("namespace").strip()
     myclient = client.BatchV1Api()
-    jobs = myclient.list_job_for_all_namespaces()
+    if namespace == "" or namespace == "all": 
+        jobs = myclient.list_job_for_all_namespaces(watch=False)
+    else:
+        jobs = myclient.list_namespaced_job(namespace=namespace)
+    # myclient = client.BatchV1Api()
+    # jobs = myclient.list_job_for_all_namespaces()
     job_list = []
     i = 0 
     for job in jobs.items:
@@ -471,12 +674,9 @@ def get_job_list():
             name = meta.name 
             create_time = time_to_string(meta.creation_timestamp)
             cluster_name = meta.cluster_name
-            # labels = format_dict(meta.labels)
             labels = meta.labels
-            # print(labels)
             namespace = meta.namespace 
-            
-            
+                   
             status = job.status
             active = status.active
             succeeded = status.succeeded
@@ -488,26 +688,28 @@ def get_job_list():
             myjob = {"name":name,"create_time":create_time,"cluster_name":cluster_name,"labels":labels,"namespace":namespace,"status":mystatus}    
             job_list.append(myjob) 
         i = i +1
-    return json.dumps(job_list,indent=4,cls=DateEncoder)
-
+    return json.dumps(job_list,indent=4,cls=MyEncoder)
 
 #列出job
-@k8s.route('/get_cronjob_list')
+@k8s.route('/get_cronjob_list',methods=('GET','POST'))
 def get_cronjob_list():
+    data = json.loads(request.get_data().decode("utf-8"))
+    namespace = data.get("namespace").strip()
     myclient = client.BatchV1beta1Api()
-    cronjobs = myclient.list_cron_job_for_all_namespaces()
+    if namespace == "" or namespace == "all": 
+        cronjobs = myclient.list_cron_job_for_all_namespaces(watch=False)
+    else:
+        cronjobs = myclient.list_namespaced_cron_job(namespace=namespace)
     cronjob_list = []
     i = 0 
     for cronjob in cronjobs.items:
         if (i >=0):
-            print(cronjob)
+            # print(cronjob)
             meta = cronjob.metadata
             name = meta.name 
             create_time = time_to_string(meta.creation_timestamp)
             cluster_name = meta.cluster_name
-            # labels = format_dict(meta.labels)
             labels = meta.labels
-            # print(labels)
             namespace = meta.namespace 
             
             spec = cronjob.spec
@@ -524,10 +726,10 @@ def get_cronjob_list():
                 "successful_jobs_history_limit":successful_jobs_history_limit, "suspend":suspend}    
             cronjob_list.append(mycronjob) 
         i = i +1
-    return json.dumps(cronjob_list,indent=4,cls=DateEncoder)
+    return json.dumps(cronjob_list,indent=4,cls=MyEncoder)
 
 #列出storageclass
-@k8s.route('/get_storageclass_list')
+@k8s.route('/get_storageclass_list',methods=('GET','POST'))
 def get_storageclass_list():
     myclient = client.StorageV1Api()
     storageclasss = myclient.list_storage_class()
@@ -550,10 +752,10 @@ def get_storageclass_list():
                 "mount_options":mount_options,"parameters":parameters,"reclaim_policy":reclaim_policy}    
             storageclass_list.append(mystorageclass) 
         i = i +1
-    return json.dumps(storageclass_list,indent=4,cls=DateEncoder)
+    return json.dumps(storageclass_list,indent=4,cls=MyEncoder)
 
 #列出pv
-@k8s.route('/get_pv_list')
+@k8s.route('/get_pv_list',methods=('GET','POST'))
 def get_pv_list():
     myclient = client.CoreV1Api()
     pvs = myclient.list_persistent_volume()
@@ -561,7 +763,7 @@ def get_pv_list():
     i = 0 
     for pv in pvs.items:
         if (i >= 0):
-            print(pv)
+            # print(pv)
             meta = pv.metadata
             name = meta.name 
             create_time = time_to_string(meta.creation_timestamp)
@@ -584,18 +786,26 @@ def get_pv_list():
 
             pv_list.append(mypv) 
         i = i +1
-    return json.dumps(pv_list,indent=4,cls=DateEncoder)
+    return json.dumps(pv_list,indent=4,cls=MyEncoder)
 
 #列出pvc
-@k8s.route('/get_pvc_list')
+@k8s.route('/get_pvc_list',methods=('GET','POST'))
 def get_pvc_list():
+    
+    # myclient = client.CoreV1Api()
+    # pvcs = myclient.list_persistent_volume_claim_for_all_namespaces()
+    data = json.loads(request.get_data().decode("utf-8"))
+    namespace = data.get("namespace").strip()
     myclient = client.CoreV1Api()
-    pvcs = myclient.list_persistent_volume_claim_for_all_namespaces()
+    if namespace == "" or namespace == "all": 
+        pvcs = myclient.list_persistent_volume_claim_for_all_namespaces(watch=False)
+    else:
+        pvcs = myclient.list_namespaced_persistent_volume_claim(namespace=namespace)
     pvc_list = []
     i = 0 
     for pvc in pvcs.items:
         if (i >= 0):
-            print(pvc)
+            # print(pvc)
             meta = pvc.metadata
             name = meta.name 
             create_time = time_to_string(meta.creation_timestamp)
@@ -616,9 +826,9 @@ def get_pvc_list():
 
             pvc_list.append(mypvc) 
         i = i +1
-    return json.dumps(pvc_list,indent=4,cls=DateEncoder)
+    return json.dumps(pvc_list,indent=4,cls=MyEncoder)
 
-@k8s.route('/get_statefulset_list')
+@k8s.route('/get_statefulset_list',methods=('GET','POST'))
 def get_statefulset_list():
     myclient = client.AppsV1Api()
     statefulsets = myclient.list_stateful_set_for_all_namespaces()
@@ -631,7 +841,6 @@ def get_statefulset_list():
             name = meta.name
             create_time = time_to_string(meta.creation_timestamp)
             cluster_name = meta.cluster_name
-            # labels = format_dict(meta.labels)
             labels = meta.labels
             namespace = meta.namespace      
             spec = statefulset.spec
@@ -673,28 +882,32 @@ def get_statefulset_list():
             statefulset_list.append(mystatefulset)
             
         i = i +1       
-    return json.dumps(statefulset_list,indent=4,cls=DateEncoder)
-
+    return json.dumps(statefulset_list,indent=4,cls=MyEncoder)
 
 #列出ingress
-@k8s.route('/get_ingress_list')
+@k8s.route('/get_ingress_list',methods=('GET','POST'))
 def get_ingress_list():
+    # myclient = client.ExtensionsV1beta1Api()
+    # # /apis/extensions/v1beta1/namespaces/{namespace}/ingresses
+    # # myclient.list_namespaced_ingress()
+    # ingresss = myclient.list_ingress_for_all_namespaces()
+    data = json.loads(request.get_data().decode("utf-8"))
+    namespace = data.get("namespace").strip()
     myclient = client.ExtensionsV1beta1Api()
-    # /apis/extensions/v1beta1/namespaces/{namespace}/ingresses
-    # myclient.list_namespaced_ingress()
-    ingresss = myclient.list_ingress_for_all_namespaces()
+    if namespace == "" or namespace == "all": 
+        ingresss = myclient.list_ingress_for_all_namespaces(watch=False)
+    else:
+        ingresss = myclient.list_namespaced_ingress(namespace=namespace)
     ingress_list = []
     i = 0 
     for ingress in ingresss.items:
         if (i >=0):
-            print(ingress)
+            # print(ingress)
             meta = ingress.metadata
             name = meta.name 
             create_time = time_to_string(meta.creation_timestamp)
             cluster_name = meta.cluster_name
-            # labels = format_dict(meta.labels)
             labels = meta.labels
-            # print(labels)
             namespace = meta.namespace 
             
             spec = ingress.spec
@@ -710,4 +923,41 @@ def get_ingress_list():
                 "domain_list":domain_list,"rule":rule,"tls":tls}    
             ingress_list.append(myingress) 
         i = i +1
-    return json.dumps(ingress_list,indent=4,cls=DateEncoder)
+    return json.dumps(ingress_list,indent=4,cls=MyEncoder)
+
+@k8s.route('/get_deployment_name_list',methods=('GET','POST'))
+def get_deployment_name_list():
+    data = json.loads(request.get_data().decode("utf-8"))
+    namespace = data.get("namespace").strip()
+    myclient = client.AppsV1Api()
+    if namespace == "" or namespace == "all": 
+        deployments = myclient.list_deployment_for_all_namespaces(watch=False)
+    else:
+        deployments = myclient.list_namespaced_deployment(namespace=namespace)
+    deployment_names = []
+    for deployment in deployments.items:
+        name = deployment.metadata.name
+        deployment_names.append(name)
+    return json.dumps(deployment_names)
+
+@k8s.route('/get_virtualservice_name_list',methods=('GET','POST'))
+def get_virtualservice_name_list():
+    data = json.loads(request.get_data().decode("utf-8"))
+    namespace = data.get("namespace").strip()
+    myclient = client.CustomObjectsApi()
+    print(namespace)
+    if namespace == "" or namespace == "all": 
+        virtualservices = myclient.list_cluster_custom_object(group="networking.istio.io",
+                                                          version="v1alpha3",
+                                                          plural="virtualservices")
+    else:
+        virtualservices = myclient.list_namespaced_custom_object(group="networking.istio.io",
+                                                          version="v1alpha3",
+                                                          plural="virtualservices",
+                                                          namespace=namespace)
+    print(type(virtualservices['items']))
+    virtualservice_names = []
+    for virtualservice in virtualservices['items']:
+        name = virtualservice['metadata']['name']
+        virtualservice_names.append(name)
+    return json.dumps(virtualservice_names)
