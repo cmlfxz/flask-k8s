@@ -1,0 +1,98 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-k8s
+  namespace: ms-prod
+  labels:
+    app: flask-k8s
+    service: flask-k8s
+spec:
+  type: NodePort
+  ports:
+  - port: 8082
+    name: http
+  selector:
+    app: flask-k8s
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ms-prod-flask-k8s
+  namespace: ms-prod
+  labels:
+    account: flask-k8s
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-k8s-0.1
+  namespace: ms-prod
+  labels:
+    app: flask-k8s
+    version: "0.1"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-k8s
+      version: "0.1"
+  template:
+    metadata:
+      labels:
+        app: flask-k8s
+        version: "0.1"
+    spec:
+      serviceAccountName: ms-prod-flask-k8s
+      tolerations:
+        - key: "key"
+          operator: "Exists"
+          effect: "NoSchedule"  
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - flask-k8s
+            topologyKey: "kubernetes.io/hostname"
+
+      # affinity:
+      #   podAntiAffinity:
+      #     preferredDuringSchedulingIgnoredDuringExecution:
+      #     - podAffinityTerm:
+      #         labelSelector:
+      #           matchExpressions:
+      #           - key: app
+      #             operator: In
+      #             values:
+      #             - flask-k8s
+      #         topologyKey: "kubernetes.io/hostname"
+      #       weight: 100
+      imagePullSecrets: 
+      - name: harborsecret 
+      containers:
+      - name: flask-k8s
+        image: myhub.mydocker.com/ms-prod/flask-k8s:241391a
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8082
+      #   volumeMounts:
+      #   - name: fromfile-configmap
+      #     mountPath: /opt/microservices/instance
+      # volumes:
+      # - name: fromfile-configmap
+      #   configMap:
+      #     name: flask-k8s-configmap
+        volumeMounts:
+        - name: log
+          mountPath: /opt/microservices/logs
+        - name: file-config
+          mountPath: /opt/microservices/instance
+      volumes:
+      - name: log
+        emptyDir: {}
+      - name: file-config
+        configMap:
+          name: flask-k8s-configmap
