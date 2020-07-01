@@ -1,8 +1,7 @@
 namespace: ms-prod
 resources:
 - flask-k8s-deployment.yaml
-- flask-k8s-vs.yaml
-- flask-k8s-dr.yaml
+- flask-k8s-service.yaml
 - configmap.yaml
 patchesStrategicMerge:
 - healthcheck_patch.yaml

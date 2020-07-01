@@ -142,6 +142,7 @@ deploy(){
       
       ########################
       echo "发布$type部分"
+      cd $workdir/k8s/$env/$tag/$type
       kustomize edit set namespace $namespace
       kustomize build . &&  kustomize build . |kubectl apply -f -
       kubectl get pod,svc,vs,dr,gateway -n $namespace
