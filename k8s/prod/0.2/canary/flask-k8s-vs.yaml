@@ -13,6 +13,6 @@ spec:
         subset: prod
       weight: $prod_weight
     - destination:
-        host: lask-k8s
+        host: flask-k8s
         subset: canary
       weight: $canary_weight
