@@ -4,7 +4,7 @@ from dateutil import tz, zoneinfo
 import json,os
 from datetime import datetime,date
 import math
-from .k8s_decode import MyEncoder
+from .k8s_decode import MyEncoder,DateEncoder
 import requests
 import time 
 import pytz
@@ -21,6 +21,19 @@ from flask_cors import *
 k8s_op = Blueprint('k8s_op',__name__,url_prefix='/k8s_op')
 
 CORS(k8s_op, suppors_credentials=True, resources={r'/*'})
+
+# 处理接收的json数据，如果前端传的不是整形数据，进一步转化需要再调用str_to_int()
+def handle_input(obj):
+    # print("{}数据类型{}".format(obj,type(obj)))
+    if obj == None:
+        return None
+    elif isinstance(obj,str):
+        return (obj.strip())
+    elif isinstance(obj,int):
+        return obj
+    else:
+        print("未处理类型{}".format(type(obj)))
+        return(obj.strip())
 
 @k8s_op.before_app_request
 def load_header():
@@ -81,6 +94,130 @@ def after(resp):
     resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
     resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
     return resp
+
+def create_namespace_resource(name,labels=None):
+        myclient = client.CoreV1Api()
+        if labels:
+            metadata = client.V1ObjectMeta(name=name,labels=labels)
+        else:
+            metadata = client.V1ObjectMeta(name=name)
+        namespace = client.V1Namespace(
+            api_version="v1",
+            kind="Namespace",
+            metadata=metadata
+        )
+        try:
+            result = myclient.create_namespace(body=namespace)
+            print(type(result),result)
+        except ApiException as e:
+            # print("status:{}".format(e.status))
+            # print("reason:{}".format(e.reason))
+            # print("body:{}".format(e.body))
+            # body = json.loads(e.body)
+            # print(type(e.body))
+            # print("message:{},{},{}".format(body['message'],body['code'],body['status']))
+            # print("headers:{}".format(e.headers))
+            body = json.loads(e.body)
+            msg={"status":e.status,"reason":e.reason,"message":body['message']}
+            return jsonify({'error': '创建失败',"msg":msg})
+            
+        return jsonify({'ok': '创建成功'})
+
+@k8s_op.route('/create_namespace', methods=('GET', 'POST'))
+def create_namespace():
+    data = json.loads(request.get_data().decode('utf-8'))
+    # {"project_name": "ms", "env_name": "dev", "cluster_name": "k8s_c1", "istio_inject": "on"}
+    print("接收到的数据:{}".format(data))
+    project_name = handle_input(data.get('project_name'))
+    env_name = handle_input(data.get('env_name'))
+    name = "{}-{}".format(project_name,env_name)
+    print(name)
+    labels = {}
+    istio_inject = handle_input(data.get('istio_inject'))
+    print("istio_inject:{}".format(istio_inject))
+    if istio_inject:
+        labels['istio-injection'] = "enabled"
+    else:
+        labels = None
+    print("labels:{}".format(labels))
+    return create_namespace_resource(name=name,labels=labels)
+
+@k8s_op.route('/delete_namespace', methods=('GET', 'POST'))
+def delete_namespace():
+    data = json.loads(request.get_data().decode('utf-8'))
+    name  = handle_input(data.get('name'))
+    myclient = client.CoreV1Api()
+    try:
+        result = myclient.delete_namespace(name)
+    except Exception as e:
+        body = json.loads(e.body)
+        msg={"status":e.status,"reason":e.reason,"message":body['message']}
+        return jsonify({'error': '删除命名空间出现异常',"msg":msg})
+    return jsonify({"ok":"删除成功"})
+
+def get_namespace_by_name(name):
+    # namespaces = client.AppsV1Api().list_namespaced_namespace(namespace=namespace)
+    namespaces = client.CoreV1Api().list_namespace()
+    namespace = None
+    for ns in namespaces.items:
+        if ns.metadata.name == name:
+            namespace = ns
+            break
+    return namespace
+
+from kubernetes.client.models.v1_namespace import V1Namespace
+
+# 已经废弃，根据名字获取命名空间对象
+@k8s_op.route('/get_namespace_object',methods=('GET','POST'))
+def get_namespace_object():
+    # namespaces = client.AppsV1Api().list_namespaced_namespace(namespace=namespace)
+    data = json.loads(request.get_data().decode('utf-8'))
+    print("get_namespace_object接收到的数据：{}".format(data))
+    name = handle_input(data.get('name'))
+    namespaces = client.CoreV1Api().list_namespace()
+    namespace = None
+    for ns in namespaces.items:
+        if ns.metadata.name == name:
+            namespace = ns
+            break
+    # print(namespace.to_dict())
+    # print(namespace.to_str())
+    # 转化失败
+    return namespace.to_str()
+
+@k8s_op.route('/update_namespace', methods=('GET', 'POST'))
+def update_namespace():
+    # {"name": name, "labels": labels, "action": "remove_istio_inject"}
+    data = json.loads(request.get_data().decode('utf-8'))
+    print("update_namespace接收到的数据：{}".format(data))
+    name = handle_input(data.get('name'))
+    namespace = get_namespace_by_name(name)
+    if not namespace:
+        return jsonify({"error":"找不到此名称空间"})
+    labels = json.loads(handle_input(data.get('labels')))
+    # print(labels)
+    if labels == None:
+        labels = {}
+    action = handle_input(data.get('action'))
+    if action=="remove_istio_inject":
+        labels.pop('istio-injection')
+        # print("移除isito标签后: {}".format(labels))
+    elif action == "add_istio_inject":
+        labels['istio-injection'] = "enabled"
+    else:
+        return jsonify({"error":"暂时还没有实现此操作"})
+    # namespace.metadata.cluster_name="k8s_cs1"
+    namespace.metadata.labels = labels
+    myclient = client.CoreV1Api()
+    # print("命名空间:{}\n".format(namespace))
+    try:
+        result = myclient.replace_namespace(name,body=namespace)
+        # print(result)
+        # print(result.status)
+    except Exception as e:
+        print(e)
+        return jsonify({"error":"更新命名空间出现异常"})
+    return jsonify({"ok":"更新命名空间成功"})
 
 @k8s_op.route('/create_deploy_by_yaml', methods=('GET', 'POST'))
 def create_deploy_by_yaml():
@@ -311,18 +448,7 @@ def update_deployment(deploy_name,namespace,image=None,replicas=None,pod_anti_af
     status="{}".format(api_response.status)
     return jsonify({"update_status":status})
 
-# 处理接收的json数据，如果前端传的不是整形数据，进一步转化需要再调用str_to_int()
-def handle_input(obj):
-    # print("{}数据类型{}".format(obj,type(obj)))
-    if obj == None:
-        return None
-    elif isinstance(obj,str):
-        return (obj.strip())
-    elif isinstance(obj,int):
-        return obj
-    else:
-        print("未处理类型{}".format(type(obj)))
-        return(obj.strip())
+
 @k8s_op.route('/update_deploy',methods=('GET','POST'))  
 def update_deploy():
     data = json.loads(request.get_data().decode('UTF-8'))

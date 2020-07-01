@@ -51,6 +51,9 @@ from kubernetes.client.models.v1_pod_affinity_term import V1PodAffinityTerm
 from kubernetes.client.models.v1_weighted_pod_affinity_term import V1WeightedPodAffinityTerm
 from kubernetes.client.models.v1_label_selector import V1LabelSelector
 from kubernetes.client.models.v1_label_selector_requirement import V1LabelSelectorRequirement
+from kubernetes.client.models.v1_namespace import V1Namespace
+from kubernetes.client.models.v1_namespace_spec import V1NamespaceSpec
+from kubernetes.client.models.v1_namespace_status import V1NamespaceStatus
 
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):  
@@ -65,7 +68,22 @@ class MyEncoder(json.JSONEncoder):
                 "operator": obj.operator,
                 "values": obj.values,
             }
-        
+        elif isinstance(obj, V1Namespace):  
+            return {
+                "api_version": obj.api_version,
+                "kind": obj.kind,
+                "metadata": obj.metadata,
+                "spec": obj.spec,
+                "status": obj.status
+            }
+        elif isinstance(obj, V1NamespaceSpec):  
+            return {
+                "finalizers": obj.finalizers,
+            }
+        elif isinstance(obj, V1NamespaceStatus):  
+            return {
+                "phase": obj.phase
+            }
         elif isinstance(obj,V1PodTemplateSpec):
             return {
                 "metadata": obj.metadata,
@@ -442,7 +460,16 @@ class MyEncoder(json.JSONEncoder):
    
         else:  
             return json.JSONEncoder.default(self, obj)
-    
+        
+        
+class DateEncoder(json.JSONEncoder):
+    def default(self, obj):  
+        if isinstance(obj, datetime):  
+            return obj.strftime('%Y-%m-%d %H:%M:%S')  
+        elif isinstance(obj, date):  
+            return obj.strftime("%Y-%m-%d")     
+        else:  
+            return json.JSONEncoder.default(self, obj)
     
     
 

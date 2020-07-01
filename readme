@@ -100,3 +100,28 @@ jsontoyaml https://www.json2yaml.com/
 5、创建应用
    集群 环境 所属项目 端口 容器镜像
 6、应用灰度,回滚,
+
+
+kubernetes.client.rest.ApiException: (409)
+Reason: Conflict
+HTTP response headers: HTTPHeaderDict({'Content-Type': 'application/json', 'Date': 'Tue, 30 Jun 2020 09:43:31 GMT', 'Content-Length': '202'})
+HTTP response body: {"kind":"Status","apiVersion":"v1","metadata":{},"status":"Failure","message":"namespaces \"yw-dev\" already exists",\
+					"reason":"AlreadyExists","details":{"name":"yw-dev","kind":"namespaces"},"code":40
+
+status:409
+reason:Conflict
+body:{"kind":"Status","apiVersion":"v1","metadata":{},"status":"Failure","message":"namespaces \"yw-dev\" already exists","reason":"AlreadyExists","details":{"name":"yw-dev","kind":"namespaces"},"code":409}
+
+class ApiException(Exception):
+
+    def __init__(self, status=None, reason=None, http_resp=None):
+        if http_resp:
+            self.status = http_resp.status
+            self.reason = http_resp.reason
+            self.body = http_resp.data
+            self.headers = http_resp.getheaders()
+        else:
+            self.status = status
+            self.reason = reason
+            self.body = None
+            self.headers = None

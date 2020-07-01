@@ -2,6 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: flask-k8s-configmap
+  namespace: ms-dev
 data:
   kubeconfig: |
     apiVersion: v1

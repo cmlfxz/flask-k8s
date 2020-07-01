@@ -317,11 +317,20 @@ def get_namespace_list():
         meta = ns.metadata
         create_time = time_to_string(meta.creation_timestamp)
         status = ns.status.phase
-        namespace= {"name":meta.name,"status":status,"cluster_name":meta.cluster_name,"create_time":create_time,"labels":meta.labels}
+        namespace= {"name":meta.name,"status":status,"labels":meta.labels,"create_time":create_time}
         namespace_list.append(namespace)
     # return jsonify(namespace_list)
     return json.dumps(namespace_list,indent=4)
     # return json.dumps(namespace_list,default=lambda obj: obj.__dict__,sort_keys=True,indent=4)
+
+@k8s.route('/get_namespace_name_list',methods=('GET','POST'))
+def get_namespace_name_list():
+    myclient = client.CoreV1Api()
+    namespace_name_list = []
+    for item in myclient.list_namespace().items:
+        name = item.metadata.name
+        namespace_name_list.append(name)
+    return json.dumps(namespace_name_list,indent=4)
 
 @k8s.route('/get_service_list',methods=('GET','POST'))
 def get_service_list():
@@ -445,7 +454,6 @@ def get_pod_list():
         i = i + 1
     # return json.dumps(pod_list,default=lambda obj: obj.__dict__,indent=4)
     return json.dumps(pod_list,indent=4,cls=MyEncoder)
-
 
 @k8s.route('/get_deployment_list',methods=('GET','POST'))
 def get_deployment_list():
