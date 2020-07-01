@@ -126,7 +126,7 @@ deploy(){
           sed -i  "s/\$prod_weight/$prod_weight/g"  $namespace-gateway.yaml
         else
           echo "灰度文件$namespace-gateway.yaml 不存在,请检查"
-          exit 1
+          # exit 1
         fi
       fi
       ########################
