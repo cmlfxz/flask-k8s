@@ -29,13 +29,13 @@ def takename(e):
 @k8s.before_app_request
 def load_header():
     if request.method == 'OPTIONS':
-        print('options请求方式')
+        # print('options请求方式')
         pass
     if request.method == 'POST':
-        print('POST请求方式')
+        # print('POST请求方式')
         try:
             cluster_name = request.headers.get('cluster_name').strip()
-            print("load_header: 集群名字:{}".format(cluster_name))
+            # print("load_header: 集群名字:{}".format(cluster_name))
             if cluster_name == None:
                 print("没有设置cluster_name header")
                 pass
@@ -48,7 +48,7 @@ def load_header():
 
 @k8s.after_request
 def after(resp):
-    print("after is called,set cross")
+    # print("after is called,set cross")
     resp = make_response(resp)
     resp.headers['Access-Control-Allow-Origin'] = '*'
     resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'

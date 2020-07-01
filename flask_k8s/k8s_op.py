@@ -38,13 +38,13 @@ def handle_input(obj):
 @k8s_op.before_app_request
 def load_header():
     if request.method == 'OPTIONS':
-        print('options请求方式')
+        # print('options请求方式')
         pass
     if request.method == 'POST':
-        print('POST请求方式')
+        # print('POST请求方式')
         try:
             cluster_name = request.headers.get('cluster_name').strip()
-            print("load_header: 集群名字:{}".format(cluster_name))
+            # print("load_header: 集群名字:{}".format(cluster_name))
             if cluster_name == None:
                 print("没有设置cluster_name header")
                 pass
@@ -88,7 +88,7 @@ def set_k8s_config(cluster_config):
 
 @k8s_op.after_request
 def after(resp):
-    print("after is called,set cross")
+    # print("after is called,set cross")
     resp = make_response(resp)
     resp.headers['Access-Control-Allow-Origin'] = '*'
     resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
@@ -439,14 +439,18 @@ def update_deployment(deploy_name,namespace,image=None,replicas=None,pod_anti_af
             pass
     if affinity:
         deployment.spec.template.spec.affinity = affinity
-    api_response =  client.AppsV1Api().patch_namespaced_deployment(
-        name=deploy_name,
-        namespace=namespace,
-        body=deployment
-    )
-    # print("Deployment updated. status='%s'\n" % str(api_response.status))
-    status="{}".format(api_response.status)
-    return jsonify({"update_status":status})
+    try:
+        ResponseNotReady = client.AppsV1Api().patch_namespaced_deployment(
+            name=deploy_name,
+            namespace=namespace,
+            body=deployment
+        )
+    except ApiException as e:
+        body = json.loads(e.body)
+        msg={"status":e.status,"reason":e.reason,"message":body['message']}
+        return jsonify({'error': '创建失败',"msg":msg})
+    
+    return jsonify({"ok":"更新deployment成功"})
 
 
 @k8s_op.route('/update_deploy',methods=('GET','POST'))  

@@ -56,7 +56,7 @@ class SingletonDBPool(object):
     _instance_lock = threading.Lock()
 
     def __init__(self):
-        print("单例数据库连接初始化")
+        # print("单例数据库连接初始化")
         mysql_host = current_app.config.get('MYSQL_HOST')
         mysql_port = int(current_app.config.get('MYSQL_PORT'))
         mysql_username = current_app.config.get('MYSQL_USERNAME')
