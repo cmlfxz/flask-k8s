@@ -55,6 +55,20 @@ def after(resp):
     resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
     return resp
 
+def get_named_node_usage_detail(name):
+    myclient = client.CustomObjectsApi()
+    plural = "{}/{}".format("nodes",name)
+    node = myclient.list_cluster_custom_object(group="metrics.k8s.io",version="v1beta1",plural=plural)
+    node_name = node['metadata']['name']
+
+    cpu = 0 if node['usage']['cpu']== "0" else str_to_int(node['usage']['cpu'].split('n')[0])/1000/1000
+    node_cpu_usage = "{}m".format(math.ceil(cpu))
+    memory = 0 if  node['usage']['memory'] == "0" else str_to_int(node['usage']['memory'].split('Ki')[0])/1024
+    # memory = str_to_int(node['usage']['memory'].split('Ki')[0])/1024
+    node_memory_usage = "{}Mi".format(float('%.2f' % memory))
+    node_usage = {"node_name":node_name,"cpu":cpu,"memory":memory}
+    return node_usage
+    
 def get_node_usage_detail(): 
     myclient = client.CustomObjectsApi()
     nodes = myclient.list_cluster_custom_object(group="metrics.k8s.io",version="v1beta1",plural="nodes")
@@ -65,9 +79,10 @@ def get_node_usage_detail():
         if i >= 0:
             # print(node)
             node_name = node['metadata']['name']
-            cpu = str_to_int(node['usage']['cpu'].split('n')[0])/1000/1000
+            cpu = 0 if node['usage']['cpu'] == "0" else str_to_int(node['usage']['cpu'].split('n')[0])/1000/1000
             node_cpu_usage = "{}m".format(math.ceil(cpu))
-            memory = str_to_int(node['usage']['memory'].split('Ki')[0])/1024/1024
+            memory = 0 if node['usage']['memory'] == "0" else str_to_int(node['usage']['memory'].split('Ki')[0])/1024/1024
+            # memory = str_to_int(node['usage']['memory'].split('Ki')[0])/1024/1024
             node_memory_usage = "{}G".format(float('%.2f' % memory))
             node_usage = {"node_name":node_name,"node_cpu_usage":node_cpu_usage,"node_memory_usage":node_memory_usage}
             node_usage_list.append(node_usage)
@@ -105,15 +120,23 @@ def set_k8s_config(cluster_config):
         #这里需要一个文件
         config.load_kube_config(config_file=tmp_filename)
 
-@k8s.route('/get_node_usage', methods=('GET','POST'))
-def get_node_usage():
-    # data = json.loads(request.get_data().decode('UTF-8'))
-    # print("get_node_usage接受到的数据:{}".format(data))
-    # cluster_name =  data.get('cluster_name').strip()
-    # cluster_config = get_cluster_config(cluster_name)
-    # set_k8s_config(cluster_config)
-    node_usage_list = get_node_usage_detail()
+# @k8s.route('/get_node_usage', methods=('GET','POST'))
+# def get_node_usage():
+#     node_usage_list = get_node_usage_detail()
+#     return json.dumps(node_usage_list,indent=4)
+
+@k8s.route('/<version>/get_node_usage', methods=('GET','POST'))
+def get_node_usage(version):
+    # node_usage_list = get_node_usage_detail()
+    if version == "v2":
+        print("进入v2版本")
+        node_usage_list = get_named_node_usage_detail("192.168.11.51")
+    else:
+        print("进入v1版本")
+        node_usage_list = get_node_usage_detail()
+        
     return json.dumps(node_usage_list,indent=4)
+
 
 def get_pod_usage_detail(namespace=None):
     myclient = client.CustomObjectsApi()
@@ -133,14 +156,12 @@ def get_pod_usage_detail(namespace=None):
 
             containers =  pod['containers']
             container_list = []
-            # pod_all_container_usage
             j = 0
             cpu_all = 0
             memory_all = 0
 
             for container in containers:
                 container_name = container['name']
-                print("我靠我靠我靠我靠我靠 {}".format(container['usage']['cpu']))
                 container_cpu = container['usage']['cpu'] 
                 if container_cpu == "0":
                     cpu = 0
@@ -566,6 +587,7 @@ def get_node_list():
     nodes = myclient.list_node()
     i = 0
     node_list = []
+    
     for node in nodes.items:
         if (i>=0):
             # print(node.spec)
@@ -573,9 +595,7 @@ def get_node_list():
             name = meta.name
             create_time = time_to_string(meta.creation_timestamp)
             cluster_name = meta.cluster_name
-            # labels = format_dict(meta.labels)
             labels = meta.labels
-            # namespace = meta.namespace 
             
             spec = node.spec
             pod_cidr = spec.pod_cidr
@@ -587,8 +607,8 @@ def get_node_list():
             
             capacity = status.capacity
             cpu_num = capacity['cpu']
-            disk_space = math.ceil(int(capacity['ephemeral-storage'].split('Ki')[0])/1024/1024)
-            memory =  math.ceil(int(capacity['memory'].split('Ki')[0])/1024/1024)
+            disk_space = 0 if capacity['ephemeral-storage']=="0" else math.ceil(int(capacity['ephemeral-storage'].split('Ki')[0])/1024/1024)
+            memory = 0 if capacity['memory'] == "0" else math.ceil(int(capacity['memory'].split('Ki')[0])/1024)
             pods = capacity['pods']
             
             mycapacity = {"cpu":cpu_num,"storage(G)":disk_space,"memory(G)":memory,"pods":pods}
@@ -596,14 +616,159 @@ def get_node_list():
             node_info = status.node_info
             phase = status.phase
             
-            mynode = {"name":name,"create_time":create_time,"cluster_name":cluster_name,"labels":labels,"pod_cidr":pod_cidr,"taints":taints,\
-                "unschedulable":unschedulable,"address":address,"capacity":mycapacity,"images_num":images_num,"node_info":node_info,"phase":phase}
+            mynode = {"name":name,"labels":labels,"pod_cidr":pod_cidr,"taints":taints,\
+                "unschedulable":unschedulable,"capacity":mycapacity,"images_num":images_num,"node_info":node_info,"create_time":create_time}
+            
+            node_list.append(mynode)
+        i = i + 1
+    return json.dumps(node_list,indent=4,cls=MyEncoder)
+
+@k8s.route('/get_node_detail_list',methods=('GET','POST'))
+def get_node_detail_list():
+    myclient = client.CoreV1Api()
+    nodes = myclient.list_node()
+    i = 0
+    node_list = []
+    cluster_cpu = 0
+    cluster_cpu_usage = 0
+    cluster_memory = 0
+    cluster_memory_usage = 0
+    
+    for node in nodes.items:
+        if (i>=0):
+            # print(node)
+            meta = node.metadata
+            name = meta.name
+            node_usage = get_named_node_usage_detail(name)
+            node_cpu_usage = node_usage.get('cpu')
+            node_memory_usage = node_usage.get('memory')
+
+            create_time = time_to_string(meta.creation_timestamp)
+            cluster_name = meta.cluster_name
+            labels = meta.labels
+            role = labels.get('kubernetes.io/role')
+            
+            spec = node.spec
+            pod_cidr = spec.pod_cidr
+            taints = spec.taints
+            schedulable = True if spec.unschedulable == None else False
+            
+            status = node.status
+            address = status.addresses[0].address 
+            
+            capacity = status.capacity
+            cpu_num = str_to_int(capacity['cpu'])
+
+            disk_space = 0 if capacity['ephemeral-storage']=="0" else math.ceil(int(capacity['ephemeral-storage'].split('Ki')[0])/1024/1024)
+            memory = 0 if capacity['memory'] == "0" else math.ceil(int(capacity['memory'].split('Ki')[0])/1024)
+            pods = capacity['pods']
+            
+            cpu_usage_percent = (node_cpu_usage/1000)/cpu_num * 100
+            memory_usage_percent = node_memory_usage/memory * 100
+            cpu_detail = "{}/{} {}%".format(float('%.2f' % (node_cpu_usage/1000)), cpu_num,float('%.2f' % cpu_usage_percent))
+            memory_detail = "{}/{} {}%".format(math.ceil(node_memory_usage),memory,float('%.2f' % memory_usage_percent))
+            images_num = len(status.images)
+            mycapacity = {"cpu_detail":cpu_detail,"memory_detail":memory_detail,"storage(G)":disk_space,"pods":pods,"image_num":images_num}
+            node_info = status.node_info
+            phase = status.phase
+            
+            if schedulable == True:
+                cluster_cpu = cluster_cpu + cpu_num
+                cluster_memory = cluster_memory + math.ceil(memory)
+                cluster_cpu_usage = cluster_cpu_usage + node_cpu_usage/1000
+                cluster_memory_usage = cluster_memory_usage + node_memory_usage
+                
+            mynode = {"name":name,"role":role,"capacity(cpu(c),memory(Mi))":mycapacity,"labels":labels,"pod_cidr":pod_cidr,"taints":taints,\
+                "schedulable":schedulable,"create_time":create_time}
             
             # print(mynode)
             node_list.append(mynode)
         i = i + 1
+        
+    cluster_cpu_usage_percent = cluster_cpu_usage/cluster_cpu * 100
+    cluster_memory_usage_percent = cluster_memory_usage/cluster_memory * 100
+    cluster_cpu_detail = "{}/{} {}%".format(float('%.2f' % (cluster_cpu_usage)), cluster_cpu,float('%.2f' % cluster_cpu_usage_percent))
+    cluster_memory_detail = "{}/{} {}%".format(math.ceil(cluster_memory_usage),cluster_memory,float('%.2f' % cluster_memory_usage_percent))
+    cluster_capacity = {"cluster_cpu_detail":cluster_cpu_detail,"cluster_memory_detail":cluster_memory_detail}
+    print(cluster_capacity)
     return json.dumps(node_list,indent=4,cls=MyEncoder)
-    # return jsonify({'a':1})
+
+@k8s.route('/get_cluster_stats',methods=('GET','POST'))
+def get_cluster_stats():
+    myclient = client.CoreV1Api()
+    nodes = myclient.list_node()
+    i = 0
+    node_list = []
+    cluster_cpu = 0
+    cluster_cpu_usage = 0
+    cluster_memory = 0
+    cluster_memory_usage = 0
+    cluster_disk_cap = 0 
+    cluster_pod_cap = 0
+    cluster_stat_list = []
+    for node in nodes.items:
+        if (i>=0):
+            # print(node)
+            meta = node.metadata
+            name = meta.name
+            node_usage = get_named_node_usage_detail(name)
+            node_cpu_usage = node_usage.get('cpu')
+            node_memory_usage = node_usage.get('memory')
+            create_time = time_to_string(meta.creation_timestamp)
+            cluster_name = meta.cluster_name
+            labels = meta.labels
+            role = labels.get('kubernetes.io/role')
+            print(role)
+            
+            spec = node.spec
+            # pod_cidr = spec.pod_cidr
+            # taints = spec.taints
+            # print(spec.unschedulable)
+            schedulable = True if spec.unschedulable == None else False
+            
+            status = node.status
+            # address = status.addresses[0].address 
+            
+            capacity = status.capacity
+            cpu_num = str_to_int(capacity['cpu'])
+            disk_space = 0 if capacity['ephemeral-storage']=="0" else math.ceil(int(capacity['ephemeral-storage'].split('Ki')[0])/1024/1024)
+            memory = 0 if capacity['memory'] == "0" else math.ceil(int(capacity['memory'].split('Ki')[0])/1024)
+            pods = str_to_int(capacity['pods'])
+            
+            cpu_usage_percent = (node_cpu_usage/1000)/cpu_num * 100
+            memory_usage_percent = node_memory_usage/memory * 100
+            cpu_detail = "{}/{} {}%".format(float('%.2f' % (node_cpu_usage/1000)), cpu_num,float('%.2f' % cpu_usage_percent))
+            memory_detail = "{}/{} {}%".format(math.ceil(node_memory_usage),memory,float('%.2f' % memory_usage_percent))
+            images_num = len(status.images)
+            # mycapacity = {"cpu_detail":cpu_detail,"memory_detail":memory_detail,"storage(G)":disk_space,"pods":pods,"image_num":images_num}
+            mycapacity = {"cpu":cpu_num,"storage(G)":disk_space,"memory(Mi)":memory,"pods":pods}
+            node_info = status.node_info
+            phase = status.phase
+            
+            if schedulable == True:
+                cluster_cpu = cluster_cpu + cpu_num
+                cluster_memory = cluster_memory + math.ceil(memory)
+                cluster_cpu_usage = cluster_cpu_usage + node_cpu_usage/1000
+                cluster_memory_usage = cluster_memory_usage + node_memory_usage
+                cluster_disk_cap = cluster_disk_cap + disk_space
+                cluster_pod_cap = cluster_pod_cap + pods
+                
+            mynode = {"name":name,"role":role,"capacity(cpu(c),memory(Mi))":mycapacity,\
+                "schedulable":schedulable,"create_time":create_time}
+            
+            node_list.append(mynode)
+        i = i + 1
+        
+    cluster_cpu_usage_percent = cluster_cpu_usage/cluster_cpu * 100
+    cluster_memory_usage_percent = cluster_memory_usage/cluster_memory * 100
+    cluster_cpu_detail = "{}/{} {}%".format(float('%.2f' % (cluster_cpu_usage)), cluster_cpu,float('%.2f' % cluster_cpu_usage_percent))
+    cluster_memory_detail = "{}/{} {}%".format(math.ceil(cluster_memory_usage),cluster_memory,float('%.2f' % cluster_memory_usage_percent))
+    cluster_capacity = {"cluster_cpu_detail":cluster_cpu_detail,"cluster_memory_detail":cluster_memory_detail}
+    cluster_stat =  {"cluster_cpu_detail":cluster_cpu_detail,"cluster_memory_detail":cluster_memory_detail,"cluster_disk_cap":cluster_disk_cap,"cluster_pod_cap":cluster_pod_cap}
+    cluster_stat_list.append(cluster_stat)
+    return json.dumps({"node_list":node_list,"cluster_stat_list":cluster_stat_list})
+
+
 
 #列出namespace
 @k8s.route('/get_configmap_list',methods=('GET','POST'))
@@ -744,20 +909,20 @@ def get_storageclass_list():
     storageclass_list = []
     i = 0 
     for storageclass in storageclasss.items:
-        if (i == 0):
+        if (i >= 0):
             # print(storageclass)
             meta = storageclass.metadata
             name = meta.name 
             create_time = time_to_string(meta.creation_timestamp)
             cluster_name = meta.cluster_name
             annotations = meta.annotations
-            mount_options = storageclass.mount_options
+            # mount_options = storageclass.mount_options
             parameters = storageclass.parameters
             provisioner = storageclass.provisioner
             reclaim_policy = storageclass.reclaim_policy
             # volume_binding_mode = storageclass.volume_binding_mode
             mystorageclass = {"name":name,"create_time":create_time,"provisioner":provisioner,\
-                "mount_options":mount_options,"parameters":parameters,"reclaim_policy":reclaim_policy}    
+                            "parameters":parameters,"reclaim_policy":reclaim_policy}    
             storageclass_list.append(mystorageclass) 
         i = i +1
     return json.dumps(storageclass_list,indent=4,cls=MyEncoder)
@@ -783,14 +948,17 @@ def get_pv_list():
             nfs = spec.nfs
             pv_reclaim_policy = spec.persistent_volume_reclaim_policy
             storage_class_name = spec.storage_class_name
-            volume_mode = spec.volume_mode
+            # volume_mode = spec.volume_mode
             claim_ref = spec.claim_ref
+            pvc_namespace = claim_ref.namespace
+            pvc_name = claim_ref.name
+            pvc = "{}/{}".format(pvc_namespace,pvc_name)
 
             status = pv.status.phase
 
             # volume_binding_mode = pv.volume_binding_mode
-            mypv = {"name":name,"create_time":create_time,"status":status,"access_modes":access_modes,"capacity":capacity,"nfs":nfs,"pv_reclaim_policy":pv_reclaim_policy,\
-                    "storage_class_name":storage_class_name,"volume_mode":volume_mode,"claim_ref":claim_ref}   
+            mypv = {"name":name,"status":status,"access_modes":access_modes,"capacity":capacity,"nfs":nfs,"pv_reclaim_policy":pv_reclaim_policy,\
+                    "storage_class_name":storage_class_name,"pvc":pvc,"create_time":create_time}   
 
             pv_list.append(mypv) 
         i = i +1
@@ -823,14 +991,15 @@ def get_pvc_list():
             
             access_modes = spec.access_modes[0]
             resources = spec.resources
+            capacity = resources.requests['storage']
             storage_class_name = spec.storage_class_name
             volume_name = spec.volume_name
 
             # status = pvc.status
             phase = pvc.status.phase
             # volume_binding_mode = pvc.volume_binding_mode
-            mypvc = {"name":name,"volume_name":volume_name,"namespace":namespace,"create_time":create_time,"status":phase,"access_modes":access_modes,"resources":resources,\
-                    "storage_class_name":storage_class_name}   
+            mypvc = {"name":name,"status":phase,"pv":volume_name,"namespace":namespace,"access_modes":access_modes,"capacity":capacity,\
+                    "storage_class_name":storage_class_name,"create_time":create_time}   
 
             pvc_list.append(mypvc) 
         i = i +1
