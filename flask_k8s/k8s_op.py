@@ -25,7 +25,7 @@ CORS(k8s_op, suppors_credentials=True, resources={r'/*'})
 # 处理接收的json数据，如果前端传的不是整形数据，进一步转化需要再调用str_to_int()
 def handle_input(obj):
     # print("{}数据类型{}".format(obj,type(obj)))
-    if obj == None:
+    if obj == None or obj=='null':
         return None
     elif isinstance(obj,str):
         return (obj.strip())
@@ -154,6 +154,120 @@ def delete_namespace():
         msg={"status":e.status,"reason":e.reason,"message":body['message']}
         return jsonify({'error': '删除命名空间出现异常',"msg":msg})
     return jsonify({"ok":"删除成功"})
+
+# @k8s_op.route('/get_node_by_name', methods=('GET', 'POST'))
+def get_node_by_name(name=None):
+    params = {}
+    params['label_selector'] = {"kubernetes.io/role": "master"}
+    # field_selector='metadata.name=192.168.11.52'
+    # label_selector="kubernetes.io/role=master"
+    # name = "192.168.11.52"
+    field_selector="{}={}".format("metadata.name",name)
+    # pretty=True
+    # limit=3
+    node = None
+    node_list = client.CoreV1Api().list_node(limit=1,field_selector=field_selector)
+    print(type(node_list),len(node_list.items))
+    # node = node_list.items
+    # i = 0
+    for item in node_list.items:
+        if item.metadata.name == name:
+            node = item
+            break
+
+    print(type(node))
+    return node
+    # for item in nodes.items:
+    #     pass
+@k8s_op.route('/update_node', methods=('GET', 'POST'))
+def update_node():
+    data=json.loads(request.get_data().decode('utf-8'))
+    print("update_node接收到的数据是{}".format(data))
+    name=handle_input(data.get("node_name"))
+    action=handle_input(data.get("action"))
+    
+    node  = get_node_by_name(name)
+    if node == None:
+        return jsonify({"error":"找不到此node信息"})
+    if action=="add_taint":
+        print("正在添加node污点")
+        effect = handle_input(data.get('taint_effect'))
+        key = handle_input(data.get('taint_key'))   
+        value = handle_input(data.get('taint_value'))
+        print(type(node.spec.taints))
+        if node.spec.taints == None:
+            node.spec.taints = []
+        taint = client.V1Taint(effect=effect,key=key,value=value)
+        node.spec.taints.append(taint)
+        print(node.spec.taints)
+    elif action=="delete_taint":
+        print("正在删除node污点")
+        effect = handle_input(data.get('taint_effect'))
+        key = handle_input(data.get('taint_key'))
+        value = handle_input(data.get('taint_value'))
+        print(key,value)
+        print(type(node.spec.taints))
+        if node.spec.taints == None:
+            return jsonify({"error":"taint列表为空"})
+        # 查找元素
+        i = -1
+        taint_len = len(node.spec.taints)
+        has_taint = False
+        for taint in node.spec.taints:
+            i = i + 1
+            print(taint)
+            if effect == taint.effect and key==taint.key and value ==taint.value:
+                has_taint = True
+                break
+        #查找元素
+        if not has_taint:
+            return jsonify({"error": "没有此taint"})
+        else:
+            node.spec.taints.pop(i)
+            print(node.spec.taints)
+    elif action=="update_taint":
+        print("正在更新node污点")
+        old_effect = handle_input(data.get('old_taint_effect'))
+        old_key = handle_input(data.get('old_taint_key'))
+        old_value = handle_input(data.get('old_taint_value'))
+        new_effect = handle_input(data.get('taint_effect'))
+        new_key = handle_input(data.get('taint_key'))
+        new_value = handle_input(data.get('taint_value'))
+        
+        if node.spec.taints == None:
+            node.spec.taints = []
+        new_taint = client.V1Taint(effect=new_effect,key=new_key,value=new_value)
+        print(new_taint)
+        # 思路，找到index，替换
+        # 查找元素
+        i = -1
+        taint_len = len(node.spec.taints)
+        has_taint = False
+        for taint in node.spec.taints:
+            i = i + 1
+            print(taint)
+            if old_effect == taint.effect and old_key==taint.key and old_value ==taint.value:
+                has_taint = True
+                break
+        #查找元素
+        if not has_taint:
+            return jsonify({"error": "没有此taint"})
+        else:
+            node.spec.taints[i] = new_taint
+            print(node.spec.taints)
+    else:
+        return jsonify({"error":"不支持此动作{}".format(action)})
+    try:
+        result = client.CoreV1Api().patch_node(name=name,body=node)
+    except ApiException as e:
+        body = json.loads(e.body)
+        msg = {"status": e.status, "reason": e.reason, "message": body['message']}
+        return jsonify({'error': '更新node失败', "msg": msg})
+
+    return jsonify({"ok": "{}成功".format(action)})
+
+    
+    
 
 def get_namespace_by_name(name):
     # namespaces = client.AppsV1Api().list_namespaced_namespace(namespace=namespace)

@@ -55,15 +55,37 @@ def after(resp):
     resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
     return resp
 
+def handle_cpu(cpu):
+    if cpu == "0":
+        return 0
+    elif cpu.endswith('n'):
+        # 返回m为单位的cpu值
+        return str_to_int(cpu.split('n')[0])/1000/1000
+    else:
+        print("出现未识别的CPU格式{}".format(cpu))
+        return 0      
+def handle_memory(memory):
+    if memory == "0":
+        return 0
+    elif memory.endswith('Ki'):
+        return str_to_int(memory.split('Ki')[0])/1024
+    elif memory.endswith('Mi'):
+        return str_to_int(memory.split('Mi')[0])
+    else:
+        print("出现未识别的内存格式{}".format(memory))
+        return 0
 def get_named_node_usage_detail(name):
     myclient = client.CustomObjectsApi()
     plural = "{}/{}".format("nodes",name)
     node = myclient.list_cluster_custom_object(group="metrics.k8s.io",version="v1beta1",plural=plural)
     node_name = node['metadata']['name']
 
-    cpu = 0 if node['usage']['cpu']== "0" else str_to_int(node['usage']['cpu'].split('n')[0])/1000/1000
+    # cpu = 0 if node['usage']['cpu']== "0" else str_to_int(node['usage']['cpu'].split('n')[0])/1000/1000
+    cpu = handle_cpu(node['usage']['cpu'])
     node_cpu_usage = "{}m".format(math.ceil(cpu))
-    memory = 0 if  node['usage']['memory'] == "0" else str_to_int(node['usage']['memory'].split('Ki')[0])/1024
+    # print(node['usage']['memory'])
+    memory = handle_memory(node['usage']['memory'])
+    # memory = 0 if  node['usage']['memory'] == "0" else str_to_int(node['usage']['memory'].split('Ki')[0])/1024
     # memory = str_to_int(node['usage']['memory'].split('Ki')[0])/1024
     node_memory_usage = "{}Mi".format(float('%.2f' % memory))
     node_usage = {"node_name":node_name,"cpu":cpu,"memory":memory}
@@ -136,7 +158,6 @@ def get_node_usage(version):
         node_usage_list = get_node_usage_detail()
         
     return json.dumps(node_usage_list,indent=4)
-
 
 def get_pod_usage_detail(namespace=None):
     myclient = client.CustomObjectsApi()
@@ -623,6 +644,8 @@ def get_node_list():
         i = i + 1
     return json.dumps(node_list,indent=4,cls=MyEncoder)
 
+
+
 @k8s.route('/get_node_detail_list',methods=('GET','POST'))
 def get_node_detail_list():
     myclient = client.CoreV1Api()
@@ -671,26 +694,12 @@ def get_node_detail_list():
             mycapacity = {"cpu_detail":cpu_detail,"memory_detail":memory_detail,"storage(G)":disk_space,"pods":pods,"image_num":images_num}
             node_info = status.node_info
             phase = status.phase
-            
-            if schedulable == True:
-                cluster_cpu = cluster_cpu + cpu_num
-                cluster_memory = cluster_memory + math.ceil(memory)
-                cluster_cpu_usage = cluster_cpu_usage + node_cpu_usage/1000
-                cluster_memory_usage = cluster_memory_usage + node_memory_usage
-                
-            mynode = {"name":name,"role":role,"capacity(cpu(c),memory(Mi))":mycapacity,"labels":labels,"pod_cidr":pod_cidr,"taints":taints,\
+   
+            mynode = {"name":name,"role":role,"taints":taints,"capacity(cpu(c),memory(Mi))":mycapacity,"labels":labels,"pod_cidr":pod_cidr,\
                 "schedulable":schedulable,"create_time":create_time}
-            
-            # print(mynode)
             node_list.append(mynode)
-        i = i + 1
-        
-    cluster_cpu_usage_percent = cluster_cpu_usage/cluster_cpu * 100
-    cluster_memory_usage_percent = cluster_memory_usage/cluster_memory * 100
-    cluster_cpu_detail = "{}/{} {}%".format(float('%.2f' % (cluster_cpu_usage)), cluster_cpu,float('%.2f' % cluster_cpu_usage_percent))
-    cluster_memory_detail = "{}/{} {}%".format(math.ceil(cluster_memory_usage),cluster_memory,float('%.2f' % cluster_memory_usage_percent))
-    cluster_capacity = {"cluster_cpu_detail":cluster_cpu_detail,"cluster_memory_detail":cluster_memory_detail}
-    print(cluster_capacity)
+        i = i + 1 
+
     return json.dumps(node_list,indent=4,cls=MyEncoder)
 
 @k8s.route('/get_cluster_stats',methods=('GET','POST'))
@@ -767,8 +776,6 @@ def get_cluster_stats():
     cluster_stat =  {"cluster_cpu_detail":cluster_cpu_detail,"cluster_memory_detail":cluster_memory_detail,"cluster_disk_cap":cluster_disk_cap,"cluster_pod_cap":cluster_pod_cap}
     cluster_stat_list.append(cluster_stat)
     return json.dumps({"node_list":node_list,"cluster_stat_list":cluster_stat_list})
-
-
 
 #列出namespace
 @k8s.route('/get_configmap_list',methods=('GET','POST'))
