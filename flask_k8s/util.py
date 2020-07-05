@@ -42,7 +42,8 @@ def str_to_float(str):
 #参数是datetime
 def time_to_string(dt):
     tz_sh = pytz.timezone('Asia/Shanghai')
-    return  dt.astimezone(tz_sh).strftime("%Y-%m-%d %H:%M:%S")
+    return dt.astimezone(tz_sh).strftime("%Y-%m-%d")
+    # return  dt.astimezone(tz_sh).strftime("%Y-%m-%d %H:%M:%S")
 
 def utc_to_local(utc_time_str, utc_format='%Y-%m-%dT%H:%M:%S.%fZ'):
     local_tz = pytz.timezone('Asia/Shanghai')
