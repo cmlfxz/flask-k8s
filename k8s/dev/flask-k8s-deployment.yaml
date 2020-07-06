@@ -40,10 +40,16 @@ spec:
         version: v1
     spec:
       serviceAccountName: ms-dev-flask-k8s
+      # tolerations:
+      #   - key: "key"
+      #     operator: "Exists"
+      #     effect: "NoSchedule" 
       tolerations:
-        - key: "key"
-          operator: "Exists"
-          effect: "NoSchedule"  
+        - key: "server"
+          operator: "Equal"
+          value: "prometheus"
+          tolerationSeconds: 3600
+          effect: "NoExecute" 
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -75,13 +81,6 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8082
-      #   volumeMounts:
-      #   - name: fromfile-configmap
-      #     mountPath: /opt/microservices/instance
-      # volumes:
-      # - name: fromfile-configmap
-      #   configMap:
-      #     name: flask-k8s-configmap
         volumeMounts:
         - name: log
           mountPath: /opt/microservices/logs
