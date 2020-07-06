@@ -39,6 +39,44 @@ def str_to_int(str):
 def str_to_float(str):    
     return 1 if str=="" else float(str)
 
+# 处理接收的json数据，如果前端传的不是整形数据，进一步转化需要再调用str_to_int()
+def handle_input(obj):
+    # print("{}数据类型{}".format(obj,type(obj)))
+    if obj == None or obj=='null':
+        return None
+    elif isinstance(obj,str):
+        return (obj.strip())
+    elif isinstance(obj,int):
+        return obj
+    elif isinstance(obj,dict):
+        return obj
+    elif isinstance(obj,list):
+        return obj
+    else:
+        print("未处理类型{}".format(type(obj)))
+        return(obj.strip())
+
+def handle_toleraion_seconds(toleration):
+    print(toleration)
+    if toleration == "" or toleration == 'null':
+        return None
+    else:
+        return int(toleration)
+
+def string_to_int(string):
+    print(string)
+    if string == "" or string == 'null' or string== None:
+        return None
+    else:
+        return int(string)
+def handle_toleration_item(item):
+    print(item)
+    if item == "" or item == 'null':
+        return None
+    else:
+        return item
+
+
 #参数是datetime
 def time_to_string(dt):
     tz_sh = pytz.timezone('Asia/Shanghai')

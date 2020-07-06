@@ -496,6 +496,44 @@ def get_pod_list():
         i = i + 1
     # return json.dumps(pod_list,default=lambda obj: obj.__dict__,indent=4)
     return json.dumps(pod_list,indent=4,cls=MyEncoder)
+# from flask_k8s.util import *
+@k8s.route('/get_pod_list_v2',methods=('GET','POST'))
+def get_pod_list_v2():
+    data = json.loads(request.get_data().decode("utf-8"))
+    namespace = data.get("namespace").strip()
+    myclient = client.CoreV1Api()
+    if namespace == "" or namespace == "all": 
+        pods = myclient.list_pod_for_all_namespaces(watch=False)
+    else:
+        pods = myclient.list_namespaced_pod(namespace=namespace,watch=False)
+    i = 0
+    pod_list = []
+    for pod in pods.items:
+        if (i >=0):
+            # print(pod)
+            meta = pod.metadata
+            name = meta.name
+            create_time = time_to_string(meta.creation_timestamp)
+            labels = meta.labels
+            namespace = meta.namespace 
+            spec = pod.spec
+            # tolerations = spec.tolerations
+            containers = spec.containers
+            container_name = image = ""
+            i = 0
+            for c in containers: 
+                if (i==0):
+                    container_name = c.name
+                    image = c.image
+                i = i+1
+            status = pod.status
+            phase = status.phase 
+            host_ip = status.host_ip
+            pod_ip = status.pod_ip
+            mypod = {"name":name,"node":host_ip,"pod_ip":pod_ip,"status":phase,"image":image,"create_time":create_time}         
+            pod_list.append(mypod)
+        i = i + 1
+    return json.dumps(pod_list,indent=4,cls=MyEncoder)
 
 @k8s.route('/get_deployment_list',methods=('GET','POST'))
 def get_deployment_list():

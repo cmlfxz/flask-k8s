@@ -16,6 +16,7 @@ from .util import get_db_conn,my_decode,my_encode,str_to_int,str_to_float
 from .util import SingletonDBPool
 from .util import time_to_string,utc_to_local
 from .util import dir_path
+from .util import handle_input,handle_toleraion_seconds,string_to_int,handle_toleration_item
 from flask_cors import *
 from kubernetes.client.models.v1_namespace import V1Namespace
 
@@ -23,42 +24,6 @@ k8s_op = Blueprint('k8s_op',__name__,url_prefix='/k8s_op')
 
 CORS(k8s_op, suppors_credentials=True, resources={r'/*'})
 
-# 处理接收的json数据，如果前端传的不是整形数据，进一步转化需要再调用str_to_int()
-def handle_input(obj):
-    # print("{}数据类型{}".format(obj,type(obj)))
-    if obj == None or obj=='null':
-        return None
-    elif isinstance(obj,str):
-        return (obj.strip())
-    elif isinstance(obj,int):
-        return obj
-    elif isinstance(obj,dict):
-        return obj
-    elif isinstance(obj,list):
-        return obj
-    else:
-        print("未处理类型{}".format(type(obj)))
-        return(obj.strip())
-
-def handle_toleraion_seconds(toleration):
-    print(toleration)
-    if toleration == "" or toleration == 'null':
-        return None
-    else:
-        return int(toleration)
-
-def string_to_int(string):
-    print(string)
-    if string == "" or string == 'null' or string== None:
-        return None
-    else:
-        return int(string)
-def handle_toleration_item(item):
-    print(item)
-    if item == "" or item == 'null':
-        return None
-    else:
-        return item
 
 @k8s_op.before_app_request
 def load_header():
@@ -599,8 +564,10 @@ def update_deployment_v2(deploy_name, namespace, action, image=None, replicas=No
             msg="{}需要提供pod_anti_affinity".format(action)
             return jsonify({"error":msg})
         paa = deployment.spec.template.spec.affinity.pod_anti_affinity
-        # if paa != None:
-        #     return jsonify({"error":"pod_anti_affinity已经存在，无法添加"})
+        if paa != None:
+            print("pod_anti_affinity已经存在,使用更新模式")
+            action = "update_pod_anti_affinity"
+            # return jsonify({"error":"pod_anti_affinity已经存在，无法添加"})
         deployment.spec.template.spec.affinity.pod_anti_affinity = pod_anti_affinity
     elif action == "delete_pod_anti_affinity":
         print("正在运行{}操作".format(action))
@@ -659,7 +626,8 @@ def update_deployment_v2(deploy_name, namespace, action, image=None, replicas=No
         return jsonify({"error":msg})
     try:
 
-        if action == "delete_pod_anti_affinity":
+        if action == "delete_pod_anti_affinity" or action=="update_pod_anti_affinity":
+            print("正在执行替换")
             ResponseNotReady = client.AppsV1Api().replace_namespaced_deployment(
                 name=deploy_name,
                 namespace=namespace,
