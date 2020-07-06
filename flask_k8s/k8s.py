@@ -526,7 +526,9 @@ def get_deployment_list():
             # strategy = spec.strategy
             template = spec.template
             template_labels = template.metadata.labels
-
+            node_affinity = None
+            pod_affinity =None 
+            pod_anti_affinity = None
             
             template_spec = template.spec 
             affinity = template_spec.affinity

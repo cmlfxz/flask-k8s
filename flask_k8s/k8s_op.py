@@ -34,9 +34,31 @@ def handle_input(obj):
         return obj
     elif isinstance(obj,dict):
         return obj
+    elif isinstance(obj,list):
+        return obj
     else:
         print("未处理类型{}".format(type(obj)))
         return(obj.strip())
+
+def handle_toleraion_seconds(toleration):
+    print(toleration)
+    if toleration == "" or toleration == 'null':
+        return None
+    else:
+        return int(toleration)
+
+def string_to_int(string):
+    print(string)
+    if string == "" or string == 'null' or string== None:
+        return None
+    else:
+        return int(string)
+def handle_toleration_item(item):
+    print(item)
+    if item == "" or item == 'null':
+        return None
+    else:
+        return item
 
 @k8s_op.before_app_request
 def load_header():
@@ -573,58 +595,26 @@ def update_deployment_v2(deploy_name, namespace, action, image=None, replicas=No
     if (deployment == None):
         return jsonify({"error": "1003", "msg": "找不到该deployment"})
     if action == "add_pod_anti_affinity":
-        # if not pod_anti_affinity:
-        #     msg="{}需要提供pod_anti_affinity".format(action)
-        #     return jsonify("error":msg)
-        pod_anti_affinity_type = pod_anti_affinity.pod_anti_affinity_type
-        anti_affinity_key = pod_anti_affinity.anti_affinity_key
-        anti_affinity_value = pod_anti_affinity.anti_affinity_value
-        if pod_anti_affinity_type == "required":
-            # anti_affinity_type = "requiredDuringSchedulingIgnoredDuringExecution"
-            label_selector = client.V1LabelSelector(match_expressions=[
-                client.V1LabelSelectorRequirement(key=anti_affinity_key, operator='In',
-                                                  values=[anti_affinity_value])
-            ])
-            # label_selector = client.V1LabelSelector(match_expressions=[ client.V1LabelSelectorRequirement(key='app',operator=None)])
-            # # label_selector = None
-            affinity = client.V1Affinity(
-                pod_anti_affinity=client.V1PodAntiAffinity(
-                    required_during_scheduling_ignored_during_execution=[
-                        # client.re V1PreferredSchedulingTerm
-                        # client.V1Pod
-                        client.V1PodAffinityTerm(
-                            label_selector=label_selector,
-                            topology_key='kubernetes.io/hostname'
-                        )
-                    ]
-                )
-            )
-            print("{}".format(affinity))
-        else:
-            pass
-        deployment.spec.template.spec.affinity = affinity
+        if not pod_anti_affinity:
+            msg="{}需要提供pod_anti_affinity".format(action)
+            return jsonify({"error":msg})
+        paa = deployment.spec.template.spec.affinity.pod_anti_affinity
+        # if paa != None:
+        #     return jsonify({"error":"pod_anti_affinity已经存在，无法添加"})
+        deployment.spec.template.spec.affinity.pod_anti_affinity = pod_anti_affinity
     elif action == "delete_pod_anti_affinity":
-        pass
+        print("正在运行{}操作".format(action))
+        deployment.spec.template.spec.affinity.pod_anti_affinity = None
+        print(deployment)
     elif action == "add_toleration":
         print("正在运行{}操作".format(action))
         if not toleration:
             msg="{}需要提供toleration".format(action)
             return jsonify({"error":msg})
-        
-        # effect = toleration.get('effect')
-        # key = toleration.get('key')
-        # operator = toleration.get('operator')
-        # value = toleration.get('value')
-        # toleration_seconds = toleration.get('toleration_seconds')
         t = deployment.spec.template.spec.tolerations
         if t == None:
             t = []
-        # new_t = client.V1Toleration(effect=effect,key=key,operator=operator,\
-                                    # value=value,toleration_seconds=toleration_seconds)
-        # t.append(new_t)
-        print(toleration)
         t.append(toleration)
-        print(t)
         deployment.spec.template.spec.tolerations = t
     elif action == "delete_toleration":
         print("正在运行{}操作".format(action))
@@ -663,39 +653,34 @@ def update_deployment_v2(deploy_name, namespace, action, image=None, replicas=No
         pass
     elif action == "delete_labels":
         pass
-    # elif action == "add_labels":
-    #     pass
-    # elif action == "delete_labels":
-    #     pass
     else:
         msg="暂时不支持{}操作".format(action)
         print(msg)
         return jsonify({"error":msg})
     try:
-        ResponseNotReady = client.AppsV1Api().patch_namespaced_deployment(
-            name=deploy_name,
-            namespace=namespace,
-            body=deployment
-        )
+
+        if action == "delete_pod_anti_affinity":
+            ResponseNotReady = client.AppsV1Api().replace_namespaced_deployment(
+                name=deploy_name,
+                namespace=namespace,
+                body=deployment
+            )
+        else:
+            ResponseNotReady = client.AppsV1Api().patch_namespaced_deployment(
+                name=deploy_name,
+                namespace=namespace,
+                body=deployment
+            )
+        
     except ApiException as e:
+        print(e)
         body = json.loads(e.body)
         msg = {"status": e.status, "reason": e.reason, "message": body['message']}
         return jsonify({'error': '创建失败', "msg": msg})
 
     return jsonify({"ok": "deployment 执行{}成功".format(action)})
 
-def handle_toleraion_seconds(toleration):
-    print(toleration)
-    if toleration == "" or toleration == 'null':
-        return None
-    else:
-        return int(toleration)
-def handle_toleration_item(item):
-    print(item)
-    if item == "" or item == 'null':
-        return None
-    else:
-        return item
+
 @k8s_op.route('/update_deploy_v2',methods=('GET','POST'))  
 def update_deploy_v2():
     data = json.loads(request.get_data().decode('UTF-8'))
@@ -711,20 +696,82 @@ def update_deploy_v2():
     pod_affinity=None
     node_affinity=None
     labels=None
-    
     if action == "add_pod_anti_affinity":
-        pod_anti_affinity_type = handle_input(data.get('pod_anti_affinity_type'))
-        anti_affinity_key = handle_input(data.get('anti_affinity_key'))
-        anti_affinity_value = handle_input(data.get('anti_affinity_value'))
-        if (pod_anti_affinity_type != None and anti_affinity_key != None and anti_affinity_value != None):
-            pod_anti_affinity ={"pod_anti_affinity_type":pod_anti_affinity_type,"anti_affinity_key":anti_affinity_key,"anti_affinity_value":anti_affinity_value}
+        print("正在运行{}操作".format(action))
+        affinity = handle_input(data.get('pod_anti_affinity'))
+        affinity_type = handle_input(affinity.get('type'))
+
+        labelSelector = handle_input(affinity.get('labelSelector'))
+        key = handle_input(affinity.get('key'))
+        value = handle_input(affinity.get('value'))
+
+        topologyKey = handle_input(affinity.get('topologyKey'))
+        if affinity_type == "required":
+            if labelSelector == "matchExpressions":
+                if not isinstance(value,list):
+                    value = [value]
+                operator = handle_input(affinity.get('operator'))
+                if operator != 'In' and operator != 'NotIn':
+                    value = None
+                print(value)
+                label_selector = client.V1LabelSelector(match_expressions=[
+                    client.V1LabelSelectorRequirement(key=key, operator=operator,
+                                                      values=value)
+                ])
+            elif labelSelector == "matchLabels":
+                if isinstance(value,list):
+                    return jsonify({"error":"{}模式下不支持values设置为数组".format(labelSelector)})
+                label_selector = client.V1LabelSelector(match_labels={key:value})
+            else:
+                return jsonify({"error":"不支持{} labelSelector".format(labelSelector)})
+            client.V1Affinity
+            pod_anti_affinity=client.V1PodAntiAffinity(
+                required_during_scheduling_ignored_during_execution=[
+                    client.V1PodAffinityTerm(
+                        label_selector=label_selector,
+                        topology_key=topologyKey
+                    )
+                ]
+            )
+            print("{}".format(pod_anti_affinity))
+        elif affinity_type == "preferred":
+            weight = string_to_int(handle_input(affinity.get('weight')))
+            if weight == None:
+                return jsonify({"error":"{}类型必须设置weight".format(affinity_type)})
+
+            if labelSelector == "matchExpressions":
+                if not isinstance(value,list):
+                    value = [value]
+
+                operator = handle_input(affinity.get('operator'))
+                if operator != 'In' and operator != 'NotIn':
+                    value = None
+                label_selector = client.V1LabelSelector(match_expressions=[
+                    client.V1LabelSelectorRequirement(key=key, operator=operator,
+                                                      values=value)
+                ])
+            elif labelSelector == "matchLabels":
+                if isinstance(value,list):
+                    return jsonify({"error":"{}模式下不支持values设置为数组".format(labelSelector)})
+                label_selector = client.V1LabelSelector(match_labels={key:value})
+            else:
+                return jsonify({"error": "不支持{} labelSelector".format(labelSelector)})
+            pod_anti_affinity=client.V1PodAntiAffinity(
+                preferred_during_scheduling_ignored_during_execution=[
+                    client.V1WeightedPodAffinityTerm(
+                        pod_affinity_term = client.V1PodAffinityTerm(
+                            label_selector=label_selector,
+                            topology_key=topologyKey
+                        ),
+                        weight = weight
+                    )
+                ]
+            )
+            print("{}".format(pod_anti_affinity))
         else:
-            pod_anti_affinity = None
-        if not pod_anti_affinity:
-            msg = "{}需要提供pod_anti_affinity(type,key,value)".format(action)
-            return jsonify({"error":msg})
-        
+            return jsonify({"error":"不支持{}这种调度".format(affinity_type)})
     elif action == "delete_pod_anti_affinity":
+        print("正在运行{}操作".format(action))
         pass
     elif action == "add_toleration":
         print("正在运行{}操作".format(action))
@@ -763,15 +810,7 @@ def update_deploy_v2():
         print("toleration_seconds:{}".format(toleration_seconds))
         
         # if (effect != None and key != None and operator != None):
-        # toleration = {
-        #     "effect":effect,
-        #     "key":key,
-        #     "operator":operator,
-        #     "toleration_seconds":toleration_seconds,
-        #     "value":value
-        # }
         toleration = client.V1Toleration(effect=effect,key=key,operator=operator,toleration_seconds=toleration_seconds,value=value)
-        # print(toleration)
         if not toleration:
             msg = "{}需要提供toleration(effect,key,operator,value,)".format(action)
             return jsonify({"error":msg})    

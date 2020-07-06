@@ -102,6 +102,7 @@ class MyEncoder(json.JSONEncoder):
         elif isinstance(obj,V1PodAffinityTerm):
             return {
                 "label_selector": obj.label_selector,
+                "namespaces": obj.namespaces,
                 "topology_key": obj.topology_key,
             } 
         elif isinstance(obj,V1PodAntiAffinity):
