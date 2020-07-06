@@ -739,14 +739,15 @@ def update_deploy_v2():
         print("toleration_seconds:{}".format(toleration_seconds))
         
         # if (effect != None and key != None and operator != None):
-        toleration = {
-            "effect":effect,
-            "key":key,
-            "operator":operator,
-            "value":value,
-            "toleration_seconds":toleration_seconds,
-        }
-        # print(toleration)
+        # toleration = {
+        #     "effect":effect,
+        #     "key":key,
+        #     "operator":operator,
+        #     "value":value,
+        #     "toleration_seconds":toleration_seconds,
+        # }
+        toleration = client.V1Toleration(effect=effect,key=key,operator=operator,toleration_seconds=toleration_seconds,value=value)
+        print(toleration)
         if not toleration:
             msg = "{}需要提供toleration(effect,key,operator,value,)".format(action)
             return jsonify({"error":msg})            
