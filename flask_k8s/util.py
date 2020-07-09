@@ -75,6 +75,9 @@ def handle_toleration_item(item):
         return None
     else:
         return item
+    
+def simple_error_handle(msg):
+    return jsonify({"error":msg})
 
 
 #参数是datetime

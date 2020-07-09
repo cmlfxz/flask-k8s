@@ -15,6 +15,8 @@ import ssl
 from .util import get_db_conn,my_decode,my_encode,str_to_int,str_to_float
 from .util import SingletonDBPool
 from .util import time_to_string,utc_to_local
+from .util import dir_path
+from .util import handle_input,handle_toleraion_seconds,string_to_int,handle_toleration_item
 from flask_cors import *
 
 k8s = Blueprint('k8s',__name__,url_prefix='/k8s')
@@ -249,9 +251,7 @@ def get_gateway_list():
             # create_time = time.strftime('%Y-%m-%d %H:%M:%S',time.localtime(Unixtime))
             selector = spec['selector']
             servers = spec['servers']
-            
             domain_list = []
-            
             for server in servers:
                 domain = server['hosts']
                 domain_list.append(domain)
@@ -407,10 +407,18 @@ def get_service_list():
         selector = spec.selector
         service_type = spec.type
         status = service.status
-
-        service = {"name":name,"create_time":create_time,"namespace":namespace,\
-            "labels":labels,"cluster_ip":cluster_ip,"policy":policy,\
-            "load_balancer_ip":load_balancer_ip,"ports":ports,"selector":selector,"service_type":service_type,"status":status}
+        
+        internal_endpoints = []
+        
+        for p in ports:
+            endpoint = "{}.{}:{} {}".format(name,namespace,p.port,p.protocol)
+            if p.node_port:
+                endpoint2 = "{}.{}:{} {}".format(name,namespace,p.node_port,p.protocol)
+            internal_endpoints.append(endpoint)
+            internal_endpoints.append(endpoint2)
+        service = {"name":name,"namespace":namespace,"service_type":service_type,"ports":ports,\
+            "internal_endpoints":internal_endpoints,"labels":labels,"cluster_ip":cluster_ip,\
+            "selector":selector,"create_time":create_time}
         service_list.append(service)
     
     # return json.dumps(service_list,default=lambda obj: obj.__dict__,sort_keys=True,indent=4)
@@ -497,6 +505,90 @@ def get_pod_list():
     # return json.dumps(pod_list,default=lambda obj: obj.__dict__,indent=4)
     return json.dumps(pod_list,indent=4,cls=MyEncoder)
 # from flask_k8s.util import *
+def simple_error_handle(msg):
+    return jsonify({"error":msg})
+
+@k8s.route('/get_pod_detail_by_name',methods=('GET','POST'))
+def get_pod_detail_by_name():
+    print("您已进入get_pod_detail_by_name,有什么能帮助您呢?")
+    data = json.loads(request.get_data().decode("utf-8"))
+    namespace =  handle_input(data.get("namespace"))
+    pod_name = handle_input(data.get('pod_name'))
+    myclient = client.CoreV1Api()
+    field_selector="metadata.name={}".format(pod_name)
+    print(field_selector)
+    pods = myclient.list_namespaced_pod(namespace=namespace,field_selector=field_selector)
+    
+    pod = None
+    for item in pods.items:
+        if item.metadata.name == pod_name:
+            pod = item
+            break
+    if pod == None:
+        return simple_error_handle("找不到pod相关信息")
+
+    meta = pod.metadata
+    name = meta.name
+    create_time = time_to_string(meta.creation_timestamp)
+    cluster_name = meta.cluster_name
+
+    pod_labels = meta.labels
+    namespace = meta.namespace 
+    
+    spec = pod.spec
+    node_affinity = pod_affinity = pod_anti_affinity = None
+    affinity = spec.affinity
+    if affinity:
+        node_affinity = affinity.node_affinity
+        pod_affinity = affinity.pod_affinity
+        pod_anti_affinity = affinity.pod_anti_affinity
+    host_network = spec.host_network
+    image_pull_secrets = spec.image_pull_secrets
+    node_selector = spec.node_selector
+    restart_policy = spec.restart_policy
+    security_context = spec.security_context
+    service_account_name = spec.service_account_name
+    tolerations = spec.tolerations
+    containers = spec.containers
+    volumes = spec.volumes
+    containers = spec.containers
+    init_containers = spec.init_containers
+
+    status = pod.status
+    phase = status.phase 
+    host_ip = status.host_ip
+    pod_ip = status.pod_ip
+    
+    mypod = {
+        "name":name,
+        "namespace":namespace,
+        "node":host_ip,
+        "pod_ip":pod_ip,
+        "pod_labels":pod_labels,
+        "status":phase,
+        "create_time":create_time,
+        # spec关键信息
+        "affinity":affinity,
+        "nodeAffinity":node_affinity,
+        "podAffinity":pod_affinity,
+        "podAntiAffinity":pod_anti_affinity,
+        "hostNetwork":host_network,
+        "imagePullSecrets":image_pull_secrets,
+        "nodeSelector":node_selector,
+        "restartPolicy":restart_policy,
+        "serviceAccountName":service_account_name,
+        # "terminationGracePeriodSeconds":terminationGracePeriodSeconds,
+        "tolerations":tolerations,
+        "volumes":volumes,
+        # 容器信息
+        "containers":containers,
+        #初始化容器
+        "initContainers":init_containers,
+    }          
+    # return json.dumps(pod,default=lambda obj: obj.__dict__,indent=4)
+    # return jsonify(pod)
+    return json.dumps(mypod,indent=4,cls=MyEncoder)
+    
 @k8s.route('/get_pod_list_v2',methods=('GET','POST'))
 def get_pod_list_v2():
     data = json.loads(request.get_data().decode("utf-8"))
@@ -528,11 +620,56 @@ def get_pod_list_v2():
                 i = i+1
             status = pod.status
             phase = status.phase 
-            host_ip = status.host_ip
+            # host_ip = status.host_ip
+            node = spec.node_name
             pod_ip = status.pod_ip
-            mypod = {"name":name,"node":host_ip,"pod_ip":pod_ip,"status":phase,"image":image,"create_time":create_time}         
+            restart_count = None
+            if status.container_statuses:
+                restart_count = status.container_statuses[0].restart_count
+            mypod = {"name":name,"namespace":namespace,"node":node,"pod_ip":pod_ip,"status":phase,"image":image,"restart_count":restart_count,"create_time":create_time}         
             pod_list.append(mypod)
         i = i + 1
+    return json.dumps(pod_list,indent=4,cls=MyEncoder)
+
+@k8s.route('/get_pod_list_v3',methods=('GET','POST'))
+def get_pod_list_v3():
+    data = json.loads(request.get_data().decode("utf-8"))
+    # namespace = data.get("namespace").strip()
+    node = handle_input(data.get('node'))
+    if not node:
+        return simple_error_handle("必须要node参数")
+    myclient = client.CoreV1Api()
+    # 在客户端筛选属于某个node的pod
+    pods = myclient.list_pod_for_all_namespaces(watch=False)
+
+    pod_list = []
+    for pod in pods.items:
+        node_name = pod.spec.node_name
+        if node_name == node:
+            # # print(pod)
+            meta = pod.metadata
+            name = meta.name
+            create_time = time_to_string(meta.creation_timestamp)
+            labels = meta.labels
+            namespace = meta.namespace 
+            spec = pod.spec
+            # tolerations = spec.tolerations
+            containers = spec.containers
+            container_name = image = ""
+            i = 0
+            for c in containers: 
+                if (i==0):
+                    container_name = c.name
+                    image = c.image
+                i = i+1
+            status = pod.status
+            phase = status.phase 
+            # host_ip = status.host_ip
+            node = spec.node_name
+            pod_ip = status.pod_ip
+            restart_count = status.container_statuses[0].restart_count
+            mypod = {"name":name,"namespace":namespace,"node":node,"pod_ip":pod_ip,"status":phase,"image":image,"restart_count":restart_count,"create_time":create_time}         
+            pod_list.append(mypod)
     return json.dumps(pod_list,indent=4,cls=MyEncoder)
 
 @k8s.route('/get_deployment_list',methods=('GET','POST'))
@@ -649,6 +786,19 @@ def get_daemonset_list():
         i = i +1       
     return json.dumps(daemonset_list,indent=4,cls=MyEncoder)
 
+@k8s.route('/get_node_name_list',methods=('GET','POST'))
+def get_node_name_list():
+    myclient = client.CoreV1Api()
+    nodes = myclient.list_node()
+    
+    node_name_list = []
+    for node in nodes.items:
+        name = node.metadata.name
+        node_name_list.append(name)
+    return json.dumps(node_name_list,indent=4)
+
+# @k8s.route('/get_node_list',methods=('GET','POST'))
+# def get_node_list():
 # @k8s.route('/get_node_list',methods=('GET','POST'))
 # def get_node_list():
 #     myclient = client.CoreV1Api()
@@ -952,22 +1102,24 @@ def get_storageclass_list():
     storageclasss = myclient.list_storage_class()
     storageclass_list = []
     i = 0 
-    for storageclass in storageclasss.items:
+    for sc in storageclasss.items:
         if (i >= 0):
-            # print(storageclass)
-            meta = storageclass.metadata
+            # print(sc)
+            meta = sc.metadata
             name = meta.name 
             create_time = time_to_string(meta.creation_timestamp)
             cluster_name = meta.cluster_name
             annotations = meta.annotations
-            # mount_options = storageclass.mount_options
-            parameters = storageclass.parameters
-            provisioner = storageclass.provisioner
-            reclaim_policy = storageclass.reclaim_policy
-            # volume_binding_mode = storageclass.volume_binding_mode
-            mystorageclass = {"name":name,"create_time":create_time,"provisioner":provisioner,\
-                            "parameters":parameters,"reclaim_policy":reclaim_policy}    
-            storageclass_list.append(mystorageclass) 
+            mount_options = sc.mount_options
+            parameters = sc.parameters
+            provisioner = sc.provisioner
+            reclaim_policy = sc.reclaim_policy
+            
+            volume_binding_mode = sc.volume_binding_mode
+            mysc = {"name":name,"provisioner":provisioner,"reclaim_policy":reclaim_policy,\
+                            "parameters":parameters,\
+                            "mount_options":mount_options,"volume_binding_mode":volume_binding_mode,"create_time":create_time}    
+            storageclass_list.append(mysc) 
         i = i +1
     return json.dumps(storageclass_list,indent=4,cls=MyEncoder)
 
@@ -990,19 +1142,43 @@ def get_pv_list():
             access_modes = spec.access_modes[0]
             capacity = spec.capacity['storage']
             nfs = spec.nfs
+            cephfs = spec.cephfs
+            flexVolume = spec.flex_volume
+            glusterfs = spec.glusterfs
+            rbd = spec.rbd
+            hostPath = spec.host_path
+            
+            source = None
+            if nfs:
+                source=nfs
+            elif hostPath:
+                source=hostPath
+            elif rbd:
+                source=rbd
+            elif flexVolume:
+                source = flexVolume
+            elif glusterfs:
+                source = glusterfs
+            else:
+                pass
+            
+            mountOptions = spec.mount_options
             pv_reclaim_policy = spec.persistent_volume_reclaim_policy
             storage_class_name = spec.storage_class_name
-            # volume_mode = spec.volume_mode
+            volume_mode = spec.volume_mode
             claim_ref = spec.claim_ref
-            pvc_namespace = claim_ref.namespace
-            pvc_name = claim_ref.name
+            pvc_namespace = pvc_name = None
+            if claim_ref:
+                pvc_namespace = claim_ref.namespace
+                pvc_name = claim_ref.name
             pvc = "{}/{}".format(pvc_namespace,pvc_name)
 
             status = pv.status.phase
 
             # volume_binding_mode = pv.volume_binding_mode
-            mypv = {"name":name,"status":status,"access_modes":access_modes,"capacity":capacity,"nfs":nfs,"pv_reclaim_policy":pv_reclaim_policy,\
-                    "storage_class_name":storage_class_name,"pvc":pvc,"create_time":create_time}   
+            mypv = {"name":name,"pvc":pvc,"capacity":capacity,"status":status,"access_modes":access_modes,"pv_reclaim_policy":pv_reclaim_policy, \
+                    "storage_class_name":storage_class_name,"source":source,
+                   "volume_mode":volume_mode,"create_time":create_time}   
 
             pv_list.append(mypv) 
         i = i +1
@@ -1042,8 +1218,8 @@ def get_pvc_list():
             # status = pvc.status
             phase = pvc.status.phase
             # volume_binding_mode = pvc.volume_binding_mode
-            mypvc = {"name":name,"status":phase,"pv":volume_name,"namespace":namespace,"access_modes":access_modes,"capacity":capacity,\
-                    "storage_class_name":storage_class_name,"create_time":create_time}   
+            mypvc = {"name":name,"pv":volume_name,"status":phase,"capacity":capacity,"resources":resources,"namespace":namespace,\
+                    "access_modes":access_modes,"storage_class_name":storage_class_name,"create_time":create_time}   
 
             pvc_list.append(mypvc) 
         i = i +1
@@ -1110,8 +1286,6 @@ def get_statefulset_list():
 def get_ingress_list():
     # myclient = client.ExtensionsV1beta1Api()
     # # /apis/extensions/v1beta1/namespaces/{namespace}/ingresses
-    # # myclient.list_namespaced_ingress()
-    # ingresss = myclient.list_ingress_for_all_namespaces()
     data = json.loads(request.get_data().decode("utf-8"))
     namespace = data.get("namespace").strip()
     myclient = client.ExtensionsV1beta1Api()
@@ -1140,8 +1314,8 @@ def get_ingress_list():
             
             tls = spec.tls
             
-            myingress = {"name":name,"create_time":create_time,"cluster_name":cluster_name,"namespace":namespace,\
-                "domain_list":domain_list,"rule":rule,"tls":tls}    
+            myingress = {"name":name,"namespace":namespace,\
+                "domain_list":domain_list,"rule":rule,"tls":tls,"create_time":create_time}    
             ingress_list.append(myingress) 
         i = i +1
     return json.dumps(ingress_list,indent=4,cls=MyEncoder)

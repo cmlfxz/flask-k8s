@@ -54,6 +54,11 @@ from kubernetes.client.models.v1_label_selector_requirement import V1LabelSelect
 from kubernetes.client.models.v1_namespace import V1Namespace
 from kubernetes.client.models.v1_namespace_spec import V1NamespaceSpec
 from kubernetes.client.models.v1_namespace_status import V1NamespaceStatus
+from kubernetes.client.models.v1_security_context import V1SecurityContext
+from kubernetes.client.models.v1_host_path_volume_source import V1HostPathVolumeSource
+from kubernetes.client.models.v1_rbd_persistent_volume_source import V1RBDPersistentVolumeSource
+from kubernetes.client.models.v1_secret_reference import V1SecretReference
+from kubernetes.client.models.v1_host_path_volume_source import V1HostPathVolumeSource
 
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):  
@@ -67,6 +72,33 @@ class MyEncoder(json.JSONEncoder):
                 "key": obj.key,
                 "operator": obj.operator,
                 "values": obj.values,
+            }
+        elif isinstance(obj, V1RBDPersistentVolumeSource):  
+            return {
+                "fs_type": obj.fs_type,
+                "image": obj.image,
+                "keyring": obj.keyring,
+                "monitors": obj.monitors,
+                "pool": obj.pool,
+                "read_only": obj.read_only,
+                "secret_ref": obj.secret_ref,
+                "user": obj.user,
+            }
+        elif isinstance(obj, V1SecretReference):  
+            return {
+                "_name": obj._name,
+                "namespace": obj.namespace,
+            }
+        elif isinstance(obj, V1HostPathVolumeSource):  
+            return {
+                "path": obj.path,
+                "type": obj.type,
+            }
+        elif isinstance(obj, V1SecurityContext):  
+            return {
+                "privileged": obj.privileged,
+                "run_as_group": obj.run_as_group,
+                "run_as_user": obj.run_as_user,
             }
         elif isinstance(obj, V1Namespace):  
             return {
@@ -241,14 +273,19 @@ class MyEncoder(json.JSONEncoder):
             return {
                 "image": obj.image,
                 "image_pull_policy": obj.image_pull_policy,
+                "args":obj.args,
+                "command":obj.command,
+                "name":obj.name,
+                "lifecycle":obj.lifecycle,
+                "working_dir":obj.working_dir,
                 "ports": obj.ports,
-                # "env": obj.env,
+                "env": obj.env,
+                "env_from": obj.env_from,
                 "readiness_probe": obj.readiness_probe,
                 "liveness_probe": obj.liveness_probe,
                 "resources": obj.resources,
-                # "env_from": obj.env_from,
                 "volume_mounts": obj.volume_mounts,
-                # "security_context": obj.security_context,
+                "security_context": obj.security_context,
             }    
         elif isinstance(obj,V1ContainerPort):
             return {

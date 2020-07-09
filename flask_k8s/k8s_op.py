@@ -17,6 +17,7 @@ from .util import SingletonDBPool
 from .util import time_to_string,utc_to_local
 from .util import dir_path
 from .util import handle_input,handle_toleraion_seconds,string_to_int,handle_toleration_item
+from .util import simple_error_handle
 from flask_cors import *
 from kubernetes.client.models.v1_namespace import V1Namespace
 
@@ -143,6 +144,38 @@ def delete_namespace():
         body = json.loads(e.body)
         msg={"status":e.status,"reason":e.reason,"message":body['message']}
         return jsonify({'error': '删除命名空间出现异常',"msg":msg})
+    return jsonify({"ok":"删除成功"})
+
+@k8s_op.route('/delete_pv', methods=('GET', 'POST'))
+def delete_pv():
+    data = json.loads(request.get_data().decode('utf-8'))
+    name  = handle_input(data.get('name'))
+    myclient = client.CoreV1Api()
+    try:
+        # body=client.V1DeleteOptions(propagation_policy='Foreground',grace_period_seconds=5)
+        result = myclient.delete_persistent_volume(name=name)
+    except Exception as e:
+        body = json.loads(e.body)
+        msg={"status":e.status,"reason":e.reason,"message":body['message']}
+        # return simple_error_handle(msg)
+        return jsonify({'error': '删除PVC异常',"msg":msg})
+    return jsonify({"ok":"删除成功"})
+
+@k8s_op.route('/delete_pvc', methods=('GET', 'POST'))
+def delete_namespaced_service():
+    data = json.loads(request.get_data().decode('utf-8'))
+    name  = handle_input(data.get('name'))
+    namespace  = handle_input(data.get('namespace'))
+    if namespace == '' or namespace == 'all':
+        return simple_error_handle("namespace不能为空，并且不能选择all")
+    myclient = client.CoreV1Api()
+    try:
+        # body=client.V1DeleteOptions(propagation_policy='Foreground',grace_period_seconds=5)
+        result = myclient.delete_namespaced_persistent_volume_claim(namespace=namespace,name=name)
+    except Exception as e:
+        body = json.loads(e.body)
+        msg={"status":e.status,"reason":e.reason,"message":body['message']}
+        return jsonify({'error': '删除PV异常',"msg":msg})
     return jsonify({"ok":"删除成功"})
 
 # @k8s_op.route('/get_node_by_name', methods=('GET', 'POST'))
@@ -647,7 +680,6 @@ def update_deployment_v2(deploy_name, namespace, action, image=None, replicas=No
         return jsonify({'error': '创建失败', "msg": msg})
 
     return jsonify({"ok": "deployment 执行{}成功".format(action)})
-
 
 @k8s_op.route('/update_deploy_v2',methods=('GET','POST'))  
 def update_deploy_v2():
