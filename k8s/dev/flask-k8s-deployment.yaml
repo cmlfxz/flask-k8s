@@ -102,7 +102,7 @@ spec:
         volumeMounts:
         - name: log
           mountPath: /opt/microservices/logs
-          subPath: logs/$(POD_NAMESPACE)/${Module}/$(POD_NAME)
+          subPath: logs/ms-dev/flask-k8s
         - name: file-config
           mountPath: /opt/microservices/instance
       volumes:
