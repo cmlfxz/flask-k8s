@@ -110,7 +110,7 @@ spec:
       #   emptyDir: {}
       - name: log
         persistentVolumeClaim:
-          claimName: log-rwx-nfs-retain
+          claimName: pvc-rwx-nfs-retain
       - name: file-config
         configMap:
           name: flask-k8s-configmap
