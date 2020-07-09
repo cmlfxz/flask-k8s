@@ -797,49 +797,6 @@ def get_node_name_list():
         node_name_list.append(name)
     return json.dumps(node_name_list,indent=4)
 
-# @k8s.route('/get_node_list',methods=('GET','POST'))
-# def get_node_list():
-# @k8s.route('/get_node_list',methods=('GET','POST'))
-# def get_node_list():
-#     myclient = client.CoreV1Api()
-#     nodes = myclient.list_node()
-#     i = 0
-#     node_list = []
-    
-#     for node in nodes.items:
-#         if (i>=0):
-#             # print(node.spec)
-#             meta = node.metadata
-#             name = meta.name
-#             create_time = time_to_string(meta.creation_timestamp)
-#             cluster_name = meta.cluster_name
-#             labels = meta.labels
-            
-#             spec = node.spec
-#             pod_cidr = spec.pod_cidr
-#             taints = spec.taints
-#             unschedulable = spec.unschedulable
-            
-#             status = node.status
-#             address = status.addresses[0].address 
-            
-#             capacity = status.capacity
-#             cpu_num = capacity['cpu']
-#             disk_space = handle_disk_space(capacity['ephemeral-storage'])
-#             memory = handle_memory(capacity['memory'])
-#             pods = capacity['pods']
-            
-#             mycapacity = {"cpu":cpu_num,"storage(G)":disk_space,"memory(G)":memory,"pods":pods}
-#             images_num = len(status.images)-1 
-#             node_info = status.node_info
-#             phase = status.phase
-            
-#             mynode = {"name":name,"labels":labels,"pod_cidr":pod_cidr,"taints":taints,\
-#                 "unschedulable":unschedulable,"capacity":mycapacity,"images_num":images_num,"node_info":node_info,"create_time":create_time}
-            
-#             node_list.append(mynode)
-#         i = i + 1
-#     return json.dumps(node_list,indent=4,cls=MyEncoder)
 
 @k8s.route('/get_node_detail_list',methods=('GET','POST'))
 def get_node_detail_list():
