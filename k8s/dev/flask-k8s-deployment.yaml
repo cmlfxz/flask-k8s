@@ -44,35 +44,34 @@ spec:
       #   - key: "key"
       #     operator: "Exists"
       #     effect: "NoSchedule" 
-      tolerations:
-        - key: "server"
-          operator: "Equal"
-          value: "prometheus"
-          tolerationSeconds: 3600
-          effect: "NoExecute" 
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - flask-k8s
-            topologyKey: "kubernetes.io/hostname"
-
+      # tolerations:
+      #   - key: "server"
+      #     operator: "Equal"
+      #     value: "prometheus"
+      #     tolerationSeconds: 3600
+      #     effect: "NoExecute" 
       # affinity:
       #   podAntiAffinity:
-      #     preferredDuringSchedulingIgnoredDuringExecution:
-      #     - podAffinityTerm:
-      #         labelSelector:
-      #           matchExpressions:
-      #           - key: app
-      #             operator: In
-      #             values:
-      #             - flask-k8s
-      #         topologyKey: "kubernetes.io/hostname"
-      #       weight: 100
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #     - labelSelector:
+      #         matchExpressions:
+      #         - key: app
+      #           operator: In
+      #           values:
+      #           - flask-k8s
+      #       topologyKey: "kubernetes.io/hostname"
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - flask-k8s
+              topologyKey: "kubernetes.io/hostname"
+            weight: 100
       imagePullSecrets: 
       - name: harborsecret 
       containers:
@@ -81,14 +80,37 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8082
+        env:
+        - name: Module
+          value: flask-k8s
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.podIP
+        - name: HOST_IP
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
         volumeMounts:
         - name: log
           mountPath: /opt/microservices/logs
+          subPath: logs/$(POD_NAMESPACE)/${Module}/$(POD_NAME)
         - name: file-config
           mountPath: /opt/microservices/instance
       volumes:
+      # - name: log
+      #   emptyDir: {}
       - name: log
-        emptyDir: {}
+        persistentVolumeClaim:
+          claimName: log-rwx-nfs-retain
       - name: file-config
         configMap:
           name: flask-k8s-configmap
