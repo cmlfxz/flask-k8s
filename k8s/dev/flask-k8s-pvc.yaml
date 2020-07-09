@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: pvc-rwx-nfs-retain
+  name: flask-k8s-pvc
   namespace: ms-dev
 spec:
   accessModes:

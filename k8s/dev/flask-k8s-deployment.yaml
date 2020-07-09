@@ -81,8 +81,6 @@ spec:
         ports:
         - containerPort: 8082
         env:
-        - name: Module
-          value: flask-k8s
         - name: POD_NAME
           valueFrom:
             fieldRef:
@@ -110,7 +108,7 @@ spec:
       #   emptyDir: {}
       - name: log
         persistentVolumeClaim:
-          claimName: pvc-rwx-nfs-retain
+          claimName: flask-k8s-pvc
       - name: file-config
         configMap:
           name: flask-k8s-configmap
