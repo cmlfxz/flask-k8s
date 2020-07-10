@@ -80,35 +80,46 @@ spec:
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8082
-        env:
-        - name: POD_NAME
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.name
-        - name: POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
-        - name: HOST_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.hostIP
-        - name: POD_NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
         volumeMounts:
         - name: log
           mountPath: /opt/microservices/logs
-          subPath: logs/ms-dev/flask-k8s
+          # subPath: logs/ms-dev/flask-k8s
         - name: file-config
           mountPath: /opt/microservices/instance
+      #log sidecar 
+      - name: filebeat
+        # image: docker.elastic.co/beats/filebeat:6.7.0
+        image: myhub.mydocker.com/elk/filebeat:6.7.0
+        args: [
+          "-c", "/etc/filebeat.yml",
+          "-e",
+        ]
+        resources:
+          limits:
+            memory: 300Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        securityContext:
+          runAsUser: 0
+        volumeMounts:
+        # #挂载filebeat.yml(在configmap中)
+        - name: filebeat-config
+          mountPath: /etc/filebeat.yml
+          subPath: filebeat.yml
+        - name: log
+          mountPath: /opt/microservices/logs
       volumes:
       # - name: log
       #   emptyDir: {}
+      # - name: log
+      #   persistentVolumeClaim:
+      #     claimName: flask-k8s-pvc
       - name: log
-        persistentVolumeClaim:
-          claimName: flask-k8s-pvc
+        emptyDir: {}
+      - name: filebeat-config
+        configMap:
+          name: flask-k8s-filebeat
       - name: file-config
         configMap:
           name: flask-k8s-configmap

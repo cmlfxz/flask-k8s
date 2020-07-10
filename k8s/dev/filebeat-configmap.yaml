@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: flask-k8s-filebeat
+  namespace: ms-dev
+data:
+  filebeat.yml: |-
+    filebeat.prospectors:
+    - type: log
+      paths:
+        - /opt/microservices/logs/*.log
+      fields:
+        env:  dev
+        type: flask-k8s
+      fields_under_root: true
+      multiline:
+        pattern: "^[0-9]{4}-[0-9]{2}-[0-9]{2}"
+        negate: true
+        match: after
+    output.logstash:
+      hosts: ['192.168.11.200:5044']

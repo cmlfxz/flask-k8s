@@ -6,5 +6,6 @@ resources:
 - flask-k8s-vs.yaml
 - flask-k8s-dr.yaml
 - configmap.yaml
+- filebeat-configmap.yaml
 patchesStrategicMerge:
 - deployment_patch.yaml

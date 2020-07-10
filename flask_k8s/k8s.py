@@ -923,11 +923,18 @@ def get_cluster_stats():
 
 #列出namespace
 @k8s.route('/get_configmap_list',methods=('GET','POST'))
-def get_configmap_list():
-    myclient = client.CoreV1Api()
+def get_configmap_list():  
     # myclient = client.AppsV1Api()
-    configmaps = myclient.list_namespaced_config_map(namespace="ms-prod")
-    # configmaps = myclient.list_config_map_for_all_namespaces()
+    # configmaps = myclient.list_namespaced_config_map(namespace="ms-prod")
+    data = json.loads(request.get_data().decode("utf-8"))
+    namespace = handle_input(data.get("namespace"))
+    print("get_configmap_list收到的数据:{}".format(data))
+    myclient = client.CoreV1Api()
+    if namespace == "" or namespace == "all": 
+        configmaps = myclient.list_config_map_for_all_namespaces()
+    else:
+        configmaps = myclient.list_namespaced_config_map(namespace=namespace)
+        
     configmap_list = []
     i = 0 
     for configmap in configmaps.items:
@@ -1244,7 +1251,7 @@ def get_ingress_list():
     # myclient = client.ExtensionsV1beta1Api()
     # # /apis/extensions/v1beta1/namespaces/{namespace}/ingresses
     data = json.loads(request.get_data().decode("utf-8"))
-    namespace = data.get("namespace").strip()
+    namespace = handle_input(data.get("namespace"))
     myclient = client.ExtensionsV1beta1Api()
     if namespace == "" or namespace == "all": 
         ingresss = myclient.list_ingress_for_all_namespaces(watch=False)
