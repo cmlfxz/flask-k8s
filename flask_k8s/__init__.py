@@ -142,6 +142,6 @@ def create_app():
     # app.add_url_rule('/',endpoint='index')
 
     # 调试信息
-    app.logger.info(app.url_map)
+    # app.logger.info(app.url_map)
     # app.logger.info(auth.root_path)
     return app

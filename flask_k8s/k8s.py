@@ -2,7 +2,7 @@
 Reads the list of available API versions and prints them. Similar to running
 `kubectl api-versions`.
 """
-from flask import Flask,jsonify,Response,make_response,Blueprint,request,g
+from flask import Flask,jsonify,Response,make_response,Blueprint,request,g,current_app
 from kubernetes import client,config
 from dateutil import tz, zoneinfo
 import json,os
@@ -674,11 +674,12 @@ def get_pod_list_v3():
 
 @k8s.route('/get_deployment_list',methods=('GET','POST'))
 def get_deployment_list():
-    print('get_deployment_list')
+    # print('get_deployment_list')
     data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("接收到的数据:{}".format(data))
     namespace = data.get("namespace").strip()
     myclient = client.AppsV1Api()
-    print(namespace)
+    # print(namespace)
     if namespace == "" or namespace == "all": 
         deployments = myclient.list_deployment_for_all_namespaces(watch=False)
     else:
@@ -1287,7 +1288,7 @@ def get_ingress_list():
 @k8s.route('/get_deployment_name_list',methods=('GET','POST'))
 def get_deployment_name_list():
     data = json.loads(request.get_data().decode("utf-8"))
-    namespace = data.get("namespace").strip()
+    namespace = handle_input(data.get("namespace"))
     myclient = client.AppsV1Api()
     if namespace == "" or namespace == "all": 
         deployments = myclient.list_deployment_for_all_namespaces(watch=False)
