@@ -59,6 +59,8 @@ from kubernetes.client.models.v1_host_path_volume_source import V1HostPathVolume
 from kubernetes.client.models.v1_rbd_persistent_volume_source import V1RBDPersistentVolumeSource
 from kubernetes.client.models.v1_secret_reference import V1SecretReference
 from kubernetes.client.models.v1_host_path_volume_source import V1HostPathVolumeSource
+from kubernetes.client.models.v1_persistent_volume_claim_volume_source import V1PersistentVolumeClaimVolumeSource
+from kubernetes.client.models.v1_persistent_volume_status import V1PersistentVolumeStatus
 
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):  
@@ -88,6 +90,17 @@ class MyEncoder(json.JSONEncoder):
             return {
                 "_name": obj._name,
                 "namespace": obj.namespace,
+            }
+        elif isinstance(obj, V1PersistentVolumeStatus):  
+            return {
+                "message": obj.message,
+                "phase": obj.phase,
+                "reason": obj.reason,
+            }
+        elif isinstance(obj, V1PersistentVolumeClaimVolumeSource):  
+            return {
+                "claim_name": obj.claim_name,
+                "read_only": obj.read_only,
             }
         elif isinstance(obj, V1HostPathVolumeSource):  
             return {
@@ -177,6 +190,7 @@ class MyEncoder(json.JSONEncoder):
                 "cephfs":obj.cephfs,
                 "empty_dir": obj.empty_dir,
                 "host_path": obj.host_path,
+                "persistent_volume_claim": obj.persistent_volume_claim,
             }      
         elif isinstance(obj,V1PodSpec):
             return {

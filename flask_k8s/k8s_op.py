@@ -1,4 +1,4 @@
-from flask import Flask,jsonify,Response,make_response,Blueprint,request,g
+from flask import Flask,jsonify,Response,make_response,Blueprint,request,g,current_app
 from kubernetes import client,config
 from dateutil import tz, zoneinfo
 import json,os
@@ -378,6 +378,118 @@ def create_deploy_by_yaml():
                 return make_response(json.dumps({"error": "1001", "msg": str(e)}, indent=4, cls=MyEncoder), 1001)
 
     return jsonify({"msg": "创建deployment成功"})
+
+# for k, v in kwargs.items():
+#         print ('Optional argument %s (kwargs): %s' % (k, v))
+# if claim_ref is not None:
+#     self.claim_ref = claim_ref
+# if flex_volume is not None:
+#     self.flex_volume = flex_volume
+# if glusterfs is not None:
+#     self.glusterfs = glusterfs
+# if host_path is not None:
+#     self.host_path = host_path
+# if local is not None:
+#     self.local = local
+# if mount_options is not None:
+#     self.mount_options = mount_options
+# if persistent_volume_reclaim_policy is not None:
+#     self.persistent_volume_reclaim_policy = persistent_volume_reclaim_policy
+# if rbd is not None:
+#     self.rbd = rbd
+# if storage_class_name is not None:
+#     self.storage_class_name = storage_class_name
+# if storageos is not None:
+#     self.storageos = storageos
+# if volume_mode is not None:
+#     # self.volume_mode = volume_mode
+def create_pv_object(name,**kwargs):
+    for k,v in kwargs.items():
+        print ('Optional key: %s value: %s' % (k, v))
+    # Optional argument capacity (kwargs): 30Gi
+    # Optional argument accessModes (kwargs): ReadWriteMany
+    # Optional argument reclaimPolicy (kwargs): delete
+    # Optional argument storage_class_name (kwargs):
+    # Optional argument nfs (kwargs): {'path': '/NAS', 'server': '192.168.11.31', 'readonly': 'false'}
+    # [2020-07-11 20:17:21,862] DEBUG in k8s_op: nfs: {'path': '/NAS', 'server': '192.168.11.31', 'readonly': 'false'}
+    capacity = kwargs['capacity']
+    accessModes = kwargs['accessModes']
+    reclaimPolicy = kwargs['reclaimPolicy']
+    storage_class_name = kwargs['storage_class_name']
+    nfs = kwargs['nfs']
+    # current_app.logger.debug("nfs: {}".format(nfs))
+    nfs_path = nfs['path']
+    nfs_server = nfs['server']
+    readonly = nfs['readonly']
+    
+    nfs_readonly = False
+    if readonly == 'true':
+        nfs_readonly = True
+    elif readonly == 'false':
+        nfs_readonly == False
+    else:
+        pass
+    
+    # current_app.logger.debug(nfs_path)
+    # current_app.logger.debug(nfs_server)
+    # current_app.logger.debug(nfs_readonly)
+    
+    # current_app.logger.debug(capacity)
+    # current_app.logger.debug(accessModes)
+    # current_app.logger.debug(reclaimPolicy)
+    # current_app.logger.debug(storage_class_name)
+    # current_app.logger.debug(nfs)
+    
+    spec = client.V1PersistentVolumeSpec(
+        access_modes = [accessModes],
+        capacity = {"storage":capacity},
+        persistent_volume_reclaim_policy = reclaimPolicy,
+        nfs = client.V1NFSVolumeSource(
+            path = nfs_path,
+            server = nfs_server,
+            read_only = nfs_readonly
+        ),
+        storage_class_name=storage_class_name,
+        
+    )
+    print(spec)
+    pv = client.V1PersistentVolume(
+        api_version="v1",
+        kind="PersistentVolume",
+        metadata=client.V1ObjectMeta(name=name),
+        spec=spec)
+    return pv
+@k8s_op.route('/create_pv',methods=('GET','POST'))
+def create_pv():
+    data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("接收到的数据:{}".format(data))
+    name = handle_input(data.get('name'))
+
+    pv =  handle_input(data.get('pv'))
+    capacity = pv['capacity']
+    accessModes = pv['accessModes']
+    reclaimPolicy = pv['reclaimPolicy']
+    storage_class_name = pv['storage_class_name']
+    nfs  = pv['nfs']
+    
+    current_app.logger.debug(capacity)
+    current_app.logger.debug(nfs)
+    
+    # args= {"capacity":capacity,"accessModes":accessModes,\
+    #         "reclaimPolicy":reclaimPolicy,"storage_class_name":storage_class_name,"nfs":nfs}
+
+    pv = create_pv_object(name=name,capacity=capacity,accessModes=accessModes,\
+            reclaimPolicy=reclaimPolicy,storage_class_name=storage_class_name,nfs=nfs)
+    current_app.logger.debug(pv)
+    myclient = client.CoreV1Api()
+    try:
+        api_response = myclient.create_persistent_volume(body=pv)
+    except ApiException as e:
+        body = json.loads(e.body)
+        msg={"status":e.status,"reason":e.reason,"message":body['message']}
+        return jsonify({'error': '创建失败',"msg":msg})
+    
+    return jsonify({"ok":"创建pv成功"})
 
 def create_deployment_object(name=None,namespace=None,image=None,port=None,image_pull_policy=None,\
     imagePullSecret=None,labels=None,replicas=None,cpu=None,memory=None,liveness_probe=None,readiness_probe=None):

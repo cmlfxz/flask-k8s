@@ -26,6 +26,7 @@ CORS(k8s, suppors_credentials=True, resources={r'/*'})
 def takename(e):
     return e['name']
 
+
 # http://192.168.11.51:1900/apis/metrics.k8s.io/v1beta1/nodes 
 
 @k8s.before_app_request
@@ -94,6 +95,8 @@ def handle_memory(memory):
 def get_named_node_usage_detail(name):
     myclient = client.CustomObjectsApi()
     plural = "{}/{}".format("nodes",name)
+    current_app.logger.debug(plural)
+    # 这个API不稳定
     node = myclient.list_cluster_custom_object(group="metrics.k8s.io",version="v1beta1",plural=plural)
     node_name = node['metadata']['name']
 
@@ -1088,6 +1091,8 @@ def get_storageclass_list():
         i = i +1
     return json.dumps(storageclass_list,indent=4,cls=MyEncoder)
 
+def takeCreateTime(elem):
+    return elem['create_time']
 #列出pv
 @k8s.route('/get_pv_list',methods=('GET','POST'))
 def get_pv_list():
