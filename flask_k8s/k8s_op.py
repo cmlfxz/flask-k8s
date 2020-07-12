@@ -200,8 +200,7 @@ def get_node_by_name(name=None):
 
     print(type(node))
     return node
-    # for item in nodes.items:
-    #     pass
+
 @k8s_op.route('/update_node', methods=('GET', 'POST'))
 def update_node():
     data=json.loads(request.get_data().decode('utf-8'))
@@ -406,12 +405,6 @@ def create_deploy_by_yaml():
 def create_pv_object(name,**kwargs):
     for k,v in kwargs.items():
         print ('Optional key: %s value: %s' % (k, v))
-    # Optional argument capacity (kwargs): 30Gi
-    # Optional argument accessModes (kwargs): ReadWriteMany
-    # Optional argument reclaimPolicy (kwargs): delete
-    # Optional argument storage_class_name (kwargs):
-    # Optional argument nfs (kwargs): {'path': '/NAS', 'server': '192.168.11.31', 'readonly': 'false'}
-    # [2020-07-11 20:17:21,862] DEBUG in k8s_op: nfs: {'path': '/NAS', 'server': '192.168.11.31', 'readonly': 'false'}
     capacity = kwargs['capacity']
     accessModes = kwargs['accessModes']
     reclaimPolicy = kwargs['reclaimPolicy']
@@ -1128,4 +1121,62 @@ def delete_vs():
     namespace = handle_input(data.get('namespace'))
     virtual_service_name = handle_input(data.get('virtual_service_name'))
     return delete_virtual_service(namespace=namespace,virtual_service_name=virtual_service_name)
+
+
+@k8s_op.route('/delete_daemonset',methods=('GET','POST'))
+def delete_daemonset():
+    data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("接收到的数据:{}".format(data))
+    name = handle_input(data.get('name'))
+    namespace = handle_input(data.get("namespace"))
     
+    if namespace == '' or namespace == 'all':
+        return simple_error_handle("namespace不能为空，并且不能选择all")
+    myclient = client.AppsV1Api()
+    try:
+        # body=client.V1DeleteOptions(propagation_policy='Foreground',grace_period_seconds=5)
+        result = myclient.delete_namespaced_daemon_set(namespace=namespace,name=name)
+    except ApiException as e:
+        body = json.loads(e.body)
+        msg={"status":e.status,"reason":e.reason,"message":body['message']}
+        return jsonify({'error': '删除daemonset异常',"msg":msg})
+    return jsonify({"ok":"删除成功"})
+
+@k8s_op.route('/delete_statefulset',methods=('GET','POST'))
+def delete_statefulset():
+    data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("接收到的数据:{}".format(data))
+    name = handle_input(data.get('name'))
+    namespace = handle_input(data.get("namespace"))
+    
+    if namespace == '' or namespace == 'all':
+        return simple_error_handle("namespace不能为空，并且不能选择all")
+    myclient = client.AppsV1beta1Api()
+    try:
+        # body=client.V1DeleteOptions(propagation_policy='Foreground',grace_period_seconds=5)
+        result = myclient.delete_namespaced_stateful_set(namespace=namespace,name=name)
+    except ApiException as e:
+        body = json.loads(e.body)
+        msg={"status":e.status,"reason":e.reason,"message":body['message']}
+        return jsonify({'error': '删除statefulset异常',"msg":msg})
+    return jsonify({"ok":"删除成功"})
+    
+
+@k8s_op.route('/delete_configmap',methods=('GET','POST'))
+def delete_configmap():
+    data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("接收到的数据:{}".format(data))
+    name = handle_input(data.get('name'))
+    namespace = handle_input(data.get("namespace"))
+    
+    if namespace == '' or namespace == 'all':
+        return simple_error_handle("namespace不能为空，并且不能选择all")
+    myclient = client.CoreV1Api()
+    try:
+        # body=client.V1DeleteOptions(propagation_policy='Foreground',grace_period_seconds=5)
+        result = myclient.delete_namespaced_config_map(namespace=namespace,name=name)
+    except ApiException as e:
+        body = json.loads(e.body)
+        msg={"status":e.status,"reason":e.reason,"message":body['message']}
+        return jsonify({'error': '删除configmap异常',"msg":msg})
+    return jsonify({"ok":"删除成功"})

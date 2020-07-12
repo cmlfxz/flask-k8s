@@ -18,6 +18,7 @@ from .util import time_to_string,utc_to_local
 from .util import dir_path
 from .util import handle_input,handle_toleraion_seconds,string_to_int,handle_toleration_item
 from flask_cors import *
+import pprint
 
 k8s = Blueprint('k8s',__name__,url_prefix='/k8s')
 
@@ -415,10 +416,10 @@ def get_service_list():
         
         for p in ports:
             endpoint = "{}.{}:{} {}".format(name,namespace,p.port,p.protocol)
+            internal_endpoints.append(endpoint)
             if p.node_port:
                 endpoint2 = "{}.{}:{} {}".format(name,namespace,p.node_port,p.protocol)
-            internal_endpoints.append(endpoint)
-            internal_endpoints.append(endpoint2)
+                internal_endpoints.append(endpoint2)
         service = {"name":name,"namespace":namespace,"service_type":service_type,"ports":ports,\
             "internal_endpoints":internal_endpoints,"labels":labels,"cluster_ip":cluster_ip,\
             "selector":selector,"create_time":create_time}
@@ -747,14 +748,21 @@ def get_deployment_list():
 
 @k8s.route('/get_daemonset_list',methods=('GET','POST'))
 def get_daemonset_list():
+    data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("接收到的数据:{}".format(data))
+    namespace = handle_input(data.get("namespace"))
     myclient = client.AppsV1Api()
-    daemonsets = myclient.list_daemon_set_for_all_namespaces()
+    # daemonsets = myclient.list_daemon_set_for_all_namespaces()
+    if namespace == "" or namespace == "all": 
+        daemonsets = myclient.list_daemon_set_for_all_namespaces(watch=False)
+    else:
+        daemonsets = myclient.list_namespaced_daemon_set(namespace=namespace)
     i = 0
     
     daemonset_list = []
     for daemonset in daemonsets.items:
-        if (i==0):
-            # print(daemonset)
+        if (i>=0):
+            print(daemonset)
             meta = daemonset.metadata
             name = meta.name
             create_time = time_to_string(meta.creation_timestamp)
@@ -768,12 +776,16 @@ def get_daemonset_list():
             affinity = template_spec.affinity
             containers = template_spec.containers
             container_list = []
+            i = 0 
             for container in containers:
-                image = container.image
-                volume_mounts = container.volume_mounts
-                env = container.env
-                mycontainer = {"image":image,"volume_mounts":volume_mounts,"env":env}
-                container_list.append(mycontainer)
+                if (i == 0):
+                    image = container.image
+                    volume_mounts = container.volume_mounts
+                    env = container.env
+                    mycontainer = {"image":image}
+                    # mycontainer = {"image":image,"volume_mounts":volume_mounts,"env":env}
+                    container_list.append(mycontainer)
+                i = i + 1
             host_network = template_spec.host_network
             node_selector = template_spec.node_selector
             
@@ -781,10 +793,10 @@ def get_daemonset_list():
             
             status = daemonset.status
             mystatus = {"current_number_scheduled":status.current_number_scheduled,"desired_number_scheduled":status.desired_number_scheduled,\
-                "number_available":status.number_available,"number_ready":status.number_ready,"number_unavailable":status.number_unavailable}
+                "number_available":status.number_available,"number_ready":status.number_ready,"number_misscheduled":status.number_misscheduled}
             
-            mydaemonset = {"name":name,"create_time":create_time,"namespace":namespace,"labels":labels,"affinity":affinity,"containers":container_list,\
-                "host_network":host_network,"tolerations":tolerations,"status":mystatus}
+            mydaemonset = {"name":name,"namespace":namespace,"labels":labels,"affinity":affinity,"containers":container_list,\
+                "host_network":host_network,"status":mystatus,"create_time":create_time}
             daemonset_list.append(mydaemonset)
             
         i = i +1       
@@ -925,7 +937,6 @@ def get_cluster_stats():
     cluster_stat_list.append(cluster_stat)
     return json.dumps({"node_list":node_list,"cluster_stat_list":cluster_stat_list})
 
-#列出namespace
 @k8s.route('/get_configmap_list',methods=('GET','POST'))
 def get_configmap_list():  
     # myclient = client.AppsV1Api()
@@ -952,12 +963,50 @@ def get_configmap_list():
             namespace = meta.namespace 
             data = configmap.data    
             
-            myconfigmap = {"name":name,"create_time":create_time,"labels":labels,"namespace":namespace,"data":data}    
+            myconfigmap = {"name":name,"namespace":namespace,"labels":labels,"create_time":create_time}    
             configmap_list.append(myconfigmap) 
         i = i +1
     return json.dumps(configmap_list,indent=4,cls=MyEncoder)
     # return jsonify({'a':1})
-        
+    
+
+@k8s.route('/get_cm_detail_by_name',methods=('GET','POST'))        
+def get_cm_detail_by_name():
+    data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("收到的数据:{}".format(data))
+    namespace =  handle_input(data.get("namespace"))
+    cm_name = handle_input(data.get('name'))
+    myclient = client.CoreV1Api()
+    field_selector="metadata.name={}".format(cm_name)
+    current_app.logger.debug(field_selector)
+    configmaps = myclient.list_namespaced_config_map(namespace=namespace,field_selector=field_selector)
+    configmap = None
+    for item in configmaps.items:
+        if item.metadata.name == cm_name:
+            configmap = item
+            break
+    if configmap == None:
+        return simple_error_handle("找不到configmap相关信息")
+
+    meta = configmap.metadata
+    name = meta.name
+    create_time = time_to_string(meta.creation_timestamp)
+
+    labels = meta.labels
+    namespace = meta.namespace
+    data = configmap.data
+    # print(type(data),data)
+    # for k,v in data.items():
+    #     print(k,v)
+    mycm = {
+        "name":name,
+        "namespace":namespace,
+        "labels":labels,
+        "create_time":create_time,
+        "data":data
+    }          
+    return json.dumps(mycm,indent=4,cls=MyEncoder)
+
 #列出namespace
 @k8s.route('/get_secret_list',methods=('GET','POST'))
 def get_secret_list():
