@@ -61,6 +61,24 @@ spec:
       #           - flask-k8s
       #       topologyKey: "kubernetes.io/hostname"
       affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 1
+            preference:
+              matchExpressions:
+              - key: server
+                operator: In
+                values:
+                - elk
+        # nodeAffinity:
+        #   requiredDuringSchedulingIgnoredDuringExecution:
+        #   nodeSelectorTerms:
+        #   - matchExpressions:
+        #     - key: server
+        #       operator: In
+        #       values:
+        #       - elk
+
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
           - podAffinityTerm:

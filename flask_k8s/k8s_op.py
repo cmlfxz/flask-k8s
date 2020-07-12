@@ -1180,3 +1180,24 @@ def delete_configmap():
         msg={"status":e.status,"reason":e.reason,"message":body['message']}
         return jsonify({'error': '删除configmap异常',"msg":msg})
     return jsonify({"ok":"删除成功"})
+
+
+@k8s_op.route('/delete_secret', methods=('GET', 'POST'))
+def delete_secret():
+    data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("接收到的数据:{}".format(data))
+    name = handle_input(data.get('name'))
+    namespace = handle_input(data.get("namespace"))
+
+    if namespace == '' or namespace == 'all':
+        return simple_error_handle("namespace不能为空，并且不能选择all")
+    myclient = client.CoreV1Api()
+    try:
+        # body=client.V1DeleteOptions(propagation_policy='Foreground',grace_period_seconds=5)
+        result = myclient.delete_namespaced_secret(namespace=namespace, name=name)
+        # result = myclient.delete_namespaced_config_map(namespace=namespace, name=name)
+    except ApiException as e:
+        body = json.loads(e.body)
+        msg = {"status": e.status, "reason": e.reason, "message": body['message']}
+        return jsonify({'error': '删除secret异常', "msg": msg})
+    return jsonify({"ok": "删除成功"})

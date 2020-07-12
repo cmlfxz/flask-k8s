@@ -1030,12 +1030,59 @@ def get_secret_list():
             cluster_name = meta.cluster_name
             labels = meta.labels
             namespace = meta.namespace 
-            data = secret.data    
+            data = secret.data
+            type = secret.type
             
-            mysecret = {"name":name,"create_time":create_time,"cluster_name":cluster_name,"namespace":namespace,"data":data}    
+            mysecret = {"name":name,"namespace":namespace,"type":type,"create_time":create_time}
             secret_list.append(mysecret) 
         i = i +1
     return json.dumps(secret_list,indent=4,cls=MyEncoder)
+
+@k8s.route('/get_secret_detail_by_name',methods=('GET','POST'))        
+def get_secret_detail_by_name():
+    data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("收到的数据:{}".format(data))
+    namespace =  handle_input(data.get("namespace"))
+    secret_name = handle_input(data.get('name'))
+    myclient = client.CoreV1Api()
+    field_selector="metadata.name={}".format(secret_name)
+    current_app.logger.debug(field_selector)
+    secrets = myclient.list_namespaced_secret(namespace=namespace,field_selector=field_selector)
+    secret = None
+    for item in secrets.items:
+        if item.metadata.name == secret_name:
+            secret = item
+            break
+    if secret == None:
+        return simple_error_handle("找不到secret相关信息")
+    meta = secret.metadata
+    name = meta.name
+    create_time = time_to_string(meta.creation_timestamp)
+    labels = meta.labels
+    namespace = meta.namespace
+    data = secret.data
+    secret_type = secret.type
+    # print(type(data),data)
+    data_list = []
+    for k,v in data.items():
+        # print(k, my_decode(v))
+        value = my_decode(v)
+        item = {
+            "key":k,
+            "value":value,
+        }
+        data_list.append(item)
+
+    #     data返回列表吧
+    mysecret = {
+        "name":name,
+        "namespace":namespace,
+        "labels":labels,
+        "create_time":create_time,
+        "type":secret_type,
+        "data":data_list,
+    }          
+    return json.dumps(mysecret,indent=4,cls=MyEncoder)
 
 #列出job
 @k8s.route('/get_job_list',methods=('GET','POST'))
