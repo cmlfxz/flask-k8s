@@ -1,24 +1,16 @@
-"""
-Reads the list of available API versions and prints them. Similar to running
-`kubectl api-versions`.
-"""
 from flask import Flask,jsonify,Response,make_response,Blueprint,request,g,current_app
-from kubernetes import client,config
+from flask_cors import *
 from dateutil import tz, zoneinfo
-import json,os
 from datetime import datetime,date
-import math
 from .k8s_decode import MyEncoder
-import requests
-import time
-import ssl
+import json,os,math,requests,time,pytz,ssl,yaml
 from .util import get_db_conn,my_decode,my_encode,str_to_int,str_to_float
 from .util import SingletonDBPool
 from .util import time_to_string,utc_to_local
 from .util import dir_path
 from .util import handle_input,handle_toleraion_seconds,string_to_int,handle_toleration_item
-from flask_cors import *
-import pprint
+from .util import get_cluster_config
+from kubernetes import client,config
 
 k8s = Blueprint('k8s',__name__,url_prefix='/k8s')
 
@@ -26,7 +18,8 @@ CORS(k8s, suppors_credentials=True, resources={r'/*'})
 
 def takename(e):
     return e['name']
-
+def takeCreateTime(elem):
+    return elem['create_time']
 
 # http://192.168.11.51:1900/apis/metrics.k8s.io/v1beta1/nodes 
 
@@ -126,25 +119,6 @@ def get_node_usage_detail():
             node_usage_list.append(node_usage)
         i = i +1
     return node_usage_list
-        
-def get_cluster_config(cluster_name):
-    cluster_config = None
-    # conn = get_db_conn()
-    pool = SingletonDBPool()
-    conn = pool.connect()
-    if conn == None:
-        print("无法获取数据库连接")
-    else:
-        cursor = conn.cursor()
-        sql = "select cluster_config from cluster where cluster_name = \'{}\' ".format(cluster_name)
-        try:
-            cursor.execute(sql)
-            results  =  cursor.fetchone()
-            cluster_config = results[0]
-        except Exception as e:
-            print("查询不到数据")
-    conn.close()
-    return cluster_config
 
 def set_k8s_config(cluster_config):
     if cluster_config == None:
@@ -692,7 +666,7 @@ def get_deployment_list():
     deployment_list = []
     for deployment in deployments.items:
         if (i>=0):
-            # print(deployment)
+            # current_app.logger.debug(deployment)
             meta = deployment.metadata
             name = meta.name
             create_time = time_to_string(meta.creation_timestamp)
@@ -710,12 +684,17 @@ def get_deployment_list():
             pod_affinity =None 
             pod_anti_affinity = None
             
-            template_spec = template.spec 
+            template_spec = deployment.spec.template.spec
             affinity = template_spec.affinity
+
             if affinity:
                 node_affinity = affinity.node_affinity
                 pod_affinity = affinity.pod_affinity
                 pod_anti_affinity = affinity.pod_anti_affinity
+            if (name=="flask-tutorial"):
+                # current_app.logger.debug(deployment)
+                current_app.logger.debug(affinity)
+                current_app.logger.debug(pod_anti_affinity)
             containers = template_spec.containers
             
             container_names = []
@@ -730,7 +709,8 @@ def get_deployment_list():
             tolerations = template_spec.tolerations
             
             status = deployment.status
-            ready = "{}/{}".format(status.ready_replicas,status.replicas)
+            # ready = "{}/{}".format(status.ready_replicas,status.replicas)
+            ready = "{}/{}".format(status.ready_replicas, replicas)
             mystatus = {"replicas":replicas,"ready":ready,"available_replicas":status.available_replicas,\
             "up-to-date":status.updated_replicas,"create_time":create_time}
 
@@ -1187,8 +1167,7 @@ def get_storageclass_list():
         i = i +1
     return json.dumps(storageclass_list,indent=4,cls=MyEncoder)
 
-def takeCreateTime(elem):
-    return elem['create_time']
+
 #列出pv
 @k8s.route('/get_pv_list',methods=('GET','POST'))
 def get_pv_list():
@@ -1389,6 +1368,7 @@ def get_ingress_list():
 @k8s.route('/get_deployment_name_list',methods=('GET','POST'))
 def get_deployment_name_list():
     data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("接收到的数据:{}".format(data))
     namespace = handle_input(data.get("namespace"))
     myclient = client.AppsV1Api()
     if namespace == "" or namespace == "all": 

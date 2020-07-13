@@ -11,6 +11,8 @@ import os
 
 from .k8s import k8s
 from .k8s_op import k8s_op
+from .k8s_demo import k8s_demo
+from .k8s_deployment import k8s_deployment
 from flask_cors import *
 from kubernetes import client, config
 # from .models import db
@@ -139,9 +141,11 @@ def create_app():
     # 加载蓝图
     app.register_blueprint(k8s)
     app.register_blueprint(k8s_op)
+    app.register_blueprint(k8s_demo)
+    app.register_blueprint(k8s_deployment)
     # app.add_url_rule('/',endpoint='index')
 
     # 调试信息
-    # app.logger.info(app.url_map)
+    app.logger.info(app.url_map)
     # app.logger.info(auth.root_path)
     return app

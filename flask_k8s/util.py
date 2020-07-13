@@ -2,7 +2,7 @@ import os,json
 from datetime import date, datetime
 import decimal
 import pymysql 
-from flask import current_app
+from flask import jsonify,current_app
 import base64
 import threading
 import pytz
@@ -129,3 +129,22 @@ class SingletonDBPool(object):
 
     def connect(self):
         return self.pool.connection()
+
+def get_cluster_config(cluster_name):
+    cluster_config = None
+    # conn = get_db_conn()
+    pool = SingletonDBPool()
+    conn = pool.connect()
+    if conn == None:
+        print("无法获取数据库连接")
+    else:
+        cursor = conn.cursor()
+        sql = "select cluster_config from cluster where cluster_name = \'{}\' ".format(cluster_name)
+        try:
+            cursor.execute(sql)
+            results  =  cursor.fetchone()
+            cluster_config = results[0]
+        except Exception as e:
+            print("查询不到数据")
+    conn.close()
+    return cluster_config

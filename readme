@@ -125,3 +125,28 @@ class ApiException(Exception):
             self.reason = reason
             self.body = None
             self.headers = None
+
+# for k, v in kwargs.items():
+#         print ('Optional argument %s (kwargs): %s' % (k, v))
+# if claim_ref is not None:
+#     self.claim_ref = claim_ref
+# if flex_volume is not None:
+#     self.flex_volume = flex_volume
+# if glusterfs is not None:
+#     self.glusterfs = glusterfs
+# if host_path is not None:
+#     self.host_path = host_path
+# if local is not None:
+#     self.local = local
+# if mount_options is not None:
+#     self.mount_options = mount_options
+# if persistent_volume_reclaim_policy is not None:
+#     self.persistent_volume_reclaim_policy = persistent_volume_reclaim_policy
+# if rbd is not None:
+#     self.rbd = rbd
+# if storage_class_name is not None:
+#     self.storage_class_name = storage_class_name
+# if storageos is not None:
+#     self.storageos = storageos
+# if volume_mode is not None:
+#     # self.volume_mode = volume_mode
