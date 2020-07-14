@@ -12,6 +12,7 @@ from .util import handle_input,handle_toleraion_seconds,string_to_int,handle_tol
 from .util import get_cluster_config,simple_error_handle
 from .util import handle_cpu,handle_memory,handle_disk_space
 from kubernetes import client,config
+from kubernetes.client.rest import ApiException
 
 k8s = Blueprint('k8s',__name__,url_prefix='/k8s')
 
@@ -158,10 +159,21 @@ def get_gateway_list():
     data = json.loads(request.get_data().decode("utf-8"))
     namespace = data.get("namespace").strip()
     myclient = client.CustomObjectsApi()
-    if namespace == "" or namespace == "all": 
-        obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="gateways")
-    else:
-        obj = myclient.list_namespaced_custom_object(namespace=namespace,group="networking.istio.io",version="v1alpha3",plural="gateways")  
+    try:
+        if namespace == "" or namespace == "all":
+            obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="gateways")
+        else:
+            obj = myclient.list_namespaced_custom_object(namespace=namespace,group="networking.istio.io",version="v1alpha3",plural="gateways")
+    except ApiException as e:
+        if isinstance(e.body,dict):
+            body = json.loads(e.body)
+            message = body['message']
+        else:
+            body = e.body
+            message = body
+        msg = {"status": e.status, "reason": e.reason, "message": message}
+        current_app.logger.debug(msg)
+        return jsonify({'error': '获取列表失败', "msg": msg})
     gateways = obj['items']
     gateway_list = []
     i = 0
@@ -195,10 +207,22 @@ def get_virtual_service_list():
     data = json.loads(request.get_data().decode("utf-8"))
     namespace = data.get("namespace").strip()
     myclient = client.CustomObjectsApi()
-    if namespace == "" or namespace == "all": 
-        obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="virtualservices")
-    else:
-        obj = myclient.list_namespaced_custom_object(namespace=namespace,group="networking.istio.io",version="v1alpha3",plural="virtualservices")
+    #bug 没有vs的集群报错404，页面没具体显示
+    try:
+        if namespace == "" or namespace == "all":
+            obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="virtualservices")
+        else:
+            obj = myclient.list_namespaced_custom_object(namespace=namespace,group="networking.istio.io",version="v1alpha3",plural="virtualservices")
+    except ApiException as e:
+        if isinstance(e.body,dict):
+            body = json.loads(e.body)
+            message = body['message']
+        else:
+            body = e.body
+            message = body
+        msg = {"status": e.status, "reason": e.reason, "message": message}
+        current_app.logger.debug(msg)
+        return jsonify({'error': '获取列表失败', "msg": msg})
 
     virtual_services = obj['items']
     virtual_service_list = []
@@ -233,10 +257,21 @@ def get_destination_rule_list():
     data = json.loads(request.get_data().decode("utf-8"))
     namespace = data.get("namespace").strip()
     myclient = client.CustomObjectsApi()
-    if namespace == "" or namespace == "all": 
-        obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="destinationrules")
-    else:
-        obj = myclient.list_namespaced_custom_object(namespace=namespace,group="networking.istio.io",version="v1alpha3",plural="destinationrules")
+    try:
+        if namespace == "" or namespace == "all":
+            obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="destinationrules")
+        else:
+            obj = myclient.list_namespaced_custom_object(namespace=namespace,group="networking.istio.io",version="v1alpha3",plural="destinationrules")
+    except ApiException as e:
+        if isinstance(e.body,dict):
+            body = json.loads(e.body)
+            message = body['message']
+        else:
+            body = e.body
+            message = body
+        msg = {"status": e.status, "reason": e.reason, "message": message}
+        current_app.logger.debug(msg)
+        return jsonify({'error': '获取列表失败', "msg": msg})
     #obj是一个字典
     destination_rules = obj['items']
     destination_rule_list = []
@@ -971,8 +1006,27 @@ def get_pvc_list():
 
 @k8s.route('/get_statefulset_list',methods=('GET','POST'))
 def get_statefulset_list():
+    data = json.loads(request.get_data().decode("utf-8"))
+    namespace = handle_input(data.get("namespace"))
+    current_app.logger.debug("接收到的数据:{}".format(namespace))
     myclient = client.AppsV1Api()
-    statefulsets = myclient.list_stateful_set_for_all_namespaces()
+    # statefulsets = myclient.list_stateful_set_for_all_namespaces()
+    try:
+        if namespace == "" or namespace == "all":
+            statefulsets = myclient.list_stateful_set_for_all_namespaces()
+        else:
+            statefulsets = myclient.list_namespaced_stateful_set(namespace=namespace)
+    except ApiException as e:
+        if isinstance(e.body,dict):
+            body = json.loads(e.body)
+            message = body['message']
+        else:
+            body = e.body
+            message = body
+        msg = {"status": e.status, "reason": e.reason, "message": message}
+        current_app.logger.debug(msg)
+        return jsonify({'error': '获取列表失败', "msg": msg})
+
     i = 0
     statefulset_list = []
     for statefulset in statefulsets.items:
