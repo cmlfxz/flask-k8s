@@ -150,3 +150,28 @@ class ApiException(Exception):
 #     self.storageos = storageos
 # if volume_mode is not None:
 #     # self.volume_mode = volume_mode
+跟命名空间无关:
+api版本
+node
+namespaces
+storageclass
+pv
+
+有关
+
+deployment
+pod
+service
+configmap
+secret
+job
+cronjob
+daemonset
+stateful
+pvc 
+gateway
+ingress
+vs 
+dr 
+
+

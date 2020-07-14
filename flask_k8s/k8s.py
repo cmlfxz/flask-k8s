@@ -9,7 +9,8 @@ from .util import SingletonDBPool
 from .util import time_to_string,utc_to_local
 from .util import dir_path
 from .util import handle_input,handle_toleraion_seconds,string_to_int,handle_toleration_item
-from .util import get_cluster_config
+from .util import get_cluster_config,simple_error_handle
+from .util import handle_cpu,handle_memory,handle_disk_space
 from kubernetes import client,config
 
 k8s = Blueprint('k8s',__name__,url_prefix='/k8s')
@@ -52,39 +53,39 @@ def after(resp):
     resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
     return resp
 
-def handle_cpu(cpu):
-    if cpu == "0":
-        return 0
-    elif cpu.endswith('n'):
-        # 返回m为单位的cpu值
-        # return int(cpu.split('n')[0])/1000/1000
-        return math.ceil(int(cpu.split('n')[0])/1000/1000)
-    else:
-        print("出现未识别的CPU格式{}".format(cpu))
-        return 0
-
-def handle_disk_space(disk):
-    if disk == "0":
-        return 0
-    elif disk.endswith('Ki'):
-        # 转成G单位大小
-        return math.ceil(int(disk.split('Ki')[0])/1024/1024)
-    elif disk.endswith('Mi'):
-        return math.ceil(int(disk.split('Mi')[0])/1024)
-    else:
-        print("出现未识别的disk_space格式{}".format(disk))
-        return 0
-
-def handle_memory(memory):
-    if memory == "0":
-        return 0
-    elif memory.endswith('Ki'):
-        return math.ceil(int(memory.split('Ki')[0])/1024)
-    elif memory.endswith('Mi'):
-        return math.ceil(int(memory.split('Mi')[0]))
-    else:
-        print("出现未识别的内存格式{}".format(memory))
-        return 0
+# def handle_cpu(cpu):
+#     if cpu == "0":
+#         return 0
+#     elif cpu.endswith('n'):
+#         # 返回m为单位的cpu值
+#         # return int(cpu.split('n')[0])/1000/1000
+#         return math.ceil(int(cpu.split('n')[0])/1000/1000)
+#     else:
+#         print("出现未识别的CPU格式{}".format(cpu))
+#         return 0
+#
+# def handle_disk_space(disk):
+#     if disk == "0":
+#         return 0
+#     elif disk.endswith('Ki'):
+#         # 转成G单位大小
+#         return math.ceil(int(disk.split('Ki')[0])/1024/1024)
+#     elif disk.endswith('Mi'):
+#         return math.ceil(int(disk.split('Mi')[0])/1024)
+#     else:
+#         print("出现未识别的disk_space格式{}".format(disk))
+#         return 0
+#
+# def handle_memory(memory):
+#     if memory == "0":
+#         return 0
+#     elif memory.endswith('Ki'):
+#         return math.ceil(int(memory.split('Ki')[0])/1024)
+#     elif memory.endswith('Mi'):
+#         return math.ceil(int(memory.split('Mi')[0]))
+#     else:
+#         print("出现未识别的内存格式{}".format(memory))
+#         return 0
     
 def get_named_node_usage_detail(name):
     myclient = client.CustomObjectsApi()
@@ -148,59 +149,6 @@ def get_node_usage(version):
         node_usage_list = get_node_usage_detail()
         
     return json.dumps(node_usage_list,indent=4)
-
-def get_pod_usage_detail(namespace=None):
-    myclient = client.CustomObjectsApi()
-    if namespace == "" or namespace=='all':    
-        pods = myclient.list_cluster_custom_object(group="metrics.k8s.io",version="v1beta1",plural="pods")
-    else:
-        pods = myclient.list_namespaced_custom_object(namespace=namespace,group="metrics.k8s.io", version="v1beta1", plural="pods")
-    i = 0
-    pod_usage_list = []
-    for pod in pods['items']:
-        if i >= 0:
-            # print(pod)
-            namespace = pod['metadata']['namespace']
-            pod_name = pod['metadata']['name']
-
-            containers =  pod['containers']
-            container_list = []
-            j = 0
-            cpu_all = 0
-            memory_all = 0
-
-            for container in containers:
-                container_name = container['name']
-                cpu = handle_cpu(container['usage']['cpu'] )
-                container_cpu_usage = "{}m".format(math.ceil(cpu))
-                memory = handle_memory(container['usage']['memory'])
-                container_memory_usage = "{}Mi".format(float('%.2f' % memory))
-                container_usage = {"name":container_name,"cpu":container_cpu_usage,"memory":container_memory_usage}
-                container_list.append(container_usage)
-
-                #汇总容器数据
-                cpu_all = cpu_all + cpu
-                memory_all = memory_all + memory
-                cpu_all_usage =  "{}m".format(math.ceil(cpu_all))
-                memory_all_usage = "{}Mi".format(float('%.2f' % memory_all))
-
-                j = j + 1
-
-            pod_usage = {"pod_name":pod_name,"namespace":namespace,"cpu_all_usage":cpu_all_usage,"memory_all_usage":memory_all_usage,"container_list":container_list}
-            pod_usage_list.append(pod_usage)
-        i = i +1
-    return pod_usage_list
-
-@k8s.route('/get_pod_usage', methods=('GET','POST'))
-def get_pod_usage():
-    namespace = None
-    try:
-        data = json.loads(request.get_data().decode('UTF-8'))
-        namespace = data.get('namespace').strip()
-    except Exception as e:
-        print("没有收到namespace:{}".format(e))
-    pod_usage_list = get_pod_usage_detail(namespace=namespace)
-    return json.dumps(pod_usage_list,indent=4)
 
 #列出gateway
 @k8s.route('/get_gateway_list',methods=('GET','POST'))
@@ -401,254 +349,6 @@ def get_service_list():
     
     # return json.dumps(service_list,default=lambda obj: obj.__dict__,sort_keys=True,indent=4)
     return json.dumps(service_list,indent=4,cls=MyEncoder)
-
-# from flask_k8s.util import *
-@k8s.route('/get_pod_list',methods=('GET','POST'))
-def get_pod_list():
-    data = json.loads(request.get_data().decode("utf-8"))
-    namespace = data.get("namespace").strip()
-    myclient = client.CoreV1Api()
-    if namespace == "" or namespace == "all": 
-        pods = myclient.list_pod_for_all_namespaces(watch=False)
-    else:
-        pods = myclient.list_namespaced_pod(namespace=namespace)
-    i = 0
-    pod_list = []
-    for pod in pods.items:
-        if (i >=0):
-            # print(pod)
-            meta = pod.metadata
-            name = meta.name
-            create_time = time_to_string(meta.creation_timestamp)
-            cluster_name = meta.cluster_name
-
-            labels = meta.labels
-            namespace = meta.namespace 
-            
-            spec = pod.spec
-            affinity = spec.affinity
-            host_network = spec.host_network
-            image_pull_secrets = spec.image_pull_secrets
-            node_selector = spec.node_selector
-            restart_policy = spec.restart_policy
-            security_context = spec.security_context
-            service_account_name = spec.service_account_name
-            tolerations = spec.tolerations
-
-            
-            containers = spec.containers
-            
-            container_name = image = image_pull_policy = ""
-            container_info=""
-            args = command = ""
-            env = ""
-            liveness_probe = readiness_probe = ""
-            resources = ""
-            volume_mounts = ""
-            ports = ""
-            i = 0
-            for c in containers: 
-                if (i==0):
-                    container_name = c.name
-                    args = c.args 
-                    command = c.command 
-                    env = c.env 
-                    image = c.image
-                    image_pull_policy  = c.image_pull_policy
-                    liveness_probe = c.liveness_probe
-                    readiness_probe = c.readiness_probe
-                    resources = c.resources
-                    volume_mounts = c.volume_mounts
-                    ports = c.ports
-                    container_info = {"container_name":container_name,"image":image,"image_pull_policy":image_pull_policy,"ports":ports}
-
-                i = i+1
-            status = pod.status
-            phase = status.phase 
-            host_ip = status.host_ip
-            pod_ip = status.pod_ip
-            
-            pod_info = {"create_time":create_time,"namespace":namespace,"pod_ip":pod_ip,"node":host_ip,"status":phase,"affinity":affinity}
-            others={"image_pull_secrets":image_pull_secrets,"restart_policy":restart_policy,"node_selector":node_selector,\
-                "service_account_name":service_account_name,"host_network":host_network}
-            
-            mypod = {"name":name,"pod_info":pod_info,\
-                    "others":others,"container_info":container_info,\
-                    "readiness_probe":readiness_probe,"resources":resources,"volume_mounts":volume_mounts,\
-                    "env":env
-                }            
-
-            pod_list.append(mypod)
-        i = i + 1
-    # return json.dumps(pod_list,default=lambda obj: obj.__dict__,indent=4)
-    return json.dumps(pod_list,indent=4,cls=MyEncoder)
-# from flask_k8s.util import *
-def simple_error_handle(msg):
-    return jsonify({"error":msg})
-
-@k8s.route('/get_pod_detail_by_name',methods=('GET','POST'))
-def get_pod_detail_by_name():
-    print("您已进入get_pod_detail_by_name,有什么能帮助您呢?")
-    data = json.loads(request.get_data().decode("utf-8"))
-    namespace =  handle_input(data.get("namespace"))
-    pod_name = handle_input(data.get('pod_name'))
-    myclient = client.CoreV1Api()
-    field_selector="metadata.name={}".format(pod_name)
-    print(field_selector)
-    pods = myclient.list_namespaced_pod(namespace=namespace,field_selector=field_selector)
-    
-    pod = None
-    for item in pods.items:
-        if item.metadata.name == pod_name:
-            pod = item
-            break
-    if pod == None:
-        return simple_error_handle("找不到pod相关信息")
-
-    meta = pod.metadata
-    name = meta.name
-    create_time = time_to_string(meta.creation_timestamp)
-    cluster_name = meta.cluster_name
-
-    pod_labels = meta.labels
-    namespace = meta.namespace 
-    
-    spec = pod.spec
-    node_affinity = pod_affinity = pod_anti_affinity = None
-    affinity = spec.affinity
-    if affinity:
-        node_affinity = affinity.node_affinity
-        pod_affinity = affinity.pod_affinity
-        pod_anti_affinity = affinity.pod_anti_affinity
-    host_network = spec.host_network
-    image_pull_secrets = spec.image_pull_secrets
-    node_selector = spec.node_selector
-    restart_policy = spec.restart_policy
-    security_context = spec.security_context
-    service_account_name = spec.service_account_name
-    tolerations = spec.tolerations
-    containers = spec.containers
-    volumes = spec.volumes
-    containers = spec.containers
-    init_containers = spec.init_containers
-
-    status = pod.status
-    phase = status.phase 
-    host_ip = status.host_ip
-    pod_ip = status.pod_ip
-    
-    mypod = {
-        "name":name,
-        "namespace":namespace,
-        "node":host_ip,
-        "pod_ip":pod_ip,
-        "pod_labels":pod_labels,
-        "status":phase,
-        "create_time":create_time,
-        # spec关键信息
-        "affinity":affinity,
-        "nodeAffinity":node_affinity,
-        "podAffinity":pod_affinity,
-        "podAntiAffinity":pod_anti_affinity,
-        "hostNetwork":host_network,
-        "imagePullSecrets":image_pull_secrets,
-        "nodeSelector":node_selector,
-        "restartPolicy":restart_policy,
-        "serviceAccountName":service_account_name,
-        # "terminationGracePeriodSeconds":terminationGracePeriodSeconds,
-        "tolerations":tolerations,
-        "volumes":volumes,
-        # 容器信息
-        "containers":containers,
-        #初始化容器
-        "initContainers":init_containers,
-    }          
-    # return json.dumps(pod,default=lambda obj: obj.__dict__,indent=4)
-    # return jsonify(pod)
-    return json.dumps(mypod,indent=4,cls=MyEncoder)
-    
-@k8s.route('/get_pod_list_v2',methods=('GET','POST'))
-def get_pod_list_v2():
-    data = json.loads(request.get_data().decode("utf-8"))
-    namespace = data.get("namespace").strip()
-    myclient = client.CoreV1Api()
-    if namespace == "" or namespace == "all": 
-        pods = myclient.list_pod_for_all_namespaces(watch=False)
-    else:
-        pods = myclient.list_namespaced_pod(namespace=namespace,watch=False)
-    i = 0
-    pod_list = []
-    for pod in pods.items:
-        if (i >=0):
-            # print(pod)
-            meta = pod.metadata
-            name = meta.name
-            create_time = time_to_string(meta.creation_timestamp)
-            labels = meta.labels
-            namespace = meta.namespace 
-            spec = pod.spec
-            # tolerations = spec.tolerations
-            containers = spec.containers
-            container_name = image = ""
-            i = 0
-            for c in containers: 
-                if (i==0):
-                    container_name = c.name
-                    image = c.image
-                i = i+1
-            status = pod.status
-            phase = status.phase 
-            # host_ip = status.host_ip
-            node = spec.node_name
-            pod_ip = status.pod_ip
-            restart_count = None
-            if status.container_statuses:
-                restart_count = status.container_statuses[0].restart_count
-            mypod = {"name":name,"namespace":namespace,"node":node,"pod_ip":pod_ip,"status":phase,"image":image,"restart_count":restart_count,"create_time":create_time}         
-            pod_list.append(mypod)
-        i = i + 1
-    return json.dumps(pod_list,indent=4,cls=MyEncoder)
-
-@k8s.route('/get_pod_list_v3',methods=('GET','POST'))
-def get_pod_list_v3():
-    data = json.loads(request.get_data().decode("utf-8"))
-    # namespace = data.get("namespace").strip()
-    node = handle_input(data.get('node'))
-    if not node:
-        return simple_error_handle("必须要node参数")
-    myclient = client.CoreV1Api()
-    # 在客户端筛选属于某个node的pod
-    pods = myclient.list_pod_for_all_namespaces(watch=False)
-
-    pod_list = []
-    for pod in pods.items:
-        node_name = pod.spec.node_name
-        if node_name == node:
-            # # print(pod)
-            meta = pod.metadata
-            name = meta.name
-            create_time = time_to_string(meta.creation_timestamp)
-            labels = meta.labels
-            namespace = meta.namespace 
-            spec = pod.spec
-            # tolerations = spec.tolerations
-            containers = spec.containers
-            container_name = image = ""
-            i = 0
-            for c in containers: 
-                if (i==0):
-                    container_name = c.name
-                    image = c.image
-                i = i+1
-            status = pod.status
-            phase = status.phase 
-            # host_ip = status.host_ip
-            node = spec.node_name
-            pod_ip = status.pod_ip
-            restart_count = status.container_statuses[0].restart_count
-            mypod = {"name":name,"namespace":namespace,"node":node,"pod_ip":pod_ip,"status":phase,"image":image,"restart_count":restart_count,"create_time":create_time}         
-            pod_list.append(mypod)
-    return json.dumps(pod_list,indent=4,cls=MyEncoder)
 
 @k8s.route('/get_deployment_list',methods=('GET','POST'))
 def get_deployment_list():
@@ -1166,7 +866,6 @@ def get_storageclass_list():
             storageclass_list.append(mysc) 
         i = i +1
     return json.dumps(storageclass_list,indent=4,cls=MyEncoder)
-
 
 #列出pv
 @k8s.route('/get_pv_list',methods=('GET','POST'))

@@ -525,22 +525,30 @@ def update_deploy_v2():
                 preferred_during_scheduling_ignored_during_execution = preferred_term
             )
         elif node_affinity_type == "required":
+            current_app.logger.debug("node_affinity_type:{}".format(node_affinity_type))
             node_selector_terms = []
             if nodeSelector == "matchExpressions":
-                term = client.V1NodeSelectorTerm(
-                    match_expressions = client.V1NodeSelectorRequirement(
+                match_expressions = []
+                expression = client.V1NodeSelectorRequirement(
                         key = key,
                         operator = operator,
                         values = values,
-                    )
+                )
+                match_expressions.append(expression)
+                term = client.V1NodeSelectorTerm(
+                    match_expressions = match_expressions
                 )
             else:
-                term = client.V1NodeSelectorTerm(
-                    match_fields = client.V1NodeSelectorRequirement(
+                match_fields = []
+                field = client.V1NodeSelectorRequirement(
                         key = key,
                         operator = operator,
-                        values = vaules,
-                    )
+                        values = values,
+                )
+                match_fields.append(field)
+
+                term = client.V1NodeSelectorTerm(
+                    match_fields = match_fields
                 )
             node_selector_terms.append(term)
             node_affinity = client.V1NodeAffinity(

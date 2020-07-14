@@ -1,11 +1,10 @@
-import os,json
 from datetime import date, datetime
 import decimal
 import pymysql 
 from flask import jsonify,current_app
 import base64
 import threading
-import pytz
+import json,os,math,requests,time,pytz,ssl,yaml
 from DBUtils.PooledDB import PooledDB
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
@@ -69,13 +68,48 @@ def string_to_int(string):
         return None
     else:
         return int(string)
+
 def handle_toleration_item(item):
     print(item)
     if item == "" or item == 'null':
         return None
     else:
         return item
-    
+
+def handle_cpu(cpu):
+    if cpu == "0":
+        return 0
+    elif cpu.endswith('n'):
+        # 返回m为单位的cpu值
+        # return int(cpu.split('n')[0])/1000/1000
+        return math.ceil(int(cpu.split('n')[0])/1000/1000)
+    else:
+        print("出现未识别的CPU格式{}".format(cpu))
+        return 0
+
+def handle_disk_space(disk):
+    if disk == "0":
+        return 0
+    elif disk.endswith('Ki'):
+        # 转成G单位大小
+        return math.ceil(int(disk.split('Ki')[0])/1024/1024)
+    elif disk.endswith('Mi'):
+        return math.ceil(int(disk.split('Mi')[0])/1024)
+    else:
+        print("出现未识别的disk_space格式{}".format(disk))
+        return 0
+
+def handle_memory(memory):
+    if memory == "0":
+        return 0
+    elif memory.endswith('Ki'):
+        return math.ceil(int(memory.split('Ki')[0])/1024)
+    elif memory.endswith('Mi'):
+        return math.ceil(int(memory.split('Mi')[0]))
+    else:
+        print("出现未识别的内存格式{}".format(memory))
+        return 0
+
 def simple_error_handle(msg):
     return jsonify({"error":msg})
 
