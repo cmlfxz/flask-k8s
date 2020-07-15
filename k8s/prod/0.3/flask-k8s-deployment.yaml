@@ -21,8 +21,8 @@ spec:
       serviceAccountName: ms-prod-flask-k8s
       tolerations:
         - key: "server"
-          operator: "Exists"
-          values: "elk"
+          operator: "Equal"
+          value: "elk"
           effect: "NoSchedule"  
       # affinity:
       #   podAntiAffinity:
