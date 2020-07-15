@@ -54,40 +54,6 @@ def after(resp):
     resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
     return resp
 
-# def handle_cpu(cpu):
-#     if cpu == "0":
-#         return 0
-#     elif cpu.endswith('n'):
-#         # 返回m为单位的cpu值
-#         # return int(cpu.split('n')[0])/1000/1000
-#         return math.ceil(int(cpu.split('n')[0])/1000/1000)
-#     else:
-#         print("出现未识别的CPU格式{}".format(cpu))
-#         return 0
-#
-# def handle_disk_space(disk):
-#     if disk == "0":
-#         return 0
-#     elif disk.endswith('Ki'):
-#         # 转成G单位大小
-#         return math.ceil(int(disk.split('Ki')[0])/1024/1024)
-#     elif disk.endswith('Mi'):
-#         return math.ceil(int(disk.split('Mi')[0])/1024)
-#     else:
-#         print("出现未识别的disk_space格式{}".format(disk))
-#         return 0
-#
-# def handle_memory(memory):
-#     if memory == "0":
-#         return 0
-#     elif memory.endswith('Ki'):
-#         return math.ceil(int(memory.split('Ki')[0])/1024)
-#     elif memory.endswith('Mi'):
-#         return math.ceil(int(memory.split('Mi')[0]))
-#     else:
-#         print("出现未识别的内存格式{}".format(memory))
-#         return 0
-    
 def get_named_node_usage_detail(name):
     myclient = client.CustomObjectsApi()
     plural = "{}/{}".format("nodes",name)
@@ -831,7 +797,7 @@ def get_job_list():
             
             mystatus = {"active":active,"succeeded":succeeded,"start_time":start_time,"completion_time":completion_time}
             
-            myjob = {"name":name,"create_time":create_time,"cluster_name":cluster_name,"labels":labels,"namespace":namespace,"status":mystatus}    
+            myjob = {"name":name,"namespace":namespace,"status":mystatus,"labels":labels,"create_time":create_time}
             job_list.append(myjob) 
         i = i +1
     return json.dumps(job_list,indent=4,cls=MyEncoder)
@@ -868,8 +834,8 @@ def get_cronjob_list():
             
             mystatus = {"active":active,"last_schedule_time":last_schedule_time}
             
-            mycronjob = {"name":name,"create_time":create_time,"schedule":schedule,"labels":labels,"namespace":namespace,"status":mystatus,\
-                "successful_jobs_history_limit":successful_jobs_history_limit, "suspend":suspend}    
+            mycronjob = {"name":name,"namespace":namespace,"schedule":schedule,"status":mystatus,"labels":labels,\
+                "successful_jobs_history_limit":successful_jobs_history_limit, "suspend":suspend,"create_time":create_time}
             cronjob_list.append(mycronjob) 
         i = i +1
     return json.dumps(cronjob_list,indent=4,cls=MyEncoder)
@@ -1155,3 +1121,41 @@ def get_virtualservice_name_list():
         name = virtualservice['metadata']['name']
         virtualservice_names.append(name)
     return json.dumps(virtualservice_names)
+
+@k8s.route('/get_hpa_list',methods=('GET','POST'))
+def get_hpa_list():
+    data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("接收的数据:{}".format(data))
+    namespace = handle_input(data.get("namespace"))
+    myclient = client.AutoscalingV1Api()
+    if namespace == "" or namespace == "all":
+        hpas = myclient.list_horizontal_pod_autoscaler_for_all_namespaces()
+    else:
+        hpas =myclient.list_namespaced_horizontal_pod_autoscaler(namespace=namespace)
+    print(type(hpas.items))
+    hpa_list = []
+    for hpa in hpas.items:
+        # print(hpa)
+        meta  = hpa.metadata
+        name = meta.name
+        namespace = meta.namespace
+        spec = hpa.spec
+        maxReplicas = spec.max_replicas
+        minReplicas = spec.min_replicas
+        scaleTargetRef = spec.scale_target_ref
+        targetCPUUtilizationPercentage = spec.target_cpu_utilization_percentage
+
+        myhpa= {}
+        myhpa["name"] =name
+        myhpa["namespace"] =namespace
+        myhpa["minReplicas"] =minReplicas
+
+        myhpa["maxReplicas"] =maxReplicas
+
+        myhpa["scaleTargetRef"] =scaleTargetRef
+        myhpa["targetCPUUtilizationPercentage"] =targetCPUUtilizationPercentage
+
+        print(myhpa)
+        hpa_list.append(myhpa)
+    # return json.dumps({"ok":"123"})
+    return json.dumps(hpa_list,indent=4,cls=MyEncoder)

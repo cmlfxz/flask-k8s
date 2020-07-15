@@ -621,3 +621,52 @@ def delete_secret():
         msg = {"status": e.status, "reason": e.reason, "message": body['message']}
         return jsonify({'error': '删除secret异常', "msg": msg})
     return jsonify({"ok": "删除成功"})
+
+@k8s_op.route('/delete_hpa', methods=('GET', 'POST'))
+def delete_hpa():
+    data = json.loads(request.get_data().decode('utf-8'))
+    name  = handle_input(data.get('name'))
+    namespace = handle_input(data.get('namespace'))
+    myclient = client.AutoscalingV1Api()
+    try:
+        # body=client.V1DeleteOptions(propagation_policy='Foreground',grace_period_seconds=5)
+        result = myclient.delete_namespaced_horizontal_pod_autoscaler(namespace=namespace,name=name)
+    except Exception as e:
+        body = json.loads(e.body)
+        msg={"status":e.status,"reason":e.reason,"message":body['message']}
+        # return simple_error_handle(msg)
+        return jsonify({'error': '删除hpa异常',"msg":msg})
+    return jsonify({"ok":"删除成功"})
+
+
+@k8s_op.route('/delete_job', methods=('GET', 'POST'))
+def delete_job():
+    data = json.loads(request.get_data().decode('utf-8'))
+    name  = handle_input(data.get('name'))
+    namespace = handle_input(data.get('namespace'))
+    myclient = client.BatchV1Api()
+    try:
+        # body=client.V1DeleteOptions(propagation_policy='Foreground',grace_period_seconds=5)
+        result = myclient.delete_namespaced_job(namespace=namespace,name=name)
+    except Exception as e:
+        body = json.loads(e.body)
+        msg={"status":e.status,"reason":e.reason,"message":body['message']}
+        # return simple_error_handle(msg)
+        return jsonify({'error': '删除job异常',"msg":msg})
+    return jsonify({"ok":"删除成功"})
+
+@k8s_op.route('/delete_cronjob', methods=('GET', 'POST'))
+def delete_cronjob():
+    data = json.loads(request.get_data().decode('utf-8'))
+    name  = handle_input(data.get('name'))
+    namespace = handle_input(data.get('namespace'))
+    myclient = client.BatchV1beta1Api()
+    try:
+        # body=client.V1DeleteOptions(propagation_policy='Foreground',grace_period_seconds=5)
+        result = myclient.delete_namespaced_cron_job(namespace=namespace,name=name)
+    except Exception as e:
+        body = json.loads(e.body)
+        msg={"status":e.status,"reason":e.reason,"message":body['message']}
+        # return simple_error_handle(msg)
+        return jsonify({'error': '删除cronjob异常',"msg":msg})
+    return jsonify({"ok":"删除成功"})

@@ -108,16 +108,10 @@ def get_pod_usage_by_name(namespace,name):
                 break
     return pod_usage
 
-# 仅供测试目前
-# @k8s_pod.route('/get_pod_usage_v2',methods=('GET','POST'))
-# def get_pod_usage_v2():
-#     data = json.loads(request.get_data().decode('UTF-8'))
-#     namespace = handle_input(data.get('namespace'))
-#     name = handle_input(data.get('name'))
-#     return get_pod_usage_by_name(namespace,name)
 
-#前端集群下的pod_usage代码还没移除
-# def get_pod_usage_detail(namespace=None):
+#前端集群下的pod_usage代码已移除
+# get_pod_usage_detail =>get_pod_usage_by_namespace
+# def get_pod_usage_by_namespace(namespace=None):
 #     myclient = client.CustomObjectsApi()
 #     if namespace == "" or namespace=='all':
 #         pods = myclient.list_cluster_custom_object(group="metrics.k8s.io",version="v1beta1",plural="pods")
@@ -158,17 +152,7 @@ def get_pod_usage_by_name(namespace,name):
 #             pod_usage_list.append(pod_usage)
 #         i = i +1
 #     return pod_usage_list
-#
-# @k8s_pod.route('/get_pod_usage', methods=('GET','POST'))
-# def get_pod_usage():
-#     namespace = None
-#     try:
-#         data = json.loads(request.get_data().decode('UTF-8'))
-#         namespace = data.get('namespace').strip()
-#     except Exception as e:
-#         print("没有收到namespace:{}".format(e))
-#     pod_usage_list = get_pod_usage_detail(namespace=namespace)
-#     return json.dumps(pod_usage_list,indent=4)
+
 
 #pod详情页
 @k8s_pod.route('/get_pod_detail_by_name', methods=('GET', 'POST'))
@@ -176,7 +160,8 @@ def get_pod_detail_by_name():
     print("您已进入get_pod_detail_by_name,有什么能帮助您呢?")
     data = json.loads(request.get_data().decode("utf-8"))
     namespace = handle_input(data.get("namespace"))
-    pod_name = handle_input(data.get('pod_name'))
+    pod_name = handle_input(data.get('name'))
+    # pod_name = handle_input(data.get('pod_name'))
     myclient = client.CoreV1Api()
     field_selector = "metadata.name={}".format(pod_name)
     print(field_selector)
@@ -375,14 +360,15 @@ def get_namespaced_pod_list():
                 restart_count = status.container_statuses[0].restart_count
             mypod = {"name": name, "namespace": namespace, "node": node, "pod_ip": pod_ip, "status": phase,
                      "image": image, "restart": restart_count}
-            # 根据pod命名空间，内存获取pod的内存，CPU
+            # 以下4行修复rancher有些pod获取不到性能数据
+            mypod['pod_cpu_usage(m)'] = 0
+            mypod['pod_memory_usage(Mi)'] = 0
+            mypod['container_usage'] = []
             try:
                 pod_usage = get_pod_usage_by_name(namespace,name)
                 # 根据pod命名空间，内存获取pod的内存，CPU
-                # pod_performance = "{}/{}".format(pod_usage['pod_cpu_usage'],pod_usage['pod_memory_usage'])
                 mypod['pod_cpu_usage(m)'] = pod_usage['pod_cpu_usage']
                 mypod['pod_memory_usage(Mi)'] = pod_usage['pod_memory_usage']
-                # mypod['pod_performance'] = pod_performance
                 mypod['container_usage'] = pod_usage['container_list']
             except Exception as e:
                 current_app.logger.debug("获取pod性能数据出错")
@@ -435,6 +421,11 @@ def get_pod_list_by_node():
             restart_count = status.container_statuses[0].restart_count
             mypod = {"name": name, "namespace": namespace, "node": node, "pod_ip": pod_ip, "status": phase,
                      "image": image, "restart_count": restart_count}
+            # 以下4行修复rancher有些pod获取不到性能数据
+            mypod['pod_cpu_usage(m)'] = 0
+            mypod['pod_memory_usage(Mi)'] = 0
+            # mypod['pod_performance'] = pod_performance
+            mypod['container_usage'] = []
             try:
                 pod_usage = get_pod_usage_by_name(namespace,name)
                 # 根据pod命名空间，内存获取pod的内存，CPU
@@ -445,6 +436,7 @@ def get_pod_list_by_node():
                 mypod['container_usage'] = pod_usage['container_list']
             except Exception as e:
                 current_app.logger.debug("获取pod性能数据出错")
+
             mypod["create_time"] = create_time
             pod_list.append(mypod)
     return json.dumps(pod_list, indent=4, cls=MyEncoder)

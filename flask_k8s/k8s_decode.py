@@ -61,6 +61,7 @@ from kubernetes.client.models.v1_secret_reference import V1SecretReference
 from kubernetes.client.models.v1_host_path_volume_source import V1HostPathVolumeSource
 from kubernetes.client.models.v1_persistent_volume_claim_volume_source import V1PersistentVolumeClaimVolumeSource
 from kubernetes.client.models.v1_persistent_volume_status import V1PersistentVolumeStatus
+from kubernetes.client.models.v1_cross_version_object_reference import V1CrossVersionObjectReference
 
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):  
@@ -90,6 +91,12 @@ class MyEncoder(json.JSONEncoder):
             return {
                 "_name": obj._name,
                 "namespace": obj.namespace,
+            }
+        elif isinstance(obj, V1CrossVersionObjectReference):  
+            return {
+                "api_version": obj.api_version,
+                "kind": obj.kind,
+                "name": obj.name,
             }
         elif isinstance(obj, V1PersistentVolumeStatus):  
             return {
