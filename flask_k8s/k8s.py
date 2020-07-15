@@ -405,7 +405,9 @@ def get_deployment_list():
                 c_image = container.image
                 container_names.append(c_name)
                 container_images.append(c_image)
-            containerInfo = {"name":container_names[0],"image":container_images[0]}
+            # containerInfo = {"name":container_names[0],"image":container_images[0]}
+            # containerInfo = {"image": container_images[0]}
+            image = container_images[0]
             # node_selector = template_spec.node_selector
             tolerations = template_spec.tolerations
             
@@ -415,7 +417,7 @@ def get_deployment_list():
             mystatus = {"replicas":replicas,"ready":ready,"available_replicas":status.available_replicas,\
             "up-to-date":status.updated_replicas,"create_time":create_time}
 
-            info = {"namespace":namespace,"labels":labels,"container":containerInfo}
+            info = {"namespace":namespace,"labels":labels,"image":image}
             
             mydeployment = {"name":name,"status":mystatus,"info":info,"tolerations":tolerations,"node_affinity":node_affinity,\
                             "pod_affinity":pod_affinity,"pod_anti_affinity":pod_anti_affinity}

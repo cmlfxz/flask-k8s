@@ -160,11 +160,13 @@ class MyEncoder(json.JSONEncoder):
         elif isinstance(obj,V1PodAntiAffinity):
             if obj.preferred_during_scheduling_ignored_during_execution:
                 return {
-                    "preferred_during_scheduling_ignored_during_execution": obj.preferred_during_scheduling_ignored_during_execution,
+                    "preferred_pod_anti_affinity": obj.preferred_during_scheduling_ignored_during_execution,
+                    # "preferred_during_scheduling_ignored_during_execution": obj.preferred_during_scheduling_ignored_during_execution,
                 }            
             else:     
                 return {
-                    "required_during_scheduling_ignored_during_execution": obj.required_during_scheduling_ignored_during_execution,
+                    # "required_during_scheduling_ignored_during_execution": obj.required_during_scheduling_ignored_during_execution,
+                    "required_pod_anti_affinity": obj.required_during_scheduling_ignored_during_execution,
                 } 
         elif isinstance(obj,V1PreferredSchedulingTerm):
             return {
@@ -426,11 +428,13 @@ class MyEncoder(json.JSONEncoder):
         elif isinstance(obj,V1NodeAffinity):
             if  obj.preferred_during_scheduling_ignored_during_execution:
                 return {
-                    "preferred_during_scheduling_ignored_during_execution": obj.preferred_during_scheduling_ignored_during_execution,
+                    # "preferred_during_scheduling_ignored_during_execution": obj.preferred_during_scheduling_ignored_during_execution,
+                    "preferred_node_affinity": obj.preferred_during_scheduling_ignored_during_execution,
                 }
             else:                
                 return {
-                    "required_during_scheduling_ignored_during_execution": obj.required_during_scheduling_ignored_during_execution,
+                    # "required_during_scheduling_ignored_during_execution": obj.required_during_scheduling_ignored_during_execution,
+                    "required_node_affinity": obj.required_during_scheduling_ignored_during_execution,
                 }  
         elif isinstance(obj,V1NodeSelector):
             return {
