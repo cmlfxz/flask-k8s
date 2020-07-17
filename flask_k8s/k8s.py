@@ -606,7 +606,7 @@ def get_cluster_stats():
     cluster_memory_usage = 0
     cluster_disk_cap = 0 
     cluster_pod_cap = 0
-    cluster_pod_uasge = 0
+    cluster_pod_usage= 0
     cluster_stat_list = []
     for node in nodes.items:
         if (i>=0):
@@ -646,20 +646,38 @@ def get_cluster_stats():
                 #集群pod总量
                 cluster_pod_cap = cluster_pod_cap + pod_total
                 #集群pod数量
-                cluster_pod_uasge = cluster_pod_uasge + node_pod_num
+                cluster_pod_usage= cluster_pod_usage+ node_pod_num
         i = i + 1
         
     cluster_cpu_usage_percent = format_float(cluster_cpu_usage/cluster_cpu * 100)
-    cluster_cpu_detail = "{}/{} {}%".format(format_float(cluster_cpu_usage), cluster_cpu,cluster_cpu_usage_percent)
+    cluster_cpu_usage = format_float(cluster_cpu_usage)
+    cluster_cpu_detail = "{}/{} {}%".format(cluster_cpu_usage, cluster_cpu,cluster_cpu_usage_percent)
 
     cluster_memory_usage_percent = format_float(cluster_memory_usage/cluster_memory * 100)
     cluster_memory_detail = "{}/{} {}%".format(cluster_memory_usage,cluster_memory,cluster_memory_usage_percent)
 
+    cluster_pod_usage_percent = format_float(cluster_pod_usage/cluster_pod_cap * 100)
+    cluster_pod_detail = "{}/{} {}%".format(cluster_pod_usage,cluster_pod_cap,cluster_pod_usage_percent)
+
     cluster_stat = {}
-    cluster_stat["cluster_cpu_detail"] = cluster_cpu_detail
-    cluster_stat["cluster_memory_detail"] = cluster_memory_detail
-    cluster_stat["cluster_disk_cap"] = cluster_disk_cap
-    cluster_stat["cluster_pod_cap"] = cluster_pod_cap
+    cluster_stat["cpu_detail"] = cluster_cpu_detail
+    cluster_stat["memory_detail"] = cluster_memory_detail
+    cluster_stat["pod_detail"] = cluster_pod_detail
+    cluster_stat["disk_cap"] = cluster_disk_cap
+
+
+    # CPU详情
+    cluster_stat["cpu_total"] = cluster_cpu
+    cluster_stat["cpu_usage"] = cluster_cpu_usage
+    cluster_stat["cpu_usage_percent"] = cluster_cpu_usage_percent
+    #内存详情
+    cluster_stat["memory_total"] = cluster_memory
+    cluster_stat["memory_usage"] = cluster_memory_usage
+    cluster_stat["memory_usage_percent"] = cluster_memory_usage_percent
+    #POD详情
+    cluster_stat["pod_total"] = cluster_pod_cap
+    cluster_stat["pod_usage"] = cluster_pod_usage
+    cluster_stat["pod_usage_percent"] = cluster_pod_usage_percent
 
     cluster_stat_list.append(cluster_stat)
     return json.dumps(cluster_stat_list,indent=4,cls=MyEncoder)
