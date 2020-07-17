@@ -11,6 +11,7 @@ from .util import dir_path
 from .util import handle_input,handle_toleraion_seconds,string_to_int,handle_toleration_item
 from .util import get_cluster_config,simple_error_handle
 from .util import handle_cpu,handle_memory,handle_disk_space
+from .k8s_pod import get_pod_num_by_node
 from kubernetes import client,config
 from kubernetes.client.rest import ApiException
 
@@ -63,9 +64,7 @@ def get_named_node_usage_detail(name):
     node_name = node['metadata']['name']
 
     cpu = handle_cpu(node['usage']['cpu'])
-    node_cpu_usage = "{}m".format(math.ceil(cpu))
     memory = handle_memory(node['usage']['memory'])
-    node_memory_usage = "{}Mi".format(float('%.2f' % memory))
     node_usage = {"node_name":node_name,"cpu":cpu,"memory":memory}
     return node_usage
     
@@ -351,84 +350,6 @@ def get_service_list():
     # return json.dumps(service_list,default=lambda obj: obj.__dict__,sort_keys=True,indent=4)
     return json.dumps(service_list,indent=4,cls=MyEncoder)
 
-@k8s.route('/get_deployment_list',methods=('GET','POST'))
-def get_deployment_list():
-    # print('get_deployment_list')
-    data = json.loads(request.get_data().decode("utf-8"))
-    current_app.logger.debug("接收到的数据:{}".format(data))
-    namespace = data.get("namespace").strip()
-    myclient = client.AppsV1Api()
-    # print(namespace)
-    if namespace == "" or namespace == "all": 
-        deployments = myclient.list_deployment_for_all_namespaces(watch=False)
-    else:
-        deployments = myclient.list_namespaced_deployment(namespace=namespace)
-    i = 0
-    deployment_list = []
-    for deployment in deployments.items:
-        if (i>=0):
-            # current_app.logger.debug(deployment)
-            meta = deployment.metadata
-            name = meta.name
-            create_time = time_to_string(meta.creation_timestamp)
-            cluster_name = meta.cluster_name
-            labels = meta.labels
-            namespace = meta.namespace 
-            
-            spec = deployment.spec
-            replicas = spec.replicas
-            selector = spec.selector  
-            # strategy = spec.strategy
-            template = spec.template
-            template_labels = template.metadata.labels
-            node_affinity = None
-            pod_affinity =None 
-            pod_anti_affinity = None
-            
-            template_spec = deployment.spec.template.spec
-            affinity = template_spec.affinity
-
-            if affinity:
-                node_affinity = affinity.node_affinity
-                pod_affinity = affinity.pod_affinity
-                pod_anti_affinity = affinity.pod_anti_affinity
-            if (name=="flask-tutorial"):
-                # current_app.logger.debug(deployment)
-                current_app.logger.debug(affinity)
-                current_app.logger.debug(pod_anti_affinity)
-            containers = template_spec.containers
-            
-            container_names = []
-            container_images = []
-            for container in containers:
-                c_name  = container.name 
-                c_image = container.image
-                container_names.append(c_name)
-                container_images.append(c_image)
-            # containerInfo = {"name":container_names[0],"image":container_images[0]}
-            # containerInfo = {"image": container_images[0]}
-            image = container_images[0]
-            # node_selector = template_spec.node_selector
-            tolerations = template_spec.tolerations
-            
-            status = deployment.status
-            # ready = "{}/{}".format(status.ready_replicas,status.replicas)
-            ready = "{}/{}".format(status.ready_replicas, replicas)
-            mystatus = {"replicas":replicas,"ready":ready,"available_replicas":status.available_replicas,\
-            "up-to-date":status.updated_replicas,"create_time":create_time}
-
-            info = {"namespace":namespace,"labels":labels,"image":image}
-            
-            mydeployment = {"name":name,"status":mystatus,"info":info,"tolerations":tolerations,"node_affinity":node_affinity,\
-                            "pod_affinity":pod_affinity,"pod_anti_affinity":pod_anti_affinity}
-            
-            deployment_list.append(mydeployment)
-            
-        i = i +1   
-    return json.dumps(deployment_list,indent=4,cls=MyEncoder)
-    # return json.dumps(deployment_list,indent=4,cls=MyEncoder)
-    # return json.dumps(deployment_list,default=lambda obj: obj.__dict__,indent=4)
-
 @k8s.route('/get_daemonset_list',methods=('GET','POST'))
 def get_daemonset_list():
     data = json.loads(request.get_data().decode("utf-8"))
@@ -496,9 +417,110 @@ def get_node_name_list():
         node_name_list.append(name)
     return json.dumps(node_name_list,indent=4)
 
+def format_float(num):
+    return  float("%.2f" % num)
+
+# def format_percent(num):
+#     return "{}%".format(float("%.2f" % num))
+
+def create_single_node_detail_obj(node,simple):
+    meta = node.metadata
+    name = meta.name
+    create_time = time_to_string(meta.creation_timestamp)
+    labels = meta.labels
+    role = labels.get('kubernetes.io/role')
+    spec = node.spec
+    pod_cidr = spec.pod_cidr
+    taints = spec.taints
+    schedulable = True if node.spec.unschedulable == None else False
+
+    status = node.status
+    address = status.addresses[0].address
+    # 获取单独node的性能数据
+    node_usage = get_named_node_usage_detail(name)
+    # 100m 转成 0.12 已核为单位
+    node_cpu_usage = format_float(node_usage.get('cpu') / 1000)
+    node_memory_usage = node_usage.get('memory')
+    node_pod_num = get_pod_num_by_node(name)
+
+    capacity = status.capacity
+    cpu_total = str_to_int(capacity['cpu'])
+    memory_total = handle_memory(capacity['memory'])
+    pod_total = str_to_int(capacity['pods'])
+    disk_space = handle_disk_space(capacity['ephemeral-storage'])
+    image_num = len(status.images)
+
+    cpu_usage_percent = format_float(node_cpu_usage / cpu_total * 100)
+    memory_usage_percent = format_float(node_memory_usage / memory_total * 100)
+    pod_usage_percent = format_float(node_pod_num / pod_total * 100)
+
+    pod_detail = "{}/{} {}%".format(node_pod_num, pod_total, pod_usage_percent)
+    cpu_detail = "{}/{} {}%".format(node_cpu_usage, cpu_total, cpu_usage_percent)
+    memory_detail = "{}/{} {}%".format(node_memory_usage, memory_total, memory_usage_percent)
+
+    mycapacity = {}
+    mycapacity["cpu_detail"] = cpu_detail
+    mycapacity["memory_detail"] = memory_detail
+    mycapacity["pod_detail"] = pod_detail
+    mycapacity["storage"] = disk_space
+    mycapacity["image_num"] = image_num
+
+    mynode = {}
+    mynode["name"] = name
+    mynode["role"] = role
+    mynode["schedulable"] = schedulable
+    if not simple:
+        mynode["node_capacity"] = mycapacity
+        #CPU总量
+        mynode["cpu_total"]= cpu_total
+        #CPU使用量
+        mynode["cpu_usage"]= node_cpu_usage
+        #CPU百分比
+        mynode["cpu_usage_percent"] = cpu_usage_percent
+        #内存部分
+        mynode["memory_total"]= memory_total
+        mynode["memory_usage"]= node_memory_usage
+        mynode["memory_usage_percent"]= memory_usage_percent
+        #pod部分
+        mynode["pod_total"] = pod_total
+        mynode["pod_num"] = node_pod_num
+        mynode["pod_usage_percent"] = pod_usage_percent
+        mynode["storage"] = disk_space
+    else:
+        mynode["taints"] = taints
+        mynode["capacity(cpu(c),memory(Mi),storage(G))"] = mycapacity
+        mynode["labels"] = labels
+        mynode["pod_cidr"] = pod_cidr
+    mynode["create_time"] = create_time
+    return mynode
 
 @k8s.route('/get_node_detail_list',methods=('GET','POST'))
 def get_node_detail_list():
+    myclient = client.CoreV1Api()
+    nodes = myclient.list_node()
+    i = 0
+    node_list = []
+    for node in nodes.items:
+        if (i>=0):
+            # print(node)
+            mynode = create_single_node_detail_obj(node,simple=True)
+            node_list.append(mynode)
+        i = i + 1
+    return json.dumps(node_list,indent=4,cls=MyEncoder)
+
+@k8s.route('/get_node_detail_list_v2',methods=('GET','POST'))
+def get_node_detail_list_v2():
+    myclient = client.CoreV1Api()
+    nodes = myclient.list_node()
+    node_list = []
+    for node in nodes.items:
+        # print(node)
+        mynode = create_single_node_detail_obj(node,simple=False)
+        node_list.append(mynode)
+    return json.dumps(node_list,indent=4,cls=MyEncoder)
+
+@k8s.route('/get_cluster_stats_v1', methods=('GET', 'POST'))
+def get_cluster_stats_v1():
     myclient = client.CoreV1Api()
     nodes = myclient.list_node()
     i = 0
@@ -507,48 +529,70 @@ def get_node_detail_list():
     cluster_cpu_usage = 0
     cluster_memory = 0
     cluster_memory_usage = 0
-    
+    cluster_disk_cap = 0
+    cluster_pod_cap = 0
+    cluster_stat_list = []
     for node in nodes.items:
-        if (i>=0):
+        if (i >= 0):
             # print(node)
             meta = node.metadata
             name = meta.name
             node_usage = get_named_node_usage_detail(name)
             node_cpu_usage = node_usage.get('cpu')
             node_memory_usage = node_usage.get('memory')
-
             create_time = time_to_string(meta.creation_timestamp)
+            cluster_name = meta.cluster_name
             labels = meta.labels
             role = labels.get('kubernetes.io/role')
-            
+            print(role)
+
             spec = node.spec
-            pod_cidr = spec.pod_cidr
-            taints = spec.taints
             schedulable = True if spec.unschedulable == None else False
-            
+
             status = node.status
-            address = status.addresses[0].address 
-            
+
             capacity = status.capacity
             cpu_num = str_to_int(capacity['cpu'])
-
             disk_space = handle_disk_space(capacity['ephemeral-storage'])
             memory = handle_memory(capacity['memory'])
-            pods = capacity['pods']
-            cpu_usage_percent = (node_cpu_usage/1000)/cpu_num * 100
-            memory_usage_percent = node_memory_usage/memory * 100
-            cpu_detail = "{}/{} {}%".format(float('%.2f' % (node_cpu_usage/1000)), cpu_num,float('%.2f' % cpu_usage_percent))
-            memory_detail = "{}/{} {}%".format(math.ceil(node_memory_usage),memory,float('%.2f' % memory_usage_percent))
-            images_num = len(status.images)
-            mycapacity = {"cpu_detail":cpu_detail,"memory_detail":memory_detail,"storage(G)":disk_space,"pods":pods,"image_num":images_num}
-            node_info = status.node_info
-   
-            mynode = {"name":name,"role":role,"taints":taints,"capacity(cpu(c),memory(Mi))":mycapacity,"labels":labels,"pod_cidr":pod_cidr,\
-                "schedulable":schedulable,"create_time":create_time}
-            node_list.append(mynode)
-        i = i + 1 
+            pods = str_to_int(capacity['pods'])
 
-    return json.dumps(node_list,indent=4,cls=MyEncoder)
+            cpu_usage_percent = (node_cpu_usage / 1000) / cpu_num * 100
+            memory_usage_percent = node_memory_usage / memory * 100
+            cpu_detail = "{}/{} {}%".format(float('%.2f' % (node_cpu_usage / 1000)), cpu_num,
+                                            float('%.2f' % cpu_usage_percent))
+            memory_detail = "{}/{} {}%".format(math.ceil(node_memory_usage), memory,
+                                               float('%.2f' % memory_usage_percent))
+            images_num = len(status.images)
+            # mycapacity = {"cpu_detail":cpu_detail,"memory_detail":memory_detail,"storage(G)":disk_space,"pods":pods,"image_num":images_num}
+            mycapacity = {"cpu": cpu_num, "storage(G)": disk_space, "memory(Mi)": memory, "pods": pods}
+            node_info = status.node_info
+
+            if schedulable == True:
+                cluster_cpu = cluster_cpu + cpu_num
+                cluster_memory = cluster_memory + math.ceil(memory)
+                cluster_cpu_usage = cluster_cpu_usage + node_cpu_usage / 1000
+                cluster_memory_usage = cluster_memory_usage + node_memory_usage
+                cluster_disk_cap = cluster_disk_cap + disk_space
+                cluster_pod_cap = cluster_pod_cap + pods
+
+            mynode = {"name": name, "role": role, "capacity(cpu(c),memory(Mi))": mycapacity, \
+                      "schedulable": schedulable, "create_time": create_time}
+
+            node_list.append(mynode)
+        i = i + 1
+
+    cluster_cpu_usage_percent = cluster_cpu_usage / cluster_cpu * 100
+    cluster_memory_usage_percent = cluster_memory_usage / cluster_memory * 100
+    cluster_cpu_detail = "{}/{} {}%".format(float('%.2f' % (cluster_cpu_usage)), cluster_cpu,
+                                            float('%.2f' % cluster_cpu_usage_percent))
+    cluster_memory_detail = "{}/{} {}%".format(math.ceil(cluster_memory_usage), cluster_memory,
+                                               float('%.2f' % cluster_memory_usage_percent))
+    cluster_capacity = {"cluster_cpu_detail": cluster_cpu_detail, "cluster_memory_detail": cluster_memory_detail}
+    cluster_stat = {"cluster_cpu_detail": cluster_cpu_detail, "cluster_memory_detail": cluster_memory_detail,
+                    "cluster_disk_cap": cluster_disk_cap, "cluster_pod_cap": cluster_pod_cap}
+    cluster_stat_list.append(cluster_stat)
+    return json.dumps({"node_list": node_list, "cluster_stat_list": cluster_stat_list})
 
 @k8s.route('/get_cluster_stats',methods=('GET','POST'))
 def get_cluster_stats():
@@ -562,63 +606,64 @@ def get_cluster_stats():
     cluster_memory_usage = 0
     cluster_disk_cap = 0 
     cluster_pod_cap = 0
+    cluster_pod_uasge = 0
     cluster_stat_list = []
     for node in nodes.items:
         if (i>=0):
             # print(node)
             meta = node.metadata
             name = meta.name
-            node_usage = get_named_node_usage_detail(name)
-            node_cpu_usage = node_usage.get('cpu')
-            node_memory_usage = node_usage.get('memory')
-            create_time = time_to_string(meta.creation_timestamp)
-            cluster_name = meta.cluster_name
-            labels = meta.labels
-            role = labels.get('kubernetes.io/role')
-            print(role)
-            
-            spec = node.spec
-            schedulable = True if spec.unschedulable == None else False
-            
-            status = node.status
-            
-            capacity = status.capacity
-            cpu_num = str_to_int(capacity['cpu'])
-            disk_space = handle_disk_space(capacity['ephemeral-storage'])
-            memory = handle_memory(capacity['memory'])
-            pods = str_to_int(capacity['pods'])
-            
-            cpu_usage_percent = (node_cpu_usage/1000)/cpu_num * 100
-            memory_usage_percent = node_memory_usage/memory * 100
-            cpu_detail = "{}/{} {}%".format(float('%.2f' % (node_cpu_usage/1000)), cpu_num,float('%.2f' % cpu_usage_percent))
-            memory_detail = "{}/{} {}%".format(math.ceil(node_memory_usage),memory,float('%.2f' % memory_usage_percent))
-            images_num = len(status.images)
-            # mycapacity = {"cpu_detail":cpu_detail,"memory_detail":memory_detail,"storage(G)":disk_space,"pods":pods,"image_num":images_num}
-            mycapacity = {"cpu":cpu_num,"storage(G)":disk_space,"memory(Mi)":memory,"pods":pods}
-            node_info = status.node_info
-            
+            schedulable = True if node.spec.unschedulable == None else False
+            # 统计集群信息
             if schedulable == True:
-                cluster_cpu = cluster_cpu + cpu_num
-                cluster_memory = cluster_memory + math.ceil(memory)
-                cluster_cpu_usage = cluster_cpu_usage + node_cpu_usage/1000
+                spec = node.spec
+                # 获取单独node的性能数据
+                node_usage = get_named_node_usage_detail(name)
+                # 100m 转成 0.12 已核为单位
+                node_cpu_usage = format_float(node_usage.get('cpu') / 1000)
+                current_app.logger.debug("node_cpu_usage:{}".format(node_cpu_usage))
+                node_memory_usage = node_usage.get('memory')
+                node_pod_num = get_pod_num_by_node(name)
+
+                capacity = node.status.capacity
+                # 搜集数量
+                cpu_total = str_to_int(capacity['cpu'])
+                memory_total = handle_memory(capacity['memory'])
+                pod_total = str_to_int(capacity['pods'])
+                disk_space = handle_disk_space(capacity['ephemeral-storage'])
+
+                # 集群CPU总数
+                cluster_cpu = cluster_cpu + cpu_total
+                # 集群CPU使用量
+                cluster_cpu_usage = cluster_cpu_usage + node_cpu_usage
+                current_app.logger.debug("cluster_cpu_usage:{}".format(cluster_cpu_usage))
+                #集群内存总量
+                cluster_memory = cluster_memory + memory_total
+                #集群内存使用量
                 cluster_memory_usage = cluster_memory_usage + node_memory_usage
+                #磁盘总量
                 cluster_disk_cap = cluster_disk_cap + disk_space
-                cluster_pod_cap = cluster_pod_cap + pods
-                
-            mynode = {"name":name,"role":role,"capacity(cpu(c),memory(Mi))":mycapacity,\
-                "schedulable":schedulable,"create_time":create_time}
-            
-            node_list.append(mynode)
+                #集群pod总量
+                cluster_pod_cap = cluster_pod_cap + pod_total
+                #集群pod数量
+                cluster_pod_uasge = cluster_pod_uasge + node_pod_num
         i = i + 1
         
-    cluster_cpu_usage_percent = cluster_cpu_usage/cluster_cpu * 100
-    cluster_memory_usage_percent = cluster_memory_usage/cluster_memory * 100
-    cluster_cpu_detail = "{}/{} {}%".format(float('%.2f' % (cluster_cpu_usage)), cluster_cpu,float('%.2f' % cluster_cpu_usage_percent))
-    cluster_memory_detail = "{}/{} {}%".format(math.ceil(cluster_memory_usage),cluster_memory,float('%.2f' % cluster_memory_usage_percent))
-    cluster_capacity = {"cluster_cpu_detail":cluster_cpu_detail,"cluster_memory_detail":cluster_memory_detail}
-    cluster_stat =  {"cluster_cpu_detail":cluster_cpu_detail,"cluster_memory_detail":cluster_memory_detail,"cluster_disk_cap":cluster_disk_cap,"cluster_pod_cap":cluster_pod_cap}
+    cluster_cpu_usage_percent = format_float(cluster_cpu_usage/cluster_cpu * 100)
+    cluster_cpu_detail = "{}/{} {}%".format(format_float(cluster_cpu_usage), cluster_cpu,cluster_cpu_usage_percent)
+
+    cluster_memory_usage_percent = format_float(cluster_memory_usage/cluster_memory * 100)
+    cluster_memory_detail = "{}/{} {}%".format(cluster_memory_usage,cluster_memory,cluster_memory_usage_percent)
+
+    cluster_stat = {}
+    cluster_stat["cluster_cpu_detail"] = cluster_cpu_detail
+    cluster_stat["cluster_memory_detail"] = cluster_memory_detail
+    cluster_stat["cluster_disk_cap"] = cluster_disk_cap
+    cluster_stat["cluster_pod_cap"] = cluster_pod_cap
+
     cluster_stat_list.append(cluster_stat)
-    return json.dumps({"node_list":node_list,"cluster_stat_list":cluster_stat_list})
+    return json.dumps(cluster_stat_list,indent=4,cls=MyEncoder)
+    # return json.dumps({"cluster_stat_list":cluster_stat_list})
 
 @k8s.route('/get_configmap_list',methods=('GET','POST'))
 def get_configmap_list():  
@@ -1085,22 +1130,6 @@ def get_ingress_list():
             ingress_list.append(myingress) 
         i = i +1
     return json.dumps(ingress_list,indent=4,cls=MyEncoder)
-
-@k8s.route('/get_deployment_name_list',methods=('GET','POST'))
-def get_deployment_name_list():
-    data = json.loads(request.get_data().decode("utf-8"))
-    current_app.logger.debug("接收到的数据:{}".format(data))
-    namespace = handle_input(data.get("namespace"))
-    myclient = client.AppsV1Api()
-    if namespace == "" or namespace == "all": 
-        deployments = myclient.list_deployment_for_all_namespaces(watch=False)
-    else:
-        deployments = myclient.list_namespaced_deployment(namespace=namespace)
-    deployment_names = []
-    for deployment in deployments.items:
-        name = deployment.metadata.name
-        deployment_names.append(name)
-    return json.dumps(deployment_names)
 
 @k8s.route('/get_virtualservice_name_list',methods=('GET','POST'))
 def get_virtualservice_name_list():

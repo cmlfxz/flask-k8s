@@ -62,7 +62,10 @@ from kubernetes.client.models.v1_host_path_volume_source import V1HostPathVolume
 from kubernetes.client.models.v1_persistent_volume_claim_volume_source import V1PersistentVolumeClaimVolumeSource
 from kubernetes.client.models.v1_persistent_volume_status import V1PersistentVolumeStatus
 from kubernetes.client.models.v1_cross_version_object_reference import V1CrossVersionObjectReference
-
+from kubernetes.client.models.v1_config_map_volume_source import V1ConfigMapVolumeSource
+from kubernetes.client.models.v1_secret_volume_source import V1SecretVolumeSource
+from kubernetes.client.models.v1_downward_api_volume_source import V1DownwardAPIVolumeSource
+from kubernetes.client.models.v1_downward_api_volume_file import V1DownwardAPIVolumeFile
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):  
         
@@ -70,11 +73,32 @@ class MyEncoder(json.JSONEncoder):
             return obj.strftime('%Y-%m-%d %H:%M:%S')  
         elif isinstance(obj, date):  
             return obj.strftime("%Y-%m-%d")  
+        elif isinstance(obj, V1DownwardAPIVolumeFile):  
+            return {
+                "field_ref": obj.field_ref,
+                # "mode": obj.mode,
+                "path": obj.path,
+                # "resource_field_ref": obj.resource_field_ref,
+            }
+            
+        elif isinstance(obj, V1DownwardAPIVolumeSource):  
+            return {
+                # "default_mode": obj.default_mode,
+                "items": obj.items,
+            }
         elif isinstance(obj, V1LabelSelectorRequirement):  
             return {
                 "key": obj.key,
                 "operator": obj.operator,
                 "values": obj.values,
+            }
+        elif isinstance(obj, V1ConfigMapVolumeSource):  
+            return {
+                "name": obj.name,
+            }
+        elif isinstance(obj, V1SecretVolumeSource):  
+            return {
+                "secret_name": obj.secret_name,
             }
         elif isinstance(obj, V1RBDPersistentVolumeSource):  
             return {
@@ -193,6 +217,8 @@ class MyEncoder(json.JSONEncoder):
                 # "size_limit": obj.size_limit,
             }    
         elif isinstance(obj,V1Volume):
+
+            # return obj.to_dict()
             return {
                 "name": obj.name,
                 "nfs":obj.nfs,

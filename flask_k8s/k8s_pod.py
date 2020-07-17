@@ -104,10 +104,9 @@ def get_pod_usage_by_name(namespace,name):
                 pod_usage["pod_cpu_usage"] = cpu_all
                 pod_usage["pod_memory_usage"] = memory_all
                 pod_usage["container_list"] = container_list
-                current_app.logger.debug("整个pod的使用情况:{}".format(pod_usage))
+                # current_app.logger.debug("整个pod的使用情况:{}".format(pod_usage))
                 break
     return pod_usage
-
 
 #前端集群下的pod_usage代码已移除
 # get_pod_usage_detail =>get_pod_usage_by_namespace
@@ -157,11 +156,10 @@ def get_pod_usage_by_name(namespace,name):
 #pod详情页
 @k8s_pod.route('/get_pod_detail_by_name', methods=('GET', 'POST'))
 def get_pod_detail_by_name():
-    print("您已进入get_pod_detail_by_name,有什么能帮助您呢?")
     data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("收到的数据:{}".format(data))
     namespace = handle_input(data.get("namespace"))
     pod_name = handle_input(data.get('name'))
-    # pod_name = handle_input(data.get('pod_name'))
     myclient = client.CoreV1Api()
     field_selector = "metadata.name={}".format(pod_name)
     print(field_selector)
@@ -199,6 +197,37 @@ def get_pod_detail_by_name():
     tolerations = spec.tolerations
     containers = spec.containers
     volumes = spec.volumes
+    volume_list = []
+    for v in volumes:
+        print(v)
+        volume = None
+        if v.empty_dir is not None:
+            volume = {"name":v.name,"empty_dir":v.empty_dir}
+        elif v.nfs is not  None:
+            volume = {"name":v.name,"nfs":v.nfs}
+        elif v.config_map is not  None:
+            volume= {"name":v.name,"config_map":v.config_map}
+        # elif v.downward_api is not  None:
+        #     volume = {"name":v.name,"downward_api":""}
+        #     volume = {"name":v.name,"downward_api":v.downward_api}
+        elif v.flex_volume is not  None:
+            volume = {"name":v.name,"flex_volume":v.flex_volume}
+        elif v.host_path is not  None:
+            volume = {"name":v.name,"host_path":v.host_path}
+        elif v.persistent_volume_claim is not  None:
+            volume = {"name":v.name,"persistent_volume_claim":v.persistent_volume_claim}
+        elif v.rbd is not  None:
+            volume = {"name":v.name,"rbd":v.rbd}
+        elif v.secret is not  None:
+            volume = {"name":v.name,"secret":v.secret}
+        # elif v.cephfs is not  None:
+        #     volume = {"name":v.name,"cephfs":v.cephfs}
+        # elif v.aws_elastic_block_store is not  None:
+        #     volume = {"name":v.name,"aws_elastic_block_store":v.aws_elastic_block_store}
+        else:
+            volume = {"name":v.name}
+        volume_list.append(volume)
+    # print(volume_list)
     containers = spec.containers
     init_containers = spec.init_containers
 
@@ -227,7 +256,7 @@ def get_pod_detail_by_name():
         "serviceAccountName": service_account_name,
         # "terminationGracePeriodSeconds":terminationGracePeriodSeconds,
         "tolerations": tolerations,
-        "volumes": volumes,
+        "volumes": volume_list,
         # 容器信息
         "containers": containers,
         # 初始化容器
@@ -379,7 +408,6 @@ def get_namespaced_pod_list():
         i = i + 1
     return json.dumps(pod_list, indent=4, cls=MyEncoder)
 
-
 # 根据节点获取pod列表
 @k8s_pod.route('/get_pod_list_by_node', methods=('GET', 'POST'))
 def get_pod_list_by_node():
@@ -440,3 +468,18 @@ def get_pod_list_by_node():
             mypod["create_time"] = create_time
             pod_list.append(mypod)
     return json.dumps(pod_list, indent=4, cls=MyEncoder)
+
+@k8s_pod.route('/get_pod_num_by_node', methods=('GET', 'POST'))
+def get_pod_num_by_node(name):
+    # current_app.logger.debug(name)
+    if not name:
+        return simple_error_handle("必须要node name参数")
+    myclient = client.CoreV1Api()
+    # 在客户端筛选属于某个node的pod
+    pods = myclient.list_pod_for_all_namespaces(watch=False)
+    i = 0
+    for item in pods.items:
+        node_name = item.spec.node_name
+        if node_name == name:
+            i = i +1
+    return i

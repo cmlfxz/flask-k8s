@@ -641,3 +641,238 @@ def delete_deploy():
     namespace = data.get('namespace').strip()
     deploy_name = data.get('deploy_name').strip()
     return delete_deployment(deploy_name=deploy_name,namespace=namespace)
+
+
+@k8s_deployment.route('/get_deployment_list', methods=('GET', 'POST'))
+def get_deployment_list():
+    # print('get_deployment_list')
+    data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("接收到的数据:{}".format(data))
+    namespace = data.get("namespace").strip()
+    myclient = client.AppsV1Api()
+    # print(namespace)
+    if namespace == "" or namespace == "all":
+        deployments = myclient.list_deployment_for_all_namespaces(watch=False)
+    else:
+        deployments = myclient.list_namespaced_deployment(namespace=namespace)
+    i = 0
+    deployment_list = []
+    for deployment in deployments.items:
+        if (i >= 0):
+            # current_app.logger.debug(deployment)
+            meta = deployment.metadata
+            name = meta.name
+            create_time = time_to_string(meta.creation_timestamp)
+            cluster_name = meta.cluster_name
+            labels = meta.labels
+            namespace = meta.namespace
+
+            spec = deployment.spec
+            replicas = spec.replicas
+            selector = spec.selector
+            # strategy = spec.strategy
+            template = spec.template
+            template_labels = template.metadata.labels
+            node_affinity = None
+            pod_affinity = None
+            pod_anti_affinity = None
+
+            template_spec = deployment.spec.template.spec
+            affinity = template_spec.affinity
+
+            if affinity:
+                node_affinity = affinity.node_affinity
+                pod_affinity = affinity.pod_affinity
+                pod_anti_affinity = affinity.pod_anti_affinity
+            if (name == "flask-tutorial"):
+                # current_app.logger.debug(deployment)
+                current_app.logger.debug(affinity)
+                current_app.logger.debug(pod_anti_affinity)
+            containers = template_spec.containers
+
+            container_names = []
+            container_images = []
+            for container in containers:
+                c_name = container.name
+                c_image = container.image
+                container_names.append(c_name)
+                container_images.append(c_image)
+            # containerInfo = {"name":container_names[0],"image":container_images[0]}
+            # containerInfo = {"image": container_images[0]}
+            image = container_images[0]
+            # node_selector = template_spec.node_selector
+            tolerations = template_spec.tolerations
+
+            status = deployment.status
+            # ready = "{}/{}".format(status.ready_replicas,status.replicas)
+            ready = "{}/{}".format(status.ready_replicas, replicas)
+            mystatus = {"replicas": replicas, "ready": ready, "available_replicas": status.available_replicas, \
+                        "up-to-date": status.updated_replicas, "create_time": create_time}
+
+            info = {"namespace": namespace, "labels": labels, "image": image}
+
+            mydeployment = {"name": name, "status": mystatus, "info": info, "tolerations": tolerations,
+                            "node_affinity": node_affinity, \
+                            "pod_affinity": pod_affinity, "pod_anti_affinity": pod_anti_affinity}
+
+            deployment_list.append(mydeployment)
+
+        i = i + 1
+    return json.dumps(deployment_list, indent=4, cls=MyEncoder)
+    # return json.dumps(deployment_list,indent=4,cls=MyEncoder)
+    # return json.dumps(deployment_list,default=lambda obj: obj.__dict__,indent=4)
+
+@k8s_deployment.route('/get_deployment_name_list',methods=('GET','POST'))
+def get_deployment_name_list():
+    data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("接收到的数据:{}".format(data))
+    namespace = handle_input(data.get("namespace"))
+    myclient = client.AppsV1Api()
+    if namespace == "" or namespace == "all":
+        deployments = myclient.list_deployment_for_all_namespaces(watch=False)
+    else:
+        deployments = myclient.list_namespaced_deployment(namespace=namespace)
+    deployment_names = []
+    for deployment in deployments.items:
+        name = deployment.metadata.name
+        deployment_names.append(name)
+    return json.dumps(deployment_names)
+
+def create_single_deployment_object(deployment):
+    meta = deployment.metadata
+    deployment_name = meta.name
+    create_time = time_to_string(meta.creation_timestamp)
+    cluster_name = meta.cluster_name
+    labels = meta.labels
+    namespace = meta.namespace
+
+    spec = deployment.spec
+    replicas = spec.replicas
+    selector = spec.selector
+    strategy = spec.strategy
+    min_ready_seconds = spec.min_ready_seconds
+    revision_history_limit = spec.revision_history_limit
+
+    template = spec.template
+    template_labels = template.metadata.labels
+    node_affinity = None
+    pod_affinity = None
+    pod_anti_affinity = None
+
+    template_spec = deployment.spec.template.spec
+    tolerations = template_spec.tolerations
+    affinity = template_spec.affinity
+
+    if affinity:
+        node_affinity = affinity.node_affinity
+        pod_affinity = affinity.pod_affinity
+        pod_anti_affinity = affinity.pod_anti_affinity
+    containers = deployment.spec.template.spec.containers
+
+    container_list = []
+    for C in containers:
+        name = C.name
+        image = C.image
+        mycontainer = {"name": name, "image": image}
+        container_list.append(mycontainer)
+
+    status = deployment.status
+    ready_replicas = status.ready_replicas
+    updated_replicas = status.updated_replicas
+    available_replicas = status.available_replicas
+    ready = "{}/{}".format(ready_replicas, replicas)
+    mystatus = {}
+    mystatus['replicas'] = replicas
+    mystatus['ready'] = ready
+    mystatus['available_replicas'] = available_replicas
+    mystatus['up-to-date'] = updated_replicas
+
+    mydeployment = {}
+    mydeployment['name'] = deployment_name
+    mydeployment['namespace'] = namespace
+    mydeployment['labels'] = labels
+    mydeployment['selector'] = selector
+    mydeployment['create_time'] = create_time
+    mydeployment['status'] = mystatus
+    mydeployment['template_labels'] = template_labels
+    mydeployment['strategy'] = strategy
+    mydeployment['min_ready_seconds'] = min_ready_seconds
+    mydeployment['revision_history_limit'] = revision_history_limit
+    mydeployment['tolerations'] = tolerations
+    mydeployment['node_affinity'] = node_affinity
+    mydeployment['pod_affinity'] = pod_affinity
+    mydeployment['pod_anti_affinity'] = pod_anti_affinity
+    mydeployment['container_list'] = container_list
+    return mydeployment
+
+def create_single_hpa_object(hpa):
+    meta = hpa.metadata
+    name = meta.name
+    namespace = meta.namespace
+    create_time = time_to_string(meta.creation_timestamp)
+    spec = hpa.spec
+    maxReplicas = spec.max_replicas
+    minReplicas = spec.min_replicas
+    scaleTargetRef = spec.scale_target_ref
+    targetCPUUtilizationPercentage = spec.target_cpu_utilization_percentage
+
+    status = hpa.status
+    currentCPUUtilizationPercentage = status.current_cpu_utilization_percentage
+    current_replicas = status.current_replicas
+    myhpa = {}
+    myhpa["name"] = name
+    myhpa["namespace"] = namespace
+    myhpa['create_time'] = create_time
+    myhpa["currentReplicas"] = current_replicas
+    myhpa["minReplicas"] = minReplicas
+    myhpa["maxReplicas"] = maxReplicas
+    myhpa["scaleTargetRef"] = scaleTargetRef
+    myhpa["targetCPUUtilizationPercentage"] = targetCPUUtilizationPercentage
+    myhpa["currentCPUUtilizationPercentage"] = currentCPUUtilizationPercentage
+    return myhpa
+
+# @k8s_deployment.route('/get_hpa__by_deployment_name',methods=('GET','POST'))
+def get_hpa_by_deployment_name(namespace,deploy_name):
+    # data = json.loads(request.get_data().decode("utf-8"))
+    # current_app.logger.debug("接收的数据:{}".format(data))
+    # namespace = handle_input(data.get("namespace"))
+    # deploy_name = handle_input(data.get("name"))
+    myclient = client.AutoscalingV1Api()
+    hpas = myclient.list_namespaced_horizontal_pod_autoscaler(namespace=namespace)
+    hpa = None
+    for item in hpas.items:
+        scaleTargetRef = item.spec.scale_target_ref
+        kind = scaleTargetRef.kind
+        name = scaleTargetRef.name
+        if kind=='Deployment' and name  == deploy_name:
+            hpa = item
+            break
+    return hpa
+
+@k8s_deployment.route('/get_deployment_detail_by_name', methods=('GET', 'POST'))
+def get_deployment_detail_by_name():
+    data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("收到的数据:{}".format(data))
+    namespace = handle_input(data.get("namespace"))
+    deployment_name = handle_input(data.get('name'))
+    myclient = client.AppsV1Api()
+    field_selector = "metadata.name={}".format(deployment_name)
+    print(field_selector)
+
+    deployments = myclient.list_namespaced_deployment(namespace=namespace, field_selector=field_selector)
+
+    deployment = None
+    for item in deployments.items:
+        if item.metadata.name == deployment_name:
+            deployment = item
+            break
+    if deployment == None:
+        return simple_error_handle("找不到deployment相关信息")
+    # 生成deployment的结构体
+    mydeployment = create_single_deployment_object(deployment)
+    # 获取hpa信息
+    hpa = get_hpa_by_deployment_name(namespace,deployment_name)
+    if hpa:
+        myhpa = create_single_hpa_object(hpa)
+        mydeployment['hpa'] = myhpa
+    return json.dumps(mydeployment,indent=4,cls=MyEncoder)

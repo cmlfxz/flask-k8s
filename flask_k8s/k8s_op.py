@@ -580,7 +580,6 @@ def delete_statefulset():
         msg={"status":e.status,"reason":e.reason,"message":body['message']}
         return jsonify({'error': '删除statefulset异常',"msg":msg})
     return jsonify({"ok":"删除成功"})
-    
 
 @k8s_op.route('/delete_configmap',methods=('GET','POST'))
 def delete_configmap():
@@ -600,7 +599,6 @@ def delete_configmap():
         msg={"status":e.status,"reason":e.reason,"message":body['message']}
         return jsonify({'error': '删除configmap异常',"msg":msg})
     return jsonify({"ok":"删除成功"})
-
 
 @k8s_op.route('/delete_secret', methods=('GET', 'POST'))
 def delete_secret():
