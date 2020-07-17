@@ -3,7 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="3edec4b2-d54a-4ca3-972d-e91344879c01" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change beforePath="$PROJECT_DIR$/flask_k8s/k8s.py" afterPath="$PROJECT_DIR$/flask_k8s/k8s.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -17,8 +16,8 @@
       <file leaf-file-name="k8s.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/flask_k8s/k8s.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="283">
-              <caret line="648" column="53" lean-forward="false" selection-start-line="648" selection-start-column="53" selection-end-line="648" selection-end-column="53" />
+            <state relative-caret-position="240">
+              <caret line="521" column="24" lean-forward="true" selection-start-line="521" selection-start-column="13" selection-end-line="521" selection-end-column="33" />
               <folding>
                 <element signature="e#0#86#0" expanded="true" />
                 <element signature="e#1136#1171#0" expanded="false" />
@@ -76,6 +75,8 @@
                 <element signature="e#17331#17358#0" expanded="true" />
                 <element signature="e#20163#20508#0" expanded="true" />
                 <element signature="e#20607#20894#0" expanded="true" />
+                <element signature="e#20989#24633#0" expanded="true" />
+                <element signature="e#24720#28388#0" expanded="true" />
                 <element signature="e#28479#28510#0" expanded="false" />
                 <element signature="e#29077#29595#0" expanded="false" />
                 <element signature="e#29101#29577#0" expanded="false" />
@@ -312,7 +313,7 @@
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.115755625" sideWeight="0.49842396" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16291533" sideWeight="0.49842396" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
@@ -825,8 +826,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/flask_k8s/k8s.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="283">
-          <caret line="648" column="53" lean-forward="false" selection-start-line="648" selection-start-column="53" selection-end-line="648" selection-end-column="53" />
+        <state relative-caret-position="240">
+          <caret line="521" column="24" lean-forward="true" selection-start-line="521" selection-start-column="13" selection-end-line="521" selection-end-column="33" />
           <folding>
             <element signature="e#0#86#0" expanded="true" />
             <element signature="e#1136#1171#0" expanded="false" />
@@ -884,6 +885,8 @@
             <element signature="e#17331#17358#0" expanded="true" />
             <element signature="e#20163#20508#0" expanded="true" />
             <element signature="e#20607#20894#0" expanded="true" />
+            <element signature="e#20989#24633#0" expanded="true" />
+            <element signature="e#24720#28388#0" expanded="true" />
             <element signature="e#28479#28510#0" expanded="false" />
             <element signature="e#29077#29595#0" expanded="false" />
             <element signature="e#29101#29577#0" expanded="false" />
