@@ -17,7 +17,16 @@ from kubernetes.client.rest import ApiException
 
 k8s = Blueprint('k8s',__name__,url_prefix='/k8s')
 
-# CORS(k8s, suppors_credentials=True, resources={r'/*'})
+CORS(k8s, suppors_credentials=True, resources={r'/*'})
+
+@k8s.after_request
+def after(resp):
+    # print("after is called,set cross")
+    resp = make_response(resp)
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
+    resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
+    return resp
 
 def takename(e):
     return e['name']
@@ -46,14 +55,7 @@ def load_header():
         except Exception as e:
             print(e)
 
-# @k8s.after_request
-# def after(resp):
-#     # print("after is called,set cross")
-#     resp = make_response(resp)
-#     resp.headers['Access-Control-Allow-Origin'] = '*'
-#     resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
-#     resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
-#     return resp
+
 
 def get_named_node_usage_detail(name):
     myclient = client.CustomObjectsApi()
@@ -238,14 +240,14 @@ def get_destination_rule_list():
         current_app.logger.debug(msg)
         return jsonify({'error': '获取列表失败', "msg": msg})
     #obj是一个字典
-    destination_rules = obj['items']
-    destination_rule_list = []
+    drs = obj['items']
+    dr_list = []
     i = 0
-    for destination_rule in destination_rules:
+    for dr in drs:
         if(i>=0):
-            # print(destination_rule)
-            meta = destination_rule['metadata'] 
-            spec = destination_rule['spec']
+            print(dr)
+            meta = dr['metadata'] 
+            spec = dr['spec']
             name = meta['name']
             namespace = meta['namespace']
             time_str= meta['creationTimestamp']
@@ -253,11 +255,15 @@ def get_destination_rule_list():
 
             host = spec['host']
             subsets = spec['subsets']
-            mydestination_rule = {"name":name,"namespace":namespace,"host":host,"subsets":subsets,"create_time":create_time,}
-            destination_rule_list.append(mydestination_rule)
+            # trafficPolicy = spec['traffic_policy']
+            my_dr = {}
+            my_dr = {"name":name,"namespace":namespace,"host":host,"subsets":subsets}
+            # my_dr['trafficPolicy'] = trafficPolicy
+            my_dr['create_time'] = create_time
+            dr_list.append(my_dr)
             
         i = i + 1
-    return json.dumps(destination_rule_list,indent=4,cls=MyEncoder)
+    return json.dumps(dr_list,indent=4,cls=MyEncoder)
 
 @k8s.route('/get_api_version',methods=['GET','POST'])
 def get_api_version():

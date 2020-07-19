@@ -17,7 +17,16 @@ from kubernetes.client.models.v1_namespace import V1Namespace
 
 k8s_pod = Blueprint('k8s_pod',__name__,url_prefix='/k8s_pod')
 
-# CORS(k8s_pod, suppors_credentials=True, resources={r'/*'})
+CORS(k8s_pod, suppors_credentials=True, resources={r'/*'})
+
+@k8s_pod.after_request
+def after(resp):
+    # print("after is called,set cross")
+    resp = make_response(resp)
+    resp.headers['Access-Control-Allow-Origin'] = '*'
+    resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
+    resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
+    return resp
 
 @k8s_pod.before_app_request
 def load_header():
@@ -51,14 +60,7 @@ def set_k8s_config(cluster_config):
         #这里需要一个文件
         config.load_kube_config(config_file=tmp_filename)
 
-# @k8s_pod.after_request
-# def after(resp):
-#     # print("after is called,set cross")
-#     resp = make_response(resp)
-#     resp.headers['Access-Control-Allow-Origin'] = '*'
-#     resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
-#     resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
-#     return resp
+
 
 #新增根据名字获取pod内存使用情况
 def get_pod_usage_by_name(namespace,name):

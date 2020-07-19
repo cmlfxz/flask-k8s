@@ -184,7 +184,7 @@ https://istio.io/latest/docs/concepts/traffic-management/
 2、负载均衡算法
 3、熔断
 4、内外网
-5、跨域（1）
+5、跨域（1 失败）
 6、鉴权
 7、请求超时
 8、路由(vs,dr,redirect)

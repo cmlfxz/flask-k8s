@@ -2,8 +2,23 @@ apiVersion: networking.istio.io/v1alpha3
 kind: DestinationRule
 metadata:
   name: flask-k8s-dr
+  namespace: ms-dev
 spec:
   host: flask-k8s
+  # 熔断
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 1
+      http:
+        http1MaxPendingRequests: 1
+        maxRequestsPerConnection: 1
+    outlierDetection:
+      # 开始拒绝连接的错误个数
+      consecutiveErrors: 1
+      interval: 1s
+      baseEjectionTime: 3m
+      maxEjectionPercent: 100
   subsets:
   - name: v1
     labels:

@@ -2,6 +2,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: VirtualService
 metadata:
   name: flask-k8s-vs
+  namespace: ms-dev
 spec:
   hosts:
   - flask-k8s
@@ -10,6 +11,11 @@ spec:
     - destination:
         host: flask-k8s
         subset: v1
+    # timeout: 5s
+    # retries:
+    #   attempts: 5
+    #   perTryTimeout: 2s
+    #   retryOn: gateway-error,connect-failure,refused-stream
     # 跨域配置
     corsPolicy:
       allowOrigin:
