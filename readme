@@ -175,3 +175,18 @@ vs
 dr 
 
 
+首页：
+
+
+https://istio.io/latest/docs/concepts/traffic-management/
+
+1、速率限制
+2、负载均衡算法
+3、熔断
+4、内外网
+5、跨域（1）
+6、鉴权
+7、请求超时
+8、路由(vs,dr,redirect)
+9、流量镜像
+10、链路跟踪

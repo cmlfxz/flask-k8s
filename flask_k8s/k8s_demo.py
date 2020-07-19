@@ -55,14 +55,14 @@ def set_k8s_config(cluster_config):
         #这里需要一个文件
         config.load_kube_config(config_file=tmp_filename)
 
-@k8s_demo.after_request
-def after(resp):
-    # print("after is called,set cross")
-    resp = make_response(resp)
-    resp.headers['Access-Control-Allow-Origin'] = '*'
-    resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
-    resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
-    return resp
+# @k8s_demo.after_request
+# def after(resp):
+#     # print("after is called,set cross")
+#     resp = make_response(resp)
+#     resp.headers['Access-Control-Allow-Origin'] = '*'
+#     resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
+#     resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
+#     return resp
 
 def update_deployment(deploy_name, namespace, image=None, replicas=None, pod_anti_affinity_type=None,
                       anti_affinity_key=None, anti_affinity_value=None):

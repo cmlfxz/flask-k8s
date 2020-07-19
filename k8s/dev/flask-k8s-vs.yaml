@@ -10,3 +10,16 @@ spec:
     - destination:
         host: flask-k8s
         subset: v1
+    # 跨域配置
+    corsPolicy:
+      allowOrigin:
+      - '*'
+      allowMethods:
+      - GET
+      - POST 
+      - OPTIONS 
+      # - PATCH 
+      - DELETE
+      allowHeaders:
+      - 'cluster_name'
+      - 'namespace'

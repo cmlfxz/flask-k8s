@@ -46,14 +46,14 @@ def load_header():
         except Exception as e:
             print(e)
 
-@k8s.after_request
-def after(resp):
-    # print("after is called,set cross")
-    resp = make_response(resp)
-    resp.headers['Access-Control-Allow-Origin'] = '*'
-    resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
-    resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
-    return resp
+# @k8s.after_request
+# def after(resp):
+#     # print("after is called,set cross")
+#     resp = make_response(resp)
+#     resp.headers['Access-Control-Allow-Origin'] = '*'
+#     resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
+#     resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
+#     return resp
 
 def get_named_node_usage_detail(name):
     myclient = client.CustomObjectsApi()
