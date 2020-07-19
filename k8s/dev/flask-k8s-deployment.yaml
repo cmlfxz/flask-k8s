@@ -95,7 +95,7 @@ spec:
       containers:
       - name: flask-k8s
         image: myhub.mydocker.com/ms-dev/flask-k8s:f2aae65
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: Always
         ports:
         - containerPort: 8082
         volumeMounts:
