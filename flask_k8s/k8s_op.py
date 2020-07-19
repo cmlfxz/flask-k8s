@@ -15,7 +15,7 @@ from kubernetes import client,config
 from kubernetes.client.rest import ApiException
 from kubernetes.client.models.v1_namespace import V1Namespace
 
-k8s_op = Blueprint('k8s_op',__name__,url_prefix='/k8s_op')
+k8s_op = Blueprint('k8s_op',__name__,url_prefix='/api/k8s/op')
 
 CORS(k8s_op, suppors_credentials=True, resources={r'/*'})
 @k8s_op.after_request

@@ -14,7 +14,7 @@ from kubernetes import client,config
 from kubernetes.client.rest import ApiException
 from kubernetes.client.models.v1_namespace import V1Namespace
 
-k8s_deployment = Blueprint('k8s_deployment',__name__,url_prefix='/k8s_deployment')
+k8s_deployment = Blueprint('k8s_deployment',__name__,url_prefix='/api/k8s/deployment')
 
 CORS(k8s_deployment, suppors_credentials=True, resources={r'/*'})
 
@@ -245,7 +245,8 @@ def get_deployment_by_name(namespace, deploy_name):
 
 def update_deployment_v2(deploy_name, namespace, action, image=None, replicas=None,toleration=None,node_affinity=None, pod_anti_affinity=None,
                          pod_affinity=None,labels=None):
-    # print(namespace,deploy_name)
+    # debug deploy_name:  <a href="/frontend_k8s/k8s_deployment_detail?name=base&amp;namespace=default&amp;cluster_name=k8s_cs1">base</a>
+    current_app.logger.debug("命名空间:{},deploy_name: {}".format(namespace,deploy_name))
     deployment = get_deployment_by_name(namespace, deploy_name)
     # print(deployment)
     if (deployment == None):
@@ -702,26 +703,36 @@ def get_deployment_list():
             # containerInfo = {"name":container_names[0],"image":container_images[0]}
             # containerInfo = {"image": container_images[0]}
             image = container_images[0]
-            # node_selector = template_spec.node_selector
+            node_selector = template_spec.node_selector
             tolerations = template_spec.tolerations
 
             status = deployment.status
             # ready = "{}/{}".format(status.ready_replicas,status.replicas)
             ready = "{}/{}".format(status.ready_replicas, replicas)
-            mystatus = {"replicas": replicas, "ready": ready, "available_replicas": status.available_replicas, \
-                        "up-to-date": status.updated_replicas, "create_time": create_time}
-
-            info = {"namespace": namespace, "labels": labels, "image": image}
-
-            mydeployment = {"name": name, "status": mystatus, "info": info, "tolerations": tolerations,
-                            "node_affinity": node_affinity, \
-                            "pod_affinity": pod_affinity, "pod_anti_affinity": pod_anti_affinity}
-
-            deployment_list.append(mydeployment)
+            available_replicas = status.available_replicas
+            updated_replicas = status.updated_replicas
+            
+            info = {}
+            info["replicas"] = replicas
+            info["ready"] = ready
+            info["available_replicas"] = available_replicas
+            info["updated_replicas"] = updated_replicas
+            info["labels"] = labels
+            info["image"] = image
+            info["node_selector"] = node_selector
+            #构建deployment结构体
+            my_deploy = {}
+            my_deploy["name"] = name
+            my_deploy["info"] = info
+            my_deploy["tolerations"] = tolerations
+            my_deploy["affinity"] = affinity
+            # my_deploy["node_affinity"] = node_affinity
+            # my_deploy["pod_affinity"] = pod_affinity
+            # my_deploy["pod_anti_affinity"] = pod_anti_affinity
+            deployment_list.append(my_deploy)
 
         i = i + 1
     return json.dumps(deployment_list, indent=4, cls=MyEncoder)
-    # return json.dumps(deployment_list,indent=4,cls=MyEncoder)
     # return json.dumps(deployment_list,default=lambda obj: obj.__dict__,indent=4)
 
 @k8s_deployment.route('/get_deployment_name_list',methods=('GET','POST'))

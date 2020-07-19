@@ -15,7 +15,7 @@ from .k8s_pod import get_pod_num_by_node
 from kubernetes import client,config
 from kubernetes.client.rest import ApiException
 
-k8s = Blueprint('k8s',__name__,url_prefix='/k8s')
+k8s = Blueprint('k8s',__name__,url_prefix='/api/k8s')
 
 CORS(k8s, suppors_credentials=True, resources={r'/*'})
 

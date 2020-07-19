@@ -18,7 +18,7 @@ from .k8s_deployment import get_deployment_by_name
 from kubernetes import client,config
 from kubernetes.client.rest import ApiException
 
-k8s_demo = Blueprint('k8s_demo',__name__,url_prefix='/k8s_demo')
+k8s_demo = Blueprint('k8s_demo',__name__,url_prefix='/api/k8s/demo')
 
 CORS(k8s_demo, suppors_credentials=True, resources={r'/*'})
 
