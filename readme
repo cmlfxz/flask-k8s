@@ -183,10 +183,26 @@ https://istio.io/latest/docs/concepts/traffic-management/
 1、速率限制
 2、负载均衡算法
 3、熔断
+	https://istio.io/latest/docs/reference/config/networking/destination-rule/
+	# 熔断
+	trafficPolicy:
+		connectionPool:
+		tcp:
+			maxConnections: 1
+		http:
+			http1MaxPendingRequests: 1
+			maxRequestsPerConnection: 1
+		outlierDetection:
+		# 开始拒绝连接的错误个数
+		consecutiveErrors: 1
+		interval: 1s
+		baseEjectionTime: 3m
+		maxEjectionPercent: 100
 4、内外网
 5、跨域（1 失败）
 6、鉴权
 7、请求超时
+	timeout: 7s
 8、路由(vs,dr,redirect)
 9、流量镜像
 10、链路跟踪

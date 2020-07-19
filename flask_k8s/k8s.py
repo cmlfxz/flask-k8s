@@ -255,10 +255,12 @@ def get_destination_rule_list():
 
             host = spec['host']
             subsets = spec['subsets']
-            # trafficPolicy = spec['traffic_policy']
+            trafficPolicy = None
+            if 'trafficPolicy' in spec.keys():
+                trafficPolicy = spec['trafficPolicy']
             my_dr = {}
             my_dr = {"name":name,"namespace":namespace,"host":host,"subsets":subsets}
-            # my_dr['trafficPolicy'] = trafficPolicy
+            my_dr['trafficPolicy'] = trafficPolicy
             my_dr['create_time'] = create_time
             dr_list.append(my_dr)
             

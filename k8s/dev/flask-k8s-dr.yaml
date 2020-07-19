@@ -17,7 +17,7 @@ spec:
       # 开始拒绝连接的错误个数
       consecutiveErrors: 1
       interval: 1s
-      baseEjectionTime: 3m
+      baseEjectionTime: 30s
       maxEjectionPercent: 100
   subsets:
   - name: v1
