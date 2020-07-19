@@ -16,7 +16,7 @@ from kubernetes.client.models.v1_namespace import V1Namespace
 
 k8s_deployment = Blueprint('k8s_deployment',__name__,url_prefix='/k8s_deployment')
 
-CORS(k8s_deployment, suppors_credentials=True, resources={r'/*'})
+# CORS(k8s_deployment, suppors_credentials=True, resources={r'/*'})
 
 @k8s_deployment.before_app_request
 def load_header():

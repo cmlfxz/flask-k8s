@@ -17,7 +17,7 @@ from kubernetes.client.rest import ApiException
 
 k8s = Blueprint('k8s',__name__,url_prefix='/k8s')
 
-CORS(k8s, suppors_credentials=True, resources={r'/*'})
+# CORS(k8s, suppors_credentials=True, resources={r'/*'})
 
 def takename(e):
     return e['name']
@@ -733,7 +733,7 @@ def get_secret_detail_by_name():
     namespace = meta.namespace
     data = secret.data
     secret_type = secret.type
-    # print(type(data),data)
+    # current_app.logger.debug(type(data),data)
     data_list = []
     for k,v in data.items():
         # print(k, my_decode(v))

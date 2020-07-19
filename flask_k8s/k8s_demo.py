@@ -20,7 +20,7 @@ from kubernetes.client.rest import ApiException
 
 k8s_demo = Blueprint('k8s_demo',__name__,url_prefix='/k8s_demo')
 
-CORS(k8s_demo, suppors_credentials=True, resources={r'/*'})
+# CORS(k8s_demo, suppors_credentials=True, resources={r'/*'})
 
 
 @k8s_demo.before_app_request
