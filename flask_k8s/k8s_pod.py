@@ -11,6 +11,7 @@ from .util import dir_path
 from .util import handle_input,handle_toleraion_seconds,string_to_int,handle_toleration_item
 from .util import simple_error_handle,get_cluster_config
 from .util import handle_cpu,handle_memory,handle_disk_space
+from .k8s_op import get_event_list_by_name
 from kubernetes import client,config
 from kubernetes.client.rest import ApiException
 from kubernetes.client.models.v1_namespace import V1Namespace
@@ -59,8 +60,6 @@ def set_k8s_config(cluster_config):
             file.write(cluster_config)
         #这里需要一个文件
         config.load_kube_config(config_file=tmp_filename)
-
-
 
 #新增根据名字获取pod内存使用情况
 def get_pod_usage_by_name(namespace,name):
@@ -237,7 +236,9 @@ def get_pod_detail_by_name():
     phase = status.phase
     host_ip = status.host_ip
     pod_ip = status.pod_ip
-
+    # 获取pod事件
+    event_list = get_event_list_by_name(namespace=namespace,input_kind="Pod",input_name=name)
+    mypod = {}
     mypod = {
         "name": name,
         "namespace": namespace,
@@ -264,6 +265,7 @@ def get_pod_detail_by_name():
         # 初始化容器
         "initContainers": init_containers,
     }
+    mypod["event_list"] = event_list
     # return json.dumps(pod,default=lambda obj: obj.__dict__,indent=4)
     # return jsonify(pod)
     return json.dumps(mypod, indent=4, cls=MyEncoder)
@@ -392,14 +394,14 @@ def get_namespaced_pod_list():
             mypod = {"name": name, "namespace": namespace, "node": node, "pod_ip": pod_ip, "status": phase,
                      "image": image, "restart": restart_count}
             # 以下4行修复rancher有些pod获取不到性能数据
-            mypod['pod_cpu_usage(m)'] = 0
-            mypod['pod_memory_usage(Mi)'] = 0
+            mypod['cpu_usage(m)'] = 0
+            mypod['memory_usage(M)'] = 0
             mypod['container_usage'] = []
             try:
                 pod_usage = get_pod_usage_by_name(namespace,name)
                 # 根据pod命名空间，内存获取pod的内存，CPU
-                mypod['pod_cpu_usage(m)'] = pod_usage['pod_cpu_usage']
-                mypod['pod_memory_usage(Mi)'] = pod_usage['pod_memory_usage']
+                mypod['cpu_usage(m)'] = pod_usage['pod_cpu_usage']
+                mypod['memory_usage(M)'] = pod_usage['pod_memory_usage']
                 mypod['container_usage'] = pod_usage['container_list']
             except Exception as e:
                 current_app.logger.debug("获取pod性能数据出错")
@@ -448,20 +450,22 @@ def get_pod_list_by_node():
             # host_ip = status.host_ip
             node = spec.node_name
             pod_ip = status.pod_ip
-            restart_count = status.container_statuses[0].restart_count
+            restart_count = None
+            if isinstance(status.container_statuses,list):
+                restart_count = status.container_statuses[0].restart_count
             mypod = {"name": name, "namespace": namespace, "node": node, "pod_ip": pod_ip, "status": phase,
                      "image": image, "restart_count": restart_count}
             # 以下4行修复rancher有些pod获取不到性能数据
-            mypod['pod_cpu_usage(m)'] = 0
-            mypod['pod_memory_usage(Mi)'] = 0
+            mypod['cpu_usage(m)'] = 0
+            mypod['memory_usage(M)'] = 0
             # mypod['pod_performance'] = pod_performance
             mypod['container_usage'] = []
             try:
                 pod_usage = get_pod_usage_by_name(namespace,name)
                 # 根据pod命名空间，内存获取pod的内存，CPU
                 # pod_performance = "{}/{}".format(pod_usage['pod_cpu_usage'],pod_usage['pod_memory_usage'])
-                mypod['pod_cpu_usage(m)'] = pod_usage['pod_cpu_usage']
-                mypod['pod_memory_usage(Mi)'] = pod_usage['pod_memory_usage']
+                mypod['cpu_usage(m)'] = pod_usage['pod_cpu_usage']
+                mypod['memory_usage(M)'] = pod_usage['pod_memory_usage']
                 # mypod['pod_performance'] = pod_performance
                 mypod['container_usage'] = pod_usage['container_list']
             except Exception as e:
@@ -485,3 +489,26 @@ def get_pod_num_by_node(name):
         if node_name == name:
             i = i +1
     return i
+@k8s_pod.route('/delete_pod', methods=('GET', 'POST'))
+def delete_pod():
+    data = json.loads(request.get_data().decode('UTF-8'))
+    current_app.logger.debug("接受到的数据:{}".format(data))
+    namespace = handle_input(data.get('namespace'))
+    pod_name = handle_input(data.get('pod_name'))
+
+    try:
+        api_response =  client.CoreV1Api().delete_namespaced_pod(
+            name=pod_name,
+            namespace=namespace,
+            body=client.V1DeleteOptions(propagation_policy='Foreground',grace_period_seconds=5)
+        )
+    except ApiException as e:
+        if isinstance(e.body, dict):
+            body = json.loads(e.body)
+            message = body['message']
+        else:
+            message = e.body
+        msg = {"status": e.status, "reason": e.reason, "message": message}
+        current_app.logger.debug(msg)
+        return jsonify({'error': '删除失败', "msg": msg})
+    return jsonify({"ok":"删除成功"})

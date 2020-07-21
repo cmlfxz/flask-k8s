@@ -10,6 +10,8 @@ from .util import time_to_string,utc_to_local
 from .util import dir_path
 from .util import handle_input,handle_toleraion_seconds,string_to_int,handle_toleration_item
 from .util import simple_error_handle,get_cluster_config
+from .util import error_with_status
+from .k8s_op import get_event_list_by_name
 from kubernetes import client,config
 from kubernetes.client.rest import ApiException
 from kubernetes.client.models.v1_namespace import V1Namespace
@@ -58,8 +60,6 @@ def set_k8s_config(cluster_config):
             file.write(cluster_config)
         #这里需要一个文件
         config.load_kube_config(config_file=tmp_filename)
-
-
 
 @k8s_deployment.route('/create_deploy_by_yaml', methods=('GET', 'POST'))
 def create_deploy_by_yaml():
@@ -245,16 +245,17 @@ def get_deployment_by_name(namespace, deploy_name):
 
 def update_deployment_v2(deploy_name, namespace, action, image=None, replicas=None,toleration=None,node_affinity=None, pod_anti_affinity=None,
                          pod_affinity=None,labels=None):
-    # debug deploy_name:  <a href="/frontend_k8s/k8s_deployment_detail?name=base&amp;namespace=default&amp;cluster_name=k8s_cs1">base</a>
     current_app.logger.debug("命名空间:{},deploy_name: {}".format(namespace,deploy_name))
     deployment = get_deployment_by_name(namespace, deploy_name)
     # print(deployment)
     if (deployment == None):
-        return jsonify({"error": "1003", "msg": "找不到该deployment"})
+        # return jsonify({"error": "1003", "msg": "找不到该deployment"})
+        return error_with_status(error="找不到该deployment",msg="",code=1003)
     if action == "add_pod_anti_affinity":
         if not pod_anti_affinity:
             msg="{}需要提供pod_anti_affinity".format(action)
-            return jsonify({"error":msg})
+            # return jsonify({"error":msg})
+            return error_with_status(error="", msg=msg, code=1003)
         # 修复affinity为空的bug
         affinity = deployment.spec.template.spec.affinity
         if  not affinity:
@@ -262,11 +263,6 @@ def update_deployment_v2(deploy_name, namespace, action, image=None, replicas=No
             deployment.spec.template.spec.affinity = affinity
         # 修复affinity为空的bug
         else:
-            # pod_anti_affinity = deployment.spec.template.spec.affinity.pod_anti_affinity
-            # pod_anti_affinity = affinity.pod_anti_affinity
-            # if pod_anti_affinity != None:
-            #     print("pod_anti_affinity已经存在,使用更新模式")
-            #     action = "update_affinity"
             print("pod_anti_affinity已经存在,使用更新模式")
             action = "update_affinity"
             deployment.spec.template.spec.affinity.pod_anti_affinity = pod_anti_affinity
@@ -294,7 +290,9 @@ def update_deployment_v2(deploy_name, namespace, action, image=None, replicas=No
     elif action == "add_node_affinity":
         # current_app.logger.debug(node_affinity)
         if not node_affinity:
-            return simple_error_handle("{}需要提供node_affinity".format(action))
+            # return simple_error_handle("{}需要提供node_affinity".format(action))
+            msg = "{}需要提供node_affinity".format(action)
+            return simple_error_handle(msg=msg, code=1003)
         # 修复affinity为空的bug
         affinity = deployment.spec.template.spec.affinity
         current_app.logger.debug("添加前affinity:    "+json.dumps(affinity,cls=MyEncoder))
@@ -304,12 +302,6 @@ def update_deployment_v2(deploy_name, namespace, action, image=None, replicas=No
             deployment.spec.template.spec.affinity = affinity
         # 修复affinity为空的bug
         else:
-            # node_affinity = deployment.spec.template.spec.affinity.node_affinity
-            # a_node_affinity = affinity.node_affinity
-            # current_app.logger.debug("a_node_affinity:    "+json.dumps(a_node_affinity,cls=MyEncoder))
-            # if a_node_affinity != None:
-            #     print("node_affinity已经存在,使用更新模式")
-            #     action = "update_affinity"
             print("affinity已经存在,使用更新模式")
             action = "update_affinity"
             deployment.spec.template.spec.affinity.node_affinity = node_affinity
@@ -374,12 +366,11 @@ def update_deployment_v2(deploy_name, namespace, action, image=None, replicas=No
                 namespace=namespace,
                 body=deployment
             )
-        
     except ApiException as e:
         print(e)
         body = json.loads(e.body)
         msg = {"status": e.status, "reason": e.reason, "message": body['message']}
-        return jsonify({'error': '创建失败', "msg": msg})
+        return error_with_status(error="创建失败",msg=msg,status=1000)
 
     return jsonify({"ok": "deployment 执行{}成功".format(action)})
 
@@ -485,10 +476,13 @@ def update_deploy_v2():
         value = handle_input(affinity.get('value'))
         operator = handle_input(affinity.get('operator'))
         values = []
-        if not isinstance(value, list):
-            values.append(value)
+        if operator == 'Exists' or operator == 'DoesNotExist':
+            values == None
         else:
-            values = value
+            if not isinstance(value, list):
+                values.append(value)
+            else:
+                values = value
 
         if node_affinity_type == "preferred":
             weight = string_to_int(handle_input(affinity.get('weight')))
@@ -512,7 +506,7 @@ def update_deploy_v2():
                 field = client.V1NodeSelectorRequirement(
                         key=key,
                         operator=operator,
-                        values=vaules,
+                        values=values,
                 )
                 match_fields.append(field)
                 preference = client.V1NodeSelectorTerm(
@@ -888,4 +882,7 @@ def get_deployment_detail_by_name():
     if hpa:
         myhpa = create_single_hpa_object(hpa)
         mydeployment['hpa'] = myhpa
+    # 获取事件
+    event_list = get_event_list_by_name(namespace=namespace, input_kind="Deployment", input_name=deployment_name)
+    mydeployment["event_list"] = event_list
     return json.dumps(mydeployment,indent=4,cls=MyEncoder)

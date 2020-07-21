@@ -9,15 +9,16 @@ spec:
   trafficPolicy:
     connectionPool:
       tcp:
-        maxConnections: 1
+        maxConnections: 3
+        connectTimeout: 10s
       http:
-        http1MaxPendingRequests: 1
-        maxRequestsPerConnection: 1
+        http1MaxPendingRequests: 5
+        maxRequestsPerConnection: 50
     outlierDetection:
       # 开始拒绝连接的错误个数
-      consecutiveErrors: 1
-      interval: 1s
-      baseEjectionTime: 30s
+      consecutiveErrors: 3
+      interval: 3s
+      baseEjectionTime: 10s
       maxEjectionPercent: 100
   subsets:
   - name: v1

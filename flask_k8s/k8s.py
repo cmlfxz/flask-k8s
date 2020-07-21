@@ -55,8 +55,6 @@ def load_header():
         except Exception as e:
             print(e)
 
-
-
 def get_named_node_usage_detail(name):
     myclient = client.CustomObjectsApi()
     plural = "{}/{}".format("nodes",name)
@@ -1141,3 +1139,110 @@ def get_hpa_list():
         hpa_list.append(myhpa)
     # return json.dumps({"ok":"123"})
     return json.dumps(hpa_list,indent=4,cls=MyEncoder)
+
+def format_time(dt):
+    tz_sh = pytz.timezone('Asia/Shanghai')
+    now= datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    nowstamp = time.mktime(time.strptime(now, '%Y-%m-%d %H:%M:%S'))
+    dtime = dt.astimezone(tz_sh).strftime("%Y-%m-%d %H:%M:%S")
+    dstamp = time.mktime(dt.astimezone(tz_sh).timetuple())
+    difftime = nowstamp - dstamp
+    d = int(difftime/24/60/60)
+    hour = int(difftime/60/60)
+    m = int(difftime/60)
+    s = int(difftime%60)
+    if d > 0:
+        t = "{}d{}h".format(d,hour)
+    elif hour > 0:
+        t = "{}h{}m".format(hour,m)
+    elif m > 0:
+        t = "{}m{}s".format(m,s)
+    else:
+        t = "{}s".format(s)
+    print(t)
+
+    return t
+
+@k8s.route('/get_event_list',methods=('GET','POST'))
+def get_event_list():
+    data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("event接收的数据:{}".format(data))
+    namespace = handle_input(data.get("namespace"))
+    myclient = client.CoreV1Api()
+    if namespace == "" or namespace == "all":
+        events = myclient.list_event_for_all_namespaces()
+    else:
+        events =myclient.list_namespaced_event(namespace=namespace)
+    i = 0
+    event_list = []
+    for event in events.items:
+        if (i >= 0):
+            # print(event)
+            io = event.involved_object
+            meta = event.metadata
+            source = event.source.component
+            count = event.count
+            first_time = format_time(event.first_timestamp)
+            last_time = format_time(event.last_timestamp)
+            message = event.message
+            reason = event.reason
+            type = event.type
+            kind = io.kind
+            subobject  = io.name
+            # namespace = io.namespace
+            object = "{}/{}".format(kind, subobject)
+            name = meta.name
+            namespace = meta.namespace
+            my_event = {}
+            my_event["name"] = name
+            my_event["namespace"] =namespace
+            my_event["last_seen"] = last_time
+            my_event["message"] = message
+            my_event["reason"] =reason
+            my_event["type"] =type
+            my_event["object"] =object
+            my_event["source"] =source
+
+            my_event["first_seen"] =first_time
+
+            event_list.append(my_event)
+            # print(event_list)
+
+        i= i+1
+    return json.dumps(event_list,indent=4,cls=MyEncoder)
+    # return jsonify({"ok":"get event list"})
+
+@k8s.route('/get_component_status_list',methods=('GET','POST'))
+def get_component_status_list():
+    # data = json.loads(request.get_data().decode("utf-8"))
+    # current_app.logger.debug("event接收的数据:{}".format(data))
+    # namespace = handle_input(data.get("namespace"))
+    myclient = client.CoreV1Api()
+    ss = myclient.list_component_status()
+    i = 0
+    component_status_list = []
+    for cs in ss.items:
+        if (i>=0):
+            conditions = cs.conditions
+            meta = cs.metadata
+            name = meta.name
+            # j = 0
+            # for C in conditions:
+            #     if(j==0):
+            #     j = j + 1
+            error = conditions[0].error
+            message = conditions[0].message
+            status = conditions[0].status
+            type = conditions[0].type
+            name = meta.name
+            my_component_status = {}
+            my_component_status["name"] =name
+            my_component_status["type"] =type
+            my_component_status["status"] =status
+            my_component_status["message"] =message
+            my_component_status["error"] =error
+            component_status_list.append(my_component_status)
+        i = i +1
+    return json.dumps(component_status_list,indent=4)
+
+

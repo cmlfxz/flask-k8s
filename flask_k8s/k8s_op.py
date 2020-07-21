@@ -59,8 +59,6 @@ def set_k8s_config(cluster_config):
         #这里需要一个文件
         config.load_kube_config(config_file=tmp_filename)
 
-
-
 def create_namespace_resource(name,labels=None):
         myclient = client.CoreV1Api()
         if labels:
@@ -669,3 +667,51 @@ def delete_cronjob():
         # return simple_error_handle(msg)
         return jsonify({'error': '删除cronjob异常',"msg":msg})
     return jsonify({"ok":"删除成功"})
+
+@k8s_op.route('/get_event_list',methods=('GET','POST'))
+def get_event_list_by_name(namespace=None,input_kind=None,input_name=None):
+    current_app.logger.debug("namespace:{},kind:{},input_name:{}".format(namespace,input_kind,input_name))
+    myclient = client.CoreV1Api()
+    if namespace == "" or namespace == "all":
+        return simple_error_handle(msg="命名空间不能为all或者none")
+        # events = myclient.list_event_for_all_namespaces()
+    else:
+        events =myclient.list_namespaced_event(namespace=namespace)
+    i = 0
+    event_list = []
+    for event in events.items:
+        if (i >= 0):
+            # print(event)
+            io = event.involved_object
+            kind = io.kind
+            subobject  = io.name
+            if kind==input_kind and subobject == input_name:
+                meta = event.metadata
+                source = event.source.component
+                count = event.count
+                first_time = time_to_string(event.first_timestamp)
+                last_time = time_to_string(event.last_timestamp)
+                message = event.message
+                reason = event.reason
+                type = event.type
+
+                # namespace = io.namespace
+                object = "{}/{}".format(kind, subobject)
+                name = meta.name
+                namespace = meta.namespace
+                my_event = {}
+                my_event["message"] = message
+                my_event["reason"] = reason
+                my_event["source"] = source
+                # my_event["name"] = name
+                # my_event["namespace"] =namespace
+                my_event["last_seen"] = last_time
+                my_event["first_seen"] = first_time
+                # my_event["type"] =type
+                # my_event["object"] =object
+                event_list.append(my_event)
+                print(event_list)
+
+        i= i+1
+    return json.dumps(event_list,indent=4,cls=MyEncoder)
+    # return jsonify({"ok":"get event list"})

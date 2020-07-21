@@ -1,7 +1,7 @@
 from datetime import date, datetime
 import decimal
 import pymysql 
-from flask import jsonify,current_app
+from flask import jsonify,current_app,make_response
 import base64
 import threading
 import json,os,math,requests,time,pytz,ssl,yaml
@@ -111,9 +111,11 @@ def handle_memory(memory):
         return 0
 
 def simple_error_handle(msg):
-    return jsonify({"error":msg})
+    return make_response(jsonify({"error":msg}),1000)
+    # return jsonify({"error":msg})
 
-
+def error_with_status(error=None,msg=None,status=None):
+    return make_response(jsonify({"error":error,"msg":msg}),status)
 #参数是datetime
 def time_to_string(dt):
     tz_sh = pytz.timezone('Asia/Shanghai')
