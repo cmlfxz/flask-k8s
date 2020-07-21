@@ -3,6 +3,7 @@
 from flask import Flask, render_template
 from flask_migrate import Migrate
 from flask_session import Session
+from flasgger import Swagger,swag_from
 
 import logging
 from logging.handlers import RotatingFileHandler
@@ -20,8 +21,6 @@ from kubernetes import client, config
 # from .models import db
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
-
-
 def setup_config(loglevel):
     if not os.path.exists('logs'):
         os.makedirs('logs')
@@ -31,8 +30,6 @@ def setup_config(loglevel):
         '%(asctime)s - %(levelname)s - %(filename)s - %(funcName)s - %(lineno)d - %(message)s')
     handler.setFormatter(logging_format)
     return handler
-
-
 def create_app():
     app = Flask(__name__, instance_relative_config=True)
     # filepath = os.path.join(dir_path, 'kubeconfig')
@@ -122,6 +119,7 @@ def create_app():
         return 'Hello, World!'
 
     Session(app)
+    # Swagger(app)
     # r'/*' 是通配符，让本服务器所有的URL 都允许跨域请求
     CORS(app, supports_credentials=True,resources=r'/*')
     # CORS(app, supports_credentials=True,resources=r'/*',methods='GET,POST,OPTIONS',allow_headers="cluster_name,x-requested-with,content-type")

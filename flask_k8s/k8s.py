@@ -243,7 +243,7 @@ def get_destination_rule_list():
     i = 0
     for dr in drs:
         if(i>=0):
-            print(dr)
+            # print(dr)
             meta = dr['metadata'] 
             spec = dr['spec']
             name = meta['name']

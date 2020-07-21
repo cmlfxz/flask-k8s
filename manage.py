@@ -2,6 +2,7 @@ from flask_script import Manager,Server,Shell
 from flask_migrate import Migrate
 from flask_migrate import MigrateCommand
 
+
 from flask_k8s import create_app
 # from flask_k8s import models
 
