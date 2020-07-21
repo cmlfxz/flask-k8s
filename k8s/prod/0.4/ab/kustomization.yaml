@@ -2,5 +2,4 @@ namespace: ms-prod
 resources:
 - flask-k8s-dr.yaml
 - flask-k8s-vs.yaml
-- ms-prod-gateway.yaml
 
