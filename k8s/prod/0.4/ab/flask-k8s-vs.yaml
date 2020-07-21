@@ -10,10 +10,10 @@ spec:
     - headers:
         user:
           exact: admin
-   route:
-   - destination:
-       host: flask-k8s
-       subset: canary
+    route:
+      - destination:
+          host: flask-k8s
+          subset: canary
   - route:
     - destination:
         host: flask-k8s
