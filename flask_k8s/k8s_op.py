@@ -24,7 +24,7 @@ def after(resp):
     resp = make_response(resp)
     resp.headers['Access-Control-Allow-Origin'] = '*'
     resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
-    resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
+    resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name,user,user_id'
     return resp
 
 @k8s_op.before_app_request

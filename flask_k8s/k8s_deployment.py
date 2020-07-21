@@ -26,7 +26,7 @@ def after(resp):
     resp = make_response(resp)
     resp.headers['Access-Control-Allow-Origin'] = '*'
     resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
-    resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name'
+    resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name,user,user_id'
     return resp
 
 @k8s_deployment.before_app_request
@@ -35,10 +35,11 @@ def load_header():
         # print('options请求方式')
         pass
     if request.method == 'POST':
-        # print('POST请求方式')
+        print('POST请求方式')
         try:
-            cluster_name = request.headers.get('cluster_name').strip()
-            # print("load_header: 集群名字:{}".format(cluster_name))
+            cluster_name = request.headers.get('cluster_name')
+            user = request.headers.get('user')
+            print("集群名字:{},user:{}".format(cluster_name,user))
             if cluster_name == None:
                 print("没有设置cluster_name header")
                 pass
