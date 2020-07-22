@@ -17,8 +17,35 @@ from kubernetes.client.rest import ApiException
 from kubernetes.client.models.v1_namespace import V1Namespace
 
 k8s_deployment = Blueprint('k8s_deployment',__name__,url_prefix='/api/k8s/deployment')
-
 CORS(k8s_deployment, suppors_credentials=True, resources={r'/*'})
+
+import logging
+from jaeger_client import Config
+from flask_opentracing import FlaskTracer
+
+def init_tracer(service):
+    logging.getLogger('').handlers = []
+    logging.basicConfig(format='%(message)s', level=logging.DEBUG)
+
+    config = Config(
+        config={
+            'sampler': {
+                'type': 'const',
+                'param': 1,
+            },
+            'local_agent': {
+                'reporting_host': '192.168.11.142',
+                'reporting_port': '6831',
+            },
+            'logging': True,
+        },
+        service_name=service,
+    )
+    # this call also sets opentracing.tracer
+    return config.initialize_tracer()
+
+tracing = FlaskTracer(tracer=init_tracer('flask-k8s'))
+
 
 @k8s_deployment.after_request
 def after(resp):
@@ -642,6 +669,7 @@ def delete_deploy():
 
 
 @k8s_deployment.route('/get_deployment_list', methods=('GET', 'POST'))
+@tracing.trace()
 def get_deployment_list():
     # print('get_deployment_list')
     data = json.loads(request.get_data().decode("utf-8"))

@@ -66,6 +66,8 @@ from kubernetes.client.models.v1_config_map_volume_source import V1ConfigMapVolu
 from kubernetes.client.models.v1_secret_volume_source import V1SecretVolumeSource
 from kubernetes.client.models.v1_downward_api_volume_source import V1DownwardAPIVolumeSource
 from kubernetes.client.models.v1_downward_api_volume_file import V1DownwardAPIVolumeFile
+from kubernetes.client.models.v1_env_from_source import V1EnvFromSource
+from kubernetes.client.models.v1_config_map_env_source import V1ConfigMapEnvSource
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):  
         
@@ -80,7 +82,17 @@ class MyEncoder(json.JSONEncoder):
                 "path": obj.path,
                 # "resource_field_ref": obj.resource_field_ref,
             }
-            
+        elif isinstance(obj, V1ConfigMapEnvSource):
+            return {
+                "name": obj.name,
+                "optional": obj.optional,
+            }
+        elif isinstance(obj, V1EnvFromSource):
+            return {
+                "config_map_ref": obj.config_map_ref,
+                "prefix": obj.prefix,
+                "secret_ref": obj.secret_ref,
+            }
         elif isinstance(obj, V1DownwardAPIVolumeSource):  
             return {
                 # "default_mode": obj.default_mode,
@@ -560,23 +572,6 @@ class DateEncoder(json.JSONEncoder):
         else:  
             return json.JSONEncoder.default(self, obj)
     
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # #格式化字典数组(ports专用)
 # def format_obj_list(obj_list):
