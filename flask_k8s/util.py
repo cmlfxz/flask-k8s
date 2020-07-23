@@ -7,6 +7,42 @@ import threading
 import json,os,math,requests,time,pytz,ssl,yaml
 from DBUtils.PooledDB import PooledDB
 
+
+
+import logging
+from jaeger_client import Config
+from flask_opentracing import FlaskTracer
+from flask import _request_ctx_stack as stack
+from jaeger_client import Tracer,ConstSampler
+from jaeger_client import Tracer, ConstSampler
+from jaeger_client.reporter import NullReporter
+from jaeger_client.codecs import B3Codec
+from opentracing.ext import tags
+from opentracing.propagation import Format
+from opentracing_instrumentation.request_context import get_current_span,span_in_context
+
+def init_tracer(service):
+    # logging.getLogger('').handlers = []
+    # logging.basicConfig(format='%(message)s', level=logging.DEBUG)
+    config = Config(
+        config={
+            'sampler': {
+                'type': 'const',
+                'param': 1,
+            },
+            'local_agent': {
+                'reporting_host': '192.168.11.142',
+                'reporting_port': '6831',
+            },
+            # 'logging': True,
+            # zipkin使用b3
+            'propagation': 'b3',
+        },
+        service_name=service,
+    )
+    # this call also sets opentracing.tracer
+    return config.initialize_tracer()
+
 dir_path = os.path.dirname(os.path.abspath(__file__))
 
 def get_db_conn():
@@ -184,3 +220,4 @@ def get_cluster_config(cluster_name):
             print("查询不到数据")
     conn.close()
     return cluster_config
+

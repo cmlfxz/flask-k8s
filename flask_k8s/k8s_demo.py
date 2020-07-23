@@ -20,7 +20,7 @@ from kubernetes.client.rest import ApiException
 
 k8s_demo = Blueprint('k8s_demo',__name__,url_prefix='/api/k8s/demo')
 
-CORS(k8s_demo, suppors_credentials=True, resources={r'/*'})
+CORS(k8s_demo, supports_credentials=True, resources={r'/*'})
 
 @k8s_demo.after_request
 def after(resp):
@@ -62,8 +62,6 @@ def set_k8s_config(cluster_config):
             file.write(cluster_config)
         #这里需要一个文件
         config.load_kube_config(config_file=tmp_filename)
-
-
 
 def update_deployment(deploy_name, namespace, image=None, replicas=None, pod_anti_affinity_type=None,
                       anti_affinity_key=None, anti_affinity_value=None):

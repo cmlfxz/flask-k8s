@@ -17,15 +17,19 @@ from kubernetes.client.rest import ApiException
 
 k8s = Blueprint('k8s',__name__,url_prefix='/api/k8s')
 
-CORS(k8s, suppors_credentials=True, resources={r'/*'})
+CORS(k8s, supports_credentials=True, resources={r'/*'})
 
+from flask_opentracing import FlaskTracer
+from .util import init_tracer
+
+tracing = FlaskTracer(tracer=init_tracer('flask-k8s'))
 @k8s.after_request
 def after(resp):
     # print("after is called,set cross")
     resp = make_response(resp)
     resp.headers['Access-Control-Allow-Origin'] = '*'
     resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
-    resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name,user,user_id'
+    resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name,user,user_id,X-B3-TraceId,X-B3-SpanId,X-B3-Sampled'
     return resp
 
 def takename(e):
@@ -37,14 +41,16 @@ def takeCreateTime(elem):
 
 @k8s.before_app_request
 def load_header():
+    print('请求方式:{}'.format(request.method))
     if request.method == 'OPTIONS':
         # print('options请求方式')
         pass
     if request.method == 'POST':
-        # print('POST请求方式')
+
         try:
+            current_app.logger.debug("headers:{}".format(request.headers))
             cluster_name = request.headers.get('cluster_name').strip()
-            # print("load_header: 集群名字:{}".format(cluster_name))
+            print("load_header: 集群名字:{}".format(cluster_name))
             if cluster_name == None:
                 print("没有设置cluster_name header")
                 pass
@@ -52,6 +58,14 @@ def load_header():
                 g.cluster_name = cluster_name
                 cluster_config = get_cluster_config(cluster_name)
                 set_k8s_config(cluster_config)
+        except Exception as e:
+            print(e)
+    # bug 当获取deployment name list 是request get 方式，不要设置k8s config
+    if request.method == "GET":
+        try:
+            current_app.logger.debug("headers:{}".format(request.headers))
+            cluster_name = request.headers.get('cluster_name').strip()
+            print("load_header: 集群名字:{}".format(cluster_name))
         except Exception as e:
             print(e)
 
@@ -252,7 +266,9 @@ def get_destination_rule_list():
             create_time = utc_to_local(time_str, utc_format='%Y-%m-%dT%H:%M:%SZ')
 
             host = spec['host']
-            subsets = spec['subsets']
+            subsets = None
+            if 'subsets' in spec.keys():
+                subsets = spec['subsets']
             trafficPolicy = None
             if 'trafficPolicy' in spec.keys():
                 trafficPolicy = spec['trafficPolicy']
@@ -298,7 +314,9 @@ def get_namespace_list():
     # return json.dumps(namespace_list,default=lambda obj: obj.__dict__,sort_keys=True,indent=4)
 
 @k8s.route('/get_namespace_name_list',methods=('GET','POST'))
+@tracing.trace()
 def get_namespace_name_list():
+    current_app.logger.debug("get_namespace_name_list接收到的header:{}".format(request.headers))
     myclient = client.CoreV1Api()
     namespace_name_list = []
     for item in myclient.list_namespace().items:
@@ -413,6 +431,7 @@ def get_daemonset_list():
     return json.dumps(daemonset_list,indent=4,cls=MyEncoder)
 
 @k8s.route('/get_node_name_list',methods=('GET','POST'))
+@tracing.trace()
 def get_node_name_list():
     myclient = client.CoreV1Api()
     nodes = myclient.list_node()
@@ -1182,8 +1201,10 @@ def get_event_list():
             meta = event.metadata
             source = event.source.component
             count = event.count
-            first_time = format_time(event.first_timestamp)
-            last_time = format_time(event.last_timestamp)
+            # first_time = format_time(event.first_timestamp)
+            # last_time = format_time(event.last_timestamp)
+            first_time = time_to_string(event.first_timestamp)
+            last_time = time_to_string(event.last_timestamp)
             message = event.message
             reason = event.reason
             type = event.type
@@ -1203,7 +1224,7 @@ def get_event_list():
             my_event["object"] =object
             my_event["source"] =source
 
-            my_event["first_seen"] =first_time
+            # my_event["first_seen"] =first_time
 
             event_list.append(my_event)
             # print(event_list)

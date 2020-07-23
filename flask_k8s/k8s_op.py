@@ -17,7 +17,8 @@ from kubernetes.client.models.v1_namespace import V1Namespace
 
 k8s_op = Blueprint('k8s_op',__name__,url_prefix='/api/k8s/op')
 
-CORS(k8s_op, suppors_credentials=True, resources={r'/*'})
+CORS(k8s_op, supports_credentials=True, resources={r'/*'})
+
 @k8s_op.after_request
 def after(resp):
     # print("after is called,set cross")
@@ -327,10 +328,14 @@ def update_namespace():
     namespace = get_namespace_by_name(name)
     if not namespace:
         return jsonify({"error":"找不到此名称空间"})
-    labels = json.loads(handle_input(data.get('labels')))
+    # labels = json.loads(handle_input(data.get('labels')))
+    labels = handle_input(data.get('labels'))
+    print(labels,type(labels))
     # print(labels)
     if labels == None:
         labels = {}
+    else:
+        labels = json.loads(labels)
     action = handle_input(data.get('action'))
     if action=="remove_istio_inject":
         labels.pop('istio-injection')
