@@ -30,9 +30,13 @@ def init_tracer(service):
                 'type': 'const',
                 'param': 1,
             },
+            # 'local_agent': {
+            #     'reporting_host': '192.168.11.142',
+            #     'reporting_port': '6831',
+            # },
             'local_agent': {
-                'reporting_host': '192.168.11.142',
-                'reporting_port': '6831',
+                'reporting_host': 'zipkin.istio-system',
+                'reporting_port': '9411',
             },
             # 'logging': True,
             # zipkin使用b3

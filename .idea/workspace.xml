@@ -3,7 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="3edec4b2-d54a-4ca3-972d-e91344879c01" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" afterPath="$PROJECT_DIR$/requirements.txt" />
+      <change beforePath="$PROJECT_DIR$/flask_k8s/util.py" afterPath="$PROJECT_DIR$/flask_k8s/util.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -14,12 +14,20 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="requirements.txt" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/requirements.txt">
+      <file leaf-file-name="util.py" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/flask_k8s/util.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="9" lean-forward="false" selection-start-line="0" selection-start-column="9" selection-end-line="0" selection-end-column="9" />
-              <folding />
+            <state relative-caret-position="296">
+              <caret line="36" column="0" lean-forward="false" selection-start-line="36" selection-start-column="0" selection-end-line="39" selection-end-column="14" />
+              <folding>
+                <element signature="e#0#35#0" expanded="true" />
+                <element signature="e#3638#3760#0" expanded="false" />
+                <element signature="e#3638#3651#0" expanded="false" />
+                <element signature="e#3779#3830#0" expanded="false" />
+                <element signature="e#3936#4006#0" expanded="false" />
+                <element signature="e#4111#4170#0" expanded="false" />
+                <element signature="e#5311#6795#0" expanded="false" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -117,8 +125,8 @@
         <option value="$PROJECT_DIR$/flask_k8s/k8s_demo.py" />
         <option value="$PROJECT_DIR$/flask_k8s/k8s_op.py" />
         <option value="$PROJECT_DIR$/flask_k8s/k8s.py" />
-        <option value="$PROJECT_DIR$/flask_k8s/util.py" />
         <option value="$PROJECT_DIR$/requirements.txt" />
+        <option value="$PROJECT_DIR$/flask_k8s/util.py" />
       </list>
     </option>
   </component>
@@ -155,17 +163,6 @@
               <item name="flask-k8s" type="b2602c69:ProjectViewProjectNode" />
               <item name="flask-k8s" type="462c0819:PsiDirectoryNode" />
               <item name="flask_k8s" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="flask-k8s" type="b2602c69:ProjectViewProjectNode" />
-              <item name="flask-k8s" type="462c0819:PsiDirectoryNode" />
-              <item name="k8s" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="flask-k8s" type="b2602c69:ProjectViewProjectNode" />
-              <item name="flask-k8s" type="462c0819:PsiDirectoryNode" />
-              <item name="k8s" type="462c0819:PsiDirectoryNode" />
-              <item name="dev" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -653,28 +650,27 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/flask_k8s/util.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="778">
-          <caret line="65" column="0" lean-forward="true" selection-start-line="65" selection-start-column="0" selection-end-line="65" selection-end-column="0" />
-          <folding>
-            <element signature="e#0#35#0" expanded="true" />
-            <element signature="e#753#1355#0" expanded="true" />
-            <element signature="e#3487#3609#0" expanded="false" />
-            <element signature="e#3487#3500#0" expanded="false" />
-            <element signature="e#3628#3679#0" expanded="false" />
-            <element signature="e#3785#3855#0" expanded="false" />
-            <element signature="e#3960#4019#0" expanded="false" />
-            <element signature="e#5160#6644#0" expanded="false" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/requirements.txt">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
-          <caret line="0" column="9" lean-forward="false" selection-start-line="0" selection-start-column="9" selection-end-line="0" selection-end-column="9" />
+          <caret line="0" column="4" lean-forward="true" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="14" />
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/flask_k8s/util.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="296">
+          <caret line="36" column="0" lean-forward="false" selection-start-line="36" selection-start-column="0" selection-end-line="39" selection-end-column="14" />
+          <folding>
+            <element signature="e#0#35#0" expanded="true" />
+            <element signature="e#3638#3760#0" expanded="false" />
+            <element signature="e#3638#3651#0" expanded="false" />
+            <element signature="e#3779#3830#0" expanded="false" />
+            <element signature="e#3936#4006#0" expanded="false" />
+            <element signature="e#4111#4170#0" expanded="false" />
+            <element signature="e#5311#6795#0" expanded="false" />
+          </folding>
         </state>
       </provider>
     </entry>
