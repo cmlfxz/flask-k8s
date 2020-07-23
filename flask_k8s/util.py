@@ -22,8 +22,8 @@ from opentracing.propagation import Format
 from opentracing_instrumentation.request_context import get_current_span,span_in_context
 
 def init_tracer(service):
-    # logging.getLogger('').handlers = []
-    # logging.basicConfig(format='%(message)s', level=logging.DEBUG)
+    logging.getLogger('').handlers = []
+    logging.basicConfig(format='%(message)s', level=logging.DEBUG)
     config = Config(
         config={
             'sampler': {
@@ -34,11 +34,11 @@ def init_tracer(service):
             #     'reporting_host': '192.168.11.142',
             #     'reporting_port': '6831',
             # },
-            # 'local_agent': {
-            #     'reporting_host': 'zipkin.istio-system',
-            #     'reporting_port': '9411',
-            # },
-            # 'logging': True,
+            'local_agent': {
+                'reporting_host': 'zipkin.istio-system',
+                'reporting_port': '9411',
+            },
+            'logging': True,
             # zipkin使用b3
             'propagation': 'b3',
         },

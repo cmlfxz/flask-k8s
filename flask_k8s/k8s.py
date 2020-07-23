@@ -22,7 +22,7 @@ CORS(k8s, supports_credentials=True, resources={r'/*'})
 from flask_opentracing import FlaskTracer
 from .util import init_tracer
 
-tracing = FlaskTracer(tracer=init_tracer('flask-k8s'))
+tracing = FlaskTracer(tracer=init_tracer('flask-k8s.ms-dev'))
 @k8s.after_request
 def after(resp):
     # print("after is called,set cross")
