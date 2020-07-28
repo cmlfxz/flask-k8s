@@ -694,8 +694,13 @@ def get_event_list_by_name(namespace=None,input_kind=None,input_name=None):
                 meta = event.metadata
                 source = event.source.component
                 count = event.count
-                first_time = time_to_string(event.first_timestamp)
-                last_time = time_to_string(event.last_timestamp)
+                #bug first_timestamp为None，格式化失败
+                first_time = None
+                if event.first_timestamp != None:
+                    first_time = time_to_string(event.first_timestamp)
+                last_time = None
+                if  event.last_timestamp != None:
+                    last_time = time_to_string(event.last_timestamp)
                 message = event.message
                 reason = event.reason
                 type = event.type

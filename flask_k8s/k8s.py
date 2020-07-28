@@ -19,10 +19,10 @@ k8s = Blueprint('k8s',__name__,url_prefix='/api/k8s')
 
 CORS(k8s, supports_credentials=True, resources={r'/*'})
 
-from flask_opentracing import FlaskTracer
-from .util import init_tracer
-
-tracing = FlaskTracer(tracer=init_tracer('flask-k8s.ms-dev'))
+# from flask_opentracing import FlaskTracer
+# from .util import init_tracer
+#
+# tracing = FlaskTracer(tracer=init_tracer('flask-k8s.ms-dev'))
 @k8s.after_request
 def after(resp):
     # print("after is called,set cross")
@@ -74,12 +74,24 @@ def get_named_node_usage_detail(name):
     plural = "{}/{}".format("nodes",name)
     current_app.logger.debug(plural)
     # 这个API不稳定
-    node = myclient.list_cluster_custom_object(group="metrics.k8s.io",version="v1beta1",plural=plural)
-    node_name = node['metadata']['name']
-
-    cpu = handle_cpu(node['usage']['cpu'])
-    memory = handle_memory(node['usage']['memory'])
-    node_usage = {"node_name":node_name,"cpu":cpu,"memory":memory}
+    node_usage = {}
+    #bug当有节点没开，获取不到数据，页面会出不来数据，退而求其次，获取不到，置0
+    try:
+        node = myclient.list_cluster_custom_object(group="metrics.k8s.io",version="v1beta1",plural=plural)
+        node_name = node['metadata']['name']
+        cpu = handle_cpu(node['usage']['cpu'])
+        memory = handle_memory(node['usage']['memory'])
+        node_usage = {"node_name":node_name,"cpu":cpu,"memory":memory}
+    except ApiException as e:
+        if isinstance(e.body,dict):
+            body = json.loads(e.body)
+            message = body['message']
+        else:
+            message = e.body
+        msg = {"status": e.status, "reason": e.reason, "message": message}
+        current_app.logger.debug(msg)
+        node_usage = {"node_name":name,"cpu":0,"memory":0}
+         
     return node_usage
     
 def get_node_usage_detail(): 
@@ -314,7 +326,7 @@ def get_namespace_list():
     # return json.dumps(namespace_list,default=lambda obj: obj.__dict__,sort_keys=True,indent=4)
 
 @k8s.route('/get_namespace_name_list',methods=('GET','POST'))
-@tracing.trace()
+# @tracing.trace()
 def get_namespace_name_list():
     current_app.logger.debug("get_namespace_name_list接收到的header:{}".format(request.headers))
     myclient = client.CoreV1Api()
@@ -431,7 +443,7 @@ def get_daemonset_list():
     return json.dumps(daemonset_list,indent=4,cls=MyEncoder)
 
 @k8s.route('/get_node_name_list',methods=('GET','POST'))
-@tracing.trace()
+# @tracing.trace()
 def get_node_name_list():
     myclient = client.CoreV1Api()
     nodes = myclient.list_node()
@@ -460,6 +472,7 @@ def create_single_node_detail_obj(node,simple):
     schedulable = True if node.spec.unschedulable == None else False
 
     status = node.status
+    node_info = status.node_info
     address = status.addresses[0].address
     # 获取单独node的性能数据
     node_usage = get_named_node_usage_detail(name)
@@ -493,6 +506,7 @@ def create_single_node_detail_obj(node,simple):
     mynode = {}
     mynode["name"] = name
     mynode["role"] = role
+    
     mynode["schedulable"] = schedulable
     if not simple:
         mynode["node_capacity"] = mycapacity
@@ -512,13 +526,15 @@ def create_single_node_detail_obj(node,simple):
         mynode["pod_usage_percent"] = pod_usage_percent
         mynode["storage"] = disk_space
     else:
+        mynode['node_info'] = node_info
         mynode["taints"] = taints
         mynode["capacity(cpu(c),memory(Mi),storage(G))"] = mycapacity
         mynode["labels"] = labels
-        mynode["pod_cidr"] = pod_cidr
+        mynode["pod_cidr"] = pod_cidr 
     mynode["create_time"] = create_time
     return mynode
 
+#节点列表页面使用
 @k8s.route('/get_node_detail_list',methods=('GET','POST'))
 def get_node_detail_list():
     myclient = client.CoreV1Api()
@@ -533,13 +549,13 @@ def get_node_detail_list():
         i = i + 1
     return json.dumps(node_list,indent=4,cls=MyEncoder)
 
+# 集群详情页面使用
 @k8s.route('/get_node_detail_list_v2',methods=('GET','POST'))
 def get_node_detail_list_v2():
     myclient = client.CoreV1Api()
     nodes = myclient.list_node()
     node_list = []
     for node in nodes.items:
-        # print(node)
         mynode = create_single_node_detail_obj(node,simple=False)
         node_list.append(mynode)
     return json.dumps(node_list,indent=4,cls=MyEncoder)
@@ -1196,7 +1212,7 @@ def get_event_list():
     event_list = []
     for event in events.items:
         if (i >= 0):
-            # print(event)
+            print(event)
             io = event.involved_object
             meta = event.metadata
             source = event.source.component

@@ -17,15 +17,15 @@ spec:
     #   perTryTimeout: 2s
     #   retryOn: gateway-error,connect-failure,refused-stream
     # 跨域配置
-    corsPolicy:
-      allowOrigin:
-      - '*'
-      allowMethods:
-      - GET
-      - POST 
-      - OPTIONS 
-      # - PATCH 
-      - DELETE
-      allowHeaders:
-      - 'cluster_name'
-      - 'namespace'
+    # corsPolicy:
+    #   allowOrigin:
+    #   - '*'
+    #   allowMethods:
+    #   - GET
+    #   - POST 
+    #   - OPTIONS 
+    #   # - PATCH 
+    #   - DELETE
+    #   allowHeaders:
+    #   - 'cluster_name'
+    #   - 'namespace'
