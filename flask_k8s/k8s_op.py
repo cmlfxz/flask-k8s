@@ -31,7 +31,6 @@ def after(resp):
 @k8s_op.before_app_request
 def load_header():
     if request.method == 'OPTIONS':
-        # print('options请求方式')
         pass
     if request.method == 'POST':
         # print('POST请求方式')
@@ -135,8 +134,34 @@ def delete_pv():
         return jsonify({'error': '删除PVC异常',"msg":msg})
     return jsonify({"ok":"删除成功"})
 
+@k8s_op.route('/delete_multi_pv', methods=('GET', 'POST'))
+def delete_multi_pv():
+    # data = json.loads(request.get_data().decode('utf-8'))
+    # current_app.logger.debug("接受数据:{},{}".format(data,type(data)))
+    # pod_list  = data['pod_list']
+    # current_app.logger.debug(type(pod_list),pod_list)
+    data = json.loads(request.get_data().decode('utf-8'))
+    print(type(data),data)
+    try:
+        list = data['pod_list']
+        print(list)
+    except Exception as e:
+        print(e)
+        return jsonify({"fail ":e})
+    myclient = client.CoreV1Api()
+    for name in list:
+        try:
+            # body=client.V1DeleteOptions(propagation_policy='Foreground',grace_period_seconds=5)
+            result = myclient.delete_persistent_volume(name=name)
+        except Exception as e:
+            body = json.loads(e.body)
+            msg={"status":e.status,"reason":e.reason,"message":body['message']}
+            # return simple_error_handle(msg)
+            return jsonify({'error': '删除PV异常',"msg":msg})
+    return jsonify({"ok":"删除成功"})
+
 @k8s_op.route('/delete_pvc', methods=('GET', 'POST'))
-def delete_namespaced_service():
+def delete_pvc():
     data = json.loads(request.get_data().decode('utf-8'))
     name  = handle_input(data.get('name'))
     namespace  = handle_input(data.get('namespace'))
@@ -441,9 +466,25 @@ def create_service(namespace,service_name,type,selector,port,target_port):
     )
     myclient.create_namespaced_service(namespace=namespace, body=body)
 
-def delete_service(namespace,service_name):
+@k8s_op.route('/delete_service', methods=('GET', 'POST'))
+def delete_service():
+    # myclient = client.CoreV1Api()
+    # myclient.delete_namespaced_service(name=service_name,namespace=namespace)
+    
+    data = json.loads(request.get_data().decode('utf-8'))
+    name  = handle_input(data.get('name'))
+    namespace  = handle_input(data.get('namespace'))
+    if namespace == '' or namespace == 'all':
+        return simple_error_handle("namespace不能为空，并且不能选择all")
     myclient = client.CoreV1Api()
-    myclient.delete_namespaced_service(name=service_name,namespace=namespace)
+    try:
+        # body=client.V1DeleteOptions(propagation_policy='Foreground',grace_period_seconds=5)
+        result = myclient.delete_namespaced_service(namespace=namespace,name=name)
+    except Exception as e:
+        body = json.loads(e.body)
+        msg={"status":e.status,"reason":e.reason,"message":body['message']}
+        return jsonify({'error': '删除异常',"msg":msg})
+    return jsonify({"ok":"删除成功"})
     
 def create_ingress(namespace,ingress_name,host,path,service_name,service_port):
     body = client.NetworkingV1beta1Ingress(

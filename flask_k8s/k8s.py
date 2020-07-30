@@ -41,14 +41,14 @@ def takeCreateTime(elem):
 
 @k8s.before_app_request
 def load_header():
-    print('请求方式:{}'.format(request.method))
+    # print('请求方式:{}'.format(request.method))
     if request.method == 'OPTIONS':
         # print('options请求方式')
         pass
     if request.method == 'POST':
 
         try:
-            current_app.logger.debug("headers:{}".format(request.headers))
+            # current_app.logger.debug("headers:{}".format(request.headers))
             cluster_name = request.headers.get('cluster_name').strip()
             print("load_header: 集群名字:{}".format(cluster_name))
             if cluster_name == None:
@@ -1059,14 +1059,16 @@ def get_statefulset_list():
             
             pvc_list = []
             pvc_templates = spec.volume_claim_templates
-            for pvc_template in pvc_templates:    
-                pvc_annotations= pvc_template.metadata.annotations
-                pvc_name = pvc_template.metadata.name
-                pvc_access_mode = pvc_template.spec.access_modes[0]
-                pvc_capacity = pvc_template.spec.resources.requests['storage']
-                pvc_status = pvc_template.status.phase
-                my_pvc = {"pvc_name":pvc_name,"pvc_access_mode":pvc_access_mode,"pvc_capacity":pvc_capacity,"pvc_status":pvc_status,"pvc_annotations":pvc_annotations}
-                pvc_list.append(my_pvc)
+            #bug TypeError: 'NoneType' object is not iterable
+            if pvc_templates != None:
+                for pvc_template in pvc_templates:    
+                    pvc_annotations= pvc_template.metadata.annotations
+                    pvc_name = pvc_template.metadata.name
+                    pvc_access_mode = pvc_template.spec.access_modes[0]
+                    pvc_capacity = pvc_template.spec.resources.requests['storage']
+                    pvc_status = pvc_template.status.phase
+                    my_pvc = {"pvc_name":pvc_name,"pvc_access_mode":pvc_access_mode,"pvc_capacity":pvc_capacity,"pvc_status":pvc_status,"pvc_annotations":pvc_annotations}
+                    pvc_list.append(my_pvc)
 
             
             mystatefulset = {"name":name,"create_time":create_time,"namespace":namespace,"labels":labels,"replicas":replicas,"service_name":service_name,"container_list":container_list,\

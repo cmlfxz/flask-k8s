@@ -15,6 +15,7 @@ from .k8s_op import k8s_op
 from .k8s_demo import k8s_demo
 from .k8s_pod import k8s_pod
 from .k8s_deployment import k8s_deployment
+from concurrent_log_handler import ConcurrentRotatingFileHandler
 
 from flask_cors import *
 from kubernetes import client, config
@@ -24,7 +25,8 @@ dir_path = os.path.dirname(os.path.abspath(__file__))
 def setup_config(loglevel):
     if not os.path.exists('logs'):
         os.makedirs('logs')
-    handler = RotatingFileHandler('logs/flask.log', mode='a', maxBytes=1024 * 1024, backupCount=10, )
+    # handler = RotatingFileHandler('logs/flask.log', mode='a', maxBytes=1024 * 1024, backupCount=10, )
+    handler = ConcurrentRotatingFileHandler('logs/flask.log',mode='a',maxBytes=1024*1024,backupCount=5,)
     handler.setLevel(loglevel)
     logging_format = logging.Formatter(
         '%(asctime)s - %(levelname)s - %(filename)s - %(funcName)s - %(lineno)d - %(message)s')
