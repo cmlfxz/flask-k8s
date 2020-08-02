@@ -31,10 +31,8 @@ def after(resp):
 @k8s_deployment.before_app_request
 def load_header():
     if request.method == 'OPTIONS':
-        # print('options请求方式')
         pass
     if request.method == 'POST':
-        print('POST请求方式')
         try:
             cluster_name = request.headers.get('cluster_name')
             user = request.headers.get('user')
@@ -716,6 +714,7 @@ def get_deployment_list():
             #构建deployment结构体
             my_deploy = {}
             my_deploy["name"] = name
+            my_deploy["namespace"] = namespace
             my_deploy["info"] = info
             my_deploy["tolerations"] = tolerations
             my_deploy["affinity"] = affinity

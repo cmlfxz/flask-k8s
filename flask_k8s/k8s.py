@@ -43,7 +43,6 @@ def takeCreateTime(elem):
 def load_header():
     # print('请求方式:{}'.format(request.method))
     if request.method == 'OPTIONS':
-        # print('options请求方式')
         pass
     if request.method == 'POST':
 
@@ -60,12 +59,12 @@ def load_header():
                 set_k8s_config(cluster_config)
         except Exception as e:
             print(e)
-    # bug 当获取deployment name list 是request get 方式，不要设置k8s config
+    # bug 当获取deployment name list 是request get 方式，不要设置k8s config,GET代码纯粹调试
     if request.method == "GET":
         try:
-            current_app.logger.debug("headers:{}".format(request.headers))
+            # current_app.logger.debug("headers:{}".format(request.headers))
             cluster_name = request.headers.get('cluster_name').strip()
-            print("load_header: 集群名字:{}".format(cluster_name))
+            # print("load_header: 集群名字:{}".format(cluster_name))
         except Exception as e:
             print(e)
 
@@ -951,12 +950,22 @@ def get_pv_list():
 
             status = pv.status.phase
 
-            # volume_binding_mode = pv.volume_binding_mode
-            mypv = {"name":name,"pvc":pvc,"capacity":capacity,"status":status,"access_modes":access_modes,"pv_reclaim_policy":pv_reclaim_policy, \
-                    "storage_class_name":storage_class_name,"source":source,
-                   "volume_mode":volume_mode,"create_time":create_time}   
+            info = {}
+            info["capacity"] = capacity
+            info["access_modes"] = access_modes
+            info["pv_reclaim_policy"] = pv_reclaim_policy
+            info["volume_mode"] = volume_mode
 
-            pv_list.append(mypv) 
+            my_pv = {}
+            my_pv["name"] = name
+            my_pv["pvc"] = pvc
+            my_pv["status"] = status
+            my_pv["info"] = info
+            my_pv["storage_class_name"] = storage_class_name
+            my_pv["source"] = source
+            my_pv["create_time"] = create_time
+
+            pv_list.append(my_pv) 
         i = i +1
     return json.dumps(pv_list,indent=4,cls=MyEncoder)
 
@@ -1070,10 +1079,22 @@ def get_statefulset_list():
                     my_pvc = {"pvc_name":pvc_name,"pvc_access_mode":pvc_access_mode,"pvc_capacity":pvc_capacity,"pvc_status":pvc_status,"pvc_annotations":pvc_annotations}
                     pvc_list.append(my_pvc)
 
+            info = {}
+            info["replicas"] = replicas
+            info["labels"] = labels
+            info["service_name"] = service_name
+            info["host_network"] = host_network
+            info["tolerations"] = tolerations
             
-            mystatefulset = {"name":name,"create_time":create_time,"namespace":namespace,"labels":labels,"replicas":replicas,"service_name":service_name,"container_list":container_list,\
-                "host_network":host_network,"tolerations":tolerations,"pvc_list":pvc_list}
-            statefulset_list.append(mystatefulset)
+            my_state = {}
+            my_state["name"] = name
+            my_state["namespace"] = namespace
+            my_state["info"] = info
+            my_state["container_list"] =container_list
+            my_state["pvc_list"] = pvc_list
+            my_state["create_time"] = create_time
+            
+            statefulset_list.append(my_state)
             
         i = i +1       
     return json.dumps(statefulset_list,indent=4,cls=MyEncoder)
@@ -1214,7 +1235,7 @@ def get_event_list():
     event_list = []
     for event in events.items:
         if (i >= 0):
-            print(event)
+            # print(event)
             io = event.involved_object
             meta = event.metadata
             source = event.source.component

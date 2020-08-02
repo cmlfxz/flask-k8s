@@ -33,7 +33,6 @@ def load_header():
     if request.method == 'OPTIONS':
         pass
     if request.method == 'POST':
-        # print('POST请求方式')
         try:
             cluster_name = request.headers.get('cluster_name').strip()
             # print("load_header: 集群名字:{}".format(cluster_name))
@@ -509,12 +508,20 @@ def create_ingress(namespace,ingress_name,host,path,service_name,service_port):
     myclient = client.AppsV1Api().NetworkingV1beta1Api()
     myclient.create_namespaced_ingress(namespace=namespace, body=body)
 
-def delete_ingress(ingress_name,namespace):
-    myclient = client.AppsV1Api().NetworkingV1beta1Api()
-    myclient.delete_namespaced_ingress(
-        name=ingress_name,
-        namespace=namespace
-    )
+@k8s_op.route('/delete_ingress', methods=('GET', 'POST'))
+def delete_ingress():
+    data = json.loads(request.get_data().decode('utf-8'))
+    name  = handle_input(data.get('name'))
+    namespace = handle_input(data.get('namespace'))
+    myclient = client.ExtensionsV1beta1Api()
+    try:
+        # body=client.V1DeleteOptions(propagation_policy='Foreground',grace_period_seconds=5)
+        result = myclient.delete_namespaced_ingress(namespace=namespace,name=name)
+    except ApiException as e:
+        body = json.loads(e.body)
+        msg={"status":e.status,"reason":e.reason,"message":body['message']}
+        return jsonify({'error': '删除异常',"msg":msg})
+    return jsonify({"ok":"删除成功"})
 
 def get_vs_by_name(namespace,vs_name):
     virtual_services = client.CustomObjectsApi().list_namespaced_custom_object(group="networking.istio.io",

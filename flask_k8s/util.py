@@ -115,10 +115,12 @@ def handle_toleration_item(item):
         return None
     else:
         return item
-
+# 返回m为单位的cpu值
 def handle_cpu(cpu):
     if cpu == "0":
         return 0
+    elif cpu.endswith('m'):
+        return int(cpu.split('m')[0])
     elif cpu.endswith('n'):
         # 返回m为单位的cpu值
         # return int(cpu.split('n')[0])/1000/1000
@@ -158,6 +160,9 @@ def error_with_status(error=None,msg=None,status=None):
     return make_response(jsonify({"error":error,"msg":msg}),status)
 #参数是datetime
 def time_to_string(dt):
+    #修复bug
+    if dt == None:
+        return None
     tz_sh = pytz.timezone('Asia/Shanghai')
     # return dt.astimezone(tz_sh).strftime("%Y-%m-%d")
     return  dt.astimezone(tz_sh).strftime("%Y-%m-%d %H:%M:%S")
