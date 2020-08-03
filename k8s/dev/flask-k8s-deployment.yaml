@@ -16,7 +16,7 @@ spec:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: ms-dev-flask-k8s
+  name: flask-k8s-sa
   labels:
     account: flask-k8s
 ---
@@ -39,7 +39,7 @@ spec:
         app: flask-k8s
         version: v1
     spec:
-      serviceAccountName: ms-dev-flask-k8s
+      serviceAccountName: flask-k8s-sa
       # tolerations:
       #   - key: "key"
       #     operator: "Exists"

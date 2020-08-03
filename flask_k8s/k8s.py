@@ -37,6 +37,9 @@ def takename(e):
 def takeCreateTime(elem):
     return elem['create_time']
 
+def format_float(num):
+    return  float("%.2f" % num)
+
 # http://192.168.11.51:1900/apis/metrics.k8s.io/v1beta1/nodes 
 
 @k8s.before_app_request
@@ -327,7 +330,7 @@ def get_namespace_list():
 @k8s.route('/get_namespace_name_list',methods=('GET','POST'))
 # @tracing.trace()
 def get_namespace_name_list():
-    current_app.logger.debug("get_namespace_name_list接收到的header:{}".format(request.headers))
+    # current_app.logger.debug("get_namespace_name_list接收到的header:{}".format(request.headers))
     myclient = client.CoreV1Api()
     namespace_name_list = []
     for item in myclient.list_namespace().items:
@@ -452,12 +455,6 @@ def get_node_name_list():
         name = node.metadata.name
         node_name_list.append(name)
     return json.dumps(node_name_list,indent=4)
-
-def format_float(num):
-    return  float("%.2f" % num)
-
-# def format_percent(num):
-#     return "{}%".format(float("%.2f" % num))
 
 def create_single_node_detail_obj(node,simple):
     meta = node.metadata
@@ -1274,9 +1271,6 @@ def get_event_list():
 
 @k8s.route('/get_component_status_list',methods=('GET','POST'))
 def get_component_status_list():
-    # data = json.loads(request.get_data().decode("utf-8"))
-    # current_app.logger.debug("event接收的数据:{}".format(data))
-    # namespace = handle_input(data.get("namespace"))
     myclient = client.CoreV1Api()
     ss = myclient.list_component_status()
     i = 0
@@ -1304,5 +1298,6 @@ def get_component_status_list():
             component_status_list.append(my_component_status)
         i = i +1
     return json.dumps(component_status_list,indent=4)
+
 
 
