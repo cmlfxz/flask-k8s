@@ -133,8 +133,8 @@ def create_deployment_object(name=None,namespace=None,image=None,port=None,image
 
 def create_deployment(api_instance,deployment,namespace):
     api_response = api_instance.create_namespaced_deployment(namespace=namespace,body=deployment)
-    print("Deployment created. status='%s'\n" % str(api_response.status))
-    print(api_response)
+    # print("Deployment created. status='%s'\n" % str(api_response.status))
+    # print(api_response)
     return api_response.status
 
 @k8s_deployment.route('/create_deploy',methods=('GET','POST'))
@@ -208,7 +208,7 @@ def create_deploy():
         memory = int(1024*(str_to_float(memory)))
           
         if(error != "" ):
-            print(error)
+            # print(error)
             return jsonify({"error":1002,"msg":error})
         #ms-dev
         namespace = project+"-"+environment
@@ -221,7 +221,7 @@ def create_deploy():
         deployment = create_deployment_object(name=imageName,namespace=namespace,image=image,port=containerPort,\
             image_pull_policy=imagePullPolicy,imagePullSecret=imagePullSecret ,labels=labels,replicas=replicas,cpu=cpu,memory=memory,\
             liveness_probe=liveness_probe,readiness_probe=readiness_probe)
-        print(type(deployment))
+        # print(type(deployment))
         to_yaml = yaml.load(json.dumps(deployment,indent=4,cls=MyEncoder))
         file = os.path.join(dir_path,"demo-deployment.yaml")
         stream = open(file,'w')
@@ -862,7 +862,7 @@ def get_deployment_detail_by_name():
     deployment_name = handle_input(data.get('name'))
     myclient = client.AppsV1Api()
     field_selector = "metadata.name={}".format(deployment_name)
-    print(field_selector)
+    # print(field_selector)
 
     deployments = myclient.list_namespaced_deployment(namespace=namespace, field_selector=field_selector)
 

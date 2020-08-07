@@ -68,14 +68,46 @@ from kubernetes.client.models.v1_downward_api_volume_source import V1DownwardAPI
 from kubernetes.client.models.v1_downward_api_volume_file import V1DownwardAPIVolumeFile
 from kubernetes.client.models.v1_env_from_source import V1EnvFromSource
 from kubernetes.client.models.v1_config_map_env_source import V1ConfigMapEnvSource
+from kubernetes.client.models.v1_network_policy_egress_rule import V1NetworkPolicyEgressRule
+from kubernetes.client.models.v1_network_policy_ingress_rule import V1NetworkPolicyIngressRule
+from kubernetes.client.models.v1_network_policy_peer import V1NetworkPolicyPeer
+from kubernetes.client.models.v1_network_policy_port import V1NetworkPolicyPort
+from kubernetes.client.models.v1_ip_block import V1IPBlock
+
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):  
         
         if isinstance(obj, datetime):  
             return obj.strftime('%Y-%m-%d %H:%M:%S')  
         elif isinstance(obj, date):  
-            return obj.strftime("%Y-%m-%d")  
-        elif isinstance(obj, V1DownwardAPIVolumeFile):  
+            return obj.strftime("%Y-%m-%d")
+        elif isinstance(obj, V1IPBlock):
+            return {
+                "cidr": obj.cidr,
+                # "_except": obj._except,
+            }
+        elif isinstance(obj, V1NetworkPolicyEgressRule):
+            return {
+                "ports": obj.ports,
+                "to": obj.to,
+            }
+        elif isinstance(obj, V1NetworkPolicyIngressRule):
+            return {
+                "_from": obj._from,
+                "ports": obj.ports,
+            }
+        elif isinstance(obj, V1NetworkPolicyPeer):
+            return {
+                "ip_block": obj.ip_block,
+                "namespace_selector": obj.namespace_selector,
+                "pod_selector": obj.pod_selector,
+            }
+        elif isinstance(obj, V1NetworkPolicyPort):
+            return {
+                "port": obj.port,
+                "protocol": obj.protocol,
+            }
+        elif isinstance(obj, V1DownwardAPIVolumeFile):
             return {
                 "field_ref": obj.field_ref,
                 # "mode": obj.mode,

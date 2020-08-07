@@ -71,7 +71,7 @@ def get_service_account_list():
     sa_list = []
     for sa in sas.items:
         if (i >= 0):
-            print(sa)
+            # print(sa)
             meta = sa.metadata
             create_time = time_to_string(meta.creation_timestamp)
             name = meta.name
@@ -92,7 +92,7 @@ def get_service_account_list():
             my_sa["secret_list"] = secret_list
             my_sa["create_time"] =create_time
             sa_list.append(my_sa)
-            print(sa_list)
+            # print(sa_list)
 
         i= i+1
     return json.dumps(sa_list,indent=4,cls=MyEncoder)
@@ -120,30 +120,25 @@ def get_cluster_role_list():
     cluster_role_list = []
     for cluster_role in cluster_roles.items:
         if (i >= 0):
-            print(cluster_role)
+            # print(cluster_role)
             meta = cluster_role.metadata
             create_time = time_to_string(meta.creation_timestamp)
             name = meta.name
-            namespace = meta.namespace
             labels = meta.labels
 
             rules  = cluster_role.rules
             rule_list = []
-
-            for rule in rules:
-                print(rule)
-                api_groups = rule.api_groups
-                resources = rule.resources
-                verbs = rule.verbs
-                my_rule = {}
-                my_rule['api_groups'] = api_groups
-                my_rule['resources'] = resources
-                my_rule['verbs'] = verbs
-                rule_list.append(my_rule)
+            if rules != None:
+                for rule in rules:
+                    # print(rule)
+                    my_rule = {}
+                    my_rule['api_groups'] = rule.api_groups
+                    my_rule['resources'] = rule.resources
+                    my_rule['verbs'] = rule.verbs
+                    rule_list.append(my_rule)
             my_cluster_role = {}
             my_cluster_role["name"] = name
-            my_cluster_role["namespace"] =namespace
-            my_cluster_role["labels"] = labels
+            # my_cluster_role["labels"] = labels
             my_cluster_role["rule_list"] = rule_list
             my_cluster_role["create_time"] =create_time
             cluster_role_list.append(my_cluster_role)
@@ -172,39 +167,39 @@ def get_cluster_role_binding_list():
     i = 0
     crb_list = []
     for crb in crbs.items:
-        if (i == 0):
+        if (i >= 0):
             # print(crb)
             meta = crb.metadata
             create_time = time_to_string(meta.creation_timestamp)
             name = meta.name
-            namespace = meta.namespace
             labels = meta.labels
 
             role_ref = crb.role_ref
-            my_role_ref = {}
-            # my_role_ref["api_group"] = role_ref.api_group
-            my_role_ref["kind"] = role_ref.kind
-            my_role_ref["name"] = role_ref.name
+            # my_role_ref = {}
+            # # my_role_ref["api_group"] = role_ref.api_group
+            # my_role_ref["kind"] = role_ref.kind
+            # my_role_ref["name"] = role_ref.name
+            my_role_ref = "{}/{}".format(role_ref.kind,role_ref.name)
 
             subjects = crb.subjects
             subject_list = []
-            for subject in subjects:
-                my_subject = {}
-                # my_subject['api_group'] = subject.api_group
-                my_subject['kind'] = subject.kind
-                my_subject['name'] = subject.name
-                my_subject['namespace'] = subject.namespace
-                subject_list.append(my_subject)
+            if subjects != None:
+                for subject in subjects:
+                    # my_subject = {}
+                    # my_subject['kind'] = subject.kind
+                    # my_subject['name'] = subject.name
+                    # my_subject['namespace'] = subject.namespace
+                    my_subject = "{}/{}/{}".format(subject.namespace,subject.kind,subject.name)
+                    subject_list.append(my_subject)
 
             my_crb = {}
             my_crb["name"] = name
-            my_crb["namespace"] =namespace
-            my_crb["labels"] = labels
-            my_crb["role_ref"] = my_role_ref
-            my_crb["subjects"] = my_subject
+            # my_crb["labels"] = labels
+            my_crb["role_ref(角色)"] = my_role_ref
+            my_crb["account(账号)"] = my_subject
             my_crb["create_time"] =create_time
             crb_list.append(my_crb)
-            print(crb_list)
+            # print(crb_list)
 
         i= i+1
     return json.dumps(crb_list,indent=4,cls=MyEncoder)
@@ -236,8 +231,8 @@ def get_role_list():
     i = 0
     role_list = []
     for role in roles.items:
-        if (i == 0):
-            print(role)
+        if (i >= 0):
+            # print(role)
             meta = role.metadata
             create_time = time_to_string(meta.creation_timestamp)
             name = meta.name
@@ -259,12 +254,11 @@ def get_role_list():
             my_role["rule_list"] = rule_list
             my_role["create_time"] =create_time
             role_list.append(my_role)
-            print(role_list)
+            # print(role_list)
 
         i= i+1
     return json.dumps(role_list,indent=4,cls=MyEncoder)
     # return jsonify({"ok":"get sa list"})
-
 
 @k8s_auth.route('/delete_role', methods=('GET', 'POST'))
 def delete_role():
@@ -284,7 +278,6 @@ def delete_role():
         return jsonify({'error': '删除异常',"msg":msg})
     return jsonify({"ok":"删除成功"})
 
-
 @k8s_auth.route('get_role_binding_list',methods=('GET','POST'))
 def get_role_binding_list():
     data = json.loads(request.get_data().decode("utf-8"))
@@ -298,7 +291,7 @@ def get_role_binding_list():
     i = 0
     rb_list = []
     for rb in rbs.items:
-        if (i == 0):
+        if (i >= 0):
             # print(rb)
             meta = rb.metadata
             create_time = time_to_string(meta.creation_timestamp)
@@ -307,32 +300,53 @@ def get_role_binding_list():
             labels = meta.labels
 
             role_ref = rb.role_ref
-            my_role_ref = {}
-            # my_role_ref["api_group"] = role_ref.api_group
-            my_role_ref["kind"] = role_ref.kind
-            my_role_ref["name"] = role_ref.name
+            # my_role_ref = {}
+            # # my_role_ref["api_group"] = role_ref.api_group
+            # my_role_ref["kind"] = role_ref.kind
+            # my_role_ref["name"] = role_ref.name
+            my_role_ref = "{}/{}".format(role_ref.kind,role_ref.name)
 
             subjects = rb.subjects
             subject_list = []
-            for subject in subjects:
-                my_subject = {}
-                # my_subject['api_group'] = subject.api_group
-                my_subject['kind'] = subject.kind
-                my_subject['name'] = subject.name
-                my_subject['namespace'] = subject.namespace
-                subject_list.append(my_subject)
+            if subjects != None:
+                for subject in subjects:
+                    # my_subject = {}
+                    # my_subject['kind'] = subject.kind
+                    # my_subject['name'] = subject.name
+                    # my_subject['namespace'] = subject.namespace
+                    my_subject = "{}/{}/{}".format(subject.namespace,subject.kind,subject.name)
+                    subject_list.append(my_subject)
 
             my_rb = {}
             my_rb["name"] = name
             my_rb["namespace"] =namespace
-            my_rb["labels"] = labels
+            # my_rb["labels"] = labels
             my_rb["role_ref"] = my_role_ref
             my_rb["subjects"] = my_subject
             my_rb["create_time"] =create_time
             rb_list.append(my_rb)
-            print(rb_list)
+            # print(rb_list)
 
         i= i+1
     return json.dumps(rb_list,indent=4,cls=MyEncoder)
     # return jsonify({"ok":"get sa list"})
+
+@k8s_auth.route('/delete_role_binding', methods=('GET', 'POST'))
+def delete_role_binding():
+    data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("接收到的数据:{}".format(data))
+    name = handle_input(data.get('name'))
+    namespace = handle_input(data.get("namespace"))
+    if namespace == '' or namespace == 'all':
+        return simple_error_handle("namespace不能为空，并且不能选择all")
+
+    myclient = client.RbacAuthorizationV1Api()
+    try:
+        result = myclient.delete_namespaced_role_binding(namespace=namespace,name=name)
+    except ApiException as e:
+        body = json.loads(e.body)
+        msg={"status":e.status,"reason":e.reason,"message":body['message']}
+        return jsonify({'error': '删除异常',"msg":msg})
+    return jsonify({"ok":"删除成功"})
+
 

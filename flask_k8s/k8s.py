@@ -48,7 +48,6 @@ def load_header():
     if request.method == 'OPTIONS':
         pass
     if request.method == 'POST':
-
         try:
             # current_app.logger.debug("headers:{}".format(request.headers))
             cluster_name = request.headers.get('cluster_name').strip()
@@ -74,7 +73,7 @@ def load_header():
 def get_named_node_usage_detail(name):
     myclient = client.CustomObjectsApi()
     plural = "{}/{}".format("nodes",name)
-    current_app.logger.debug(plural)
+    # current_app.logger.debug(plural)
     # 这个API不稳定
     node_usage = {}
     #bug当有节点没开，获取不到数据，页面会出不来数据，退而求其次，获取不到，置0
@@ -91,7 +90,7 @@ def get_named_node_usage_detail(name):
         else:
             message = e.body
         msg = {"status": e.status, "reason": e.reason, "message": message}
-        current_app.logger.debug(msg)
+        # current_app.logger.debug(msg)
         node_usage = {"node_name":name,"cpu":0,"memory":0}
          
     return node_usage
@@ -165,7 +164,7 @@ def get_gateway_list():
             body = e.body
             message = body
         msg = {"status": e.status, "reason": e.reason, "message": message}
-        current_app.logger.debug(msg)
+        # current_app.logger.debug(msg)
         return jsonify({'error': '获取列表失败', "msg": msg})
     gateways = obj['items']
     gateway_list = []
@@ -214,7 +213,7 @@ def get_virtual_service_list():
             body = e.body
             message = body
         msg = {"status": e.status, "reason": e.reason, "message": message}
-        current_app.logger.debug(msg)
+        # current_app.logger.debug(msg)
         return jsonify({'error': '获取列表失败', "msg": msg})
 
     virtual_services = obj['items']
@@ -340,9 +339,6 @@ def get_namespace_name_list():
 
 @k8s.route('/get_service_list',methods=('GET','POST'))
 def get_service_list():
-    # get_data = request.get_data()
-    # print(type(get_data))
-    # print("{}".format(get_data))
     data = json.loads(request.get_data().decode("utf-8"))
     namespace = data.get("namespace").strip()
     # print(namespace)
@@ -404,7 +400,7 @@ def get_daemonset_list():
     daemonset_list = []
     for daemonset in daemonsets.items:
         if (i>=0):
-            print(daemonset)
+            # print(daemonset)
             meta = daemonset.metadata
             name = meta.name
             create_time = time_to_string(meta.creation_timestamp)
@@ -496,8 +492,8 @@ def create_single_node_detail_obj(node,simple):
     mycapacity["cpu_detail"] = cpu_detail
     mycapacity["memory_detail"] = memory_detail
     mycapacity["pod_detail"] = pod_detail
-    mycapacity["storage"] = disk_space
-    mycapacity["image_num"] = image_num
+    # mycapacity["storage"] = disk_space
+    # mycapacity["image_num"] = image_num
 
     mynode = {}
     mynode["name"] = name
@@ -505,7 +501,7 @@ def create_single_node_detail_obj(node,simple):
     
     mynode["schedulable"] = schedulable
     if not simple:
-        mynode["node_capacity"] = mycapacity
+        # mynode["node_capacity"] = mycapacity
         #CPU总量
         mynode["cpu_total"]= cpu_total
         #CPU使用量
@@ -556,11 +552,26 @@ def get_node_detail_list_v2():
         node_list.append(mynode)
     return json.dumps(node_list,indent=4,cls=MyEncoder)
 
+def get_single_node_capacity(name):
+    nodes = client.CoreV1Api().list_node()
+    capacity = None
+    for node in nodes.items:
+        if name == node.metadata.name:
+            capacity = node.status.capacity
+            break
+    return capacity
 @k8s.route('/get_cluster_stats',methods=('GET','POST'))
 def get_cluster_stats():
+    try:
+        data = json.loads(request.get_data().decode("utf-8"))
+        stat_type =  handle_input(data.get('stat_type'))
+    except:
+        data = None
+        stat_type = None
+    current_app.logger.debug("接收到的数据:{}".format(data))
+
     myclient = client.CoreV1Api()
     nodes = myclient.list_node()
-    i = 0
     node_list = []
     cluster_cpu = 0
     cluster_cpu_usage = 0
@@ -570,47 +581,56 @@ def get_cluster_stats():
     cluster_pod_cap = 0
     cluster_pod_usage= 0
     cluster_stat_list = []
+
+    stat_node_list = []
+    #先生成node列表
     for node in nodes.items:
-        if (i>=0):
-            # print(node)
-            meta = node.metadata
-            name = meta.name
-            schedulable = True if node.spec.unschedulable == None else False
-            # 统计集群信息
+        meta = node.metadata
+        name = meta.name
+        schedulable = True if node.spec.unschedulable == None else False
+        if stat_type == 'all':
+            stat_node_list.append(name)
+        elif stat_type == 'unschedule':
+            if schedulable == False:
+                stat_node_list.append(name)
+        # 默认值统计schedule的数据
+        else:
             if schedulable == True:
-                spec = node.spec
-                # 获取单独node的性能数据
-                node_usage = get_named_node_usage_detail(name)
-                # 100m 转成 0.12 已核为单位
-                node_cpu_usage = format_float(node_usage.get('cpu') / 1000)
-                current_app.logger.debug("node_cpu_usage:{}".format(node_cpu_usage))
-                node_memory_usage = node_usage.get('memory')
-                node_pod_num = get_pod_num_by_node(name)
+                stat_node_list.append(name)
+    # print(stat_node_list,len(stat_node_list))
+    for name in stat_node_list:
+        # 获取单独node的性能数据
+        # print(name)
+        node_usage = get_named_node_usage_detail(name)
+        # 100m 转成 0.12 已核为单位
+        node_cpu_usage = format_float(node_usage.get('cpu') / 1000)
+        # current_app.logger.debug("node_cpu_usage:{}".format(node_cpu_usage))
+        node_memory_usage = node_usage.get('memory')
+        node_pod_num = get_pod_num_by_node(name)
+        #bug
+        capacity = get_single_node_capacity(name)
+        # capacity = node.status.capacity
+        # 搜集数量
+        cpu_total = str_to_int(capacity['cpu'])
+        memory_total = handle_memory(capacity['memory'])
+        pod_total = str_to_int(capacity['pods'])
+        disk_space = handle_disk_space(capacity['ephemeral-storage'])
 
-                capacity = node.status.capacity
-                # 搜集数量
-                cpu_total = str_to_int(capacity['cpu'])
-                memory_total = handle_memory(capacity['memory'])
-                pod_total = str_to_int(capacity['pods'])
-                disk_space = handle_disk_space(capacity['ephemeral-storage'])
-
-                # 集群CPU总数
-                cluster_cpu = cluster_cpu + cpu_total
-                # 集群CPU使用量
-                cluster_cpu_usage = cluster_cpu_usage + node_cpu_usage
-                current_app.logger.debug("cluster_cpu_usage:{}".format(cluster_cpu_usage))
-                #集群内存总量
-                cluster_memory = cluster_memory + memory_total
-                #集群内存使用量
-                cluster_memory_usage = cluster_memory_usage + node_memory_usage
-                #磁盘总量
-                cluster_disk_cap = cluster_disk_cap + disk_space
-                #集群pod总量
-                cluster_pod_cap = cluster_pod_cap + pod_total
-                #集群pod数量
-                cluster_pod_usage= cluster_pod_usage+ node_pod_num
-        i = i + 1
-        
+        # 集群CPU总数
+        cluster_cpu = cluster_cpu + cpu_total
+        # 集群CPU使用量
+        cluster_cpu_usage = cluster_cpu_usage + node_cpu_usage
+        # current_app.logger.debug("cluster_cpu_usage:{}".format(cluster_cpu_usage))
+        # 集群内存总量
+        cluster_memory = cluster_memory + memory_total
+        # 集群内存使用量
+        cluster_memory_usage = cluster_memory_usage + node_memory_usage
+        # 磁盘总量
+        cluster_disk_cap = cluster_disk_cap + disk_space
+        # 集群pod总量
+        cluster_pod_cap = cluster_pod_cap + pod_total
+        # 集群pod数量
+        cluster_pod_usage = cluster_pod_usage + node_pod_num
     cluster_cpu_usage_percent = format_float(cluster_cpu_usage/cluster_cpu * 100)
     cluster_cpu_usage = format_float(cluster_cpu_usage)
     cluster_cpu_detail = "{}/{} {}%".format(cluster_cpu_usage, cluster_cpu,cluster_cpu_usage_percent)
@@ -622,24 +642,24 @@ def get_cluster_stats():
     cluster_pod_detail = "{}/{} {}%".format(cluster_pod_usage,cluster_pod_cap,cluster_pod_usage_percent)
 
     cluster_stat = {}
-    cluster_stat["cpu_detail"] = cluster_cpu_detail
-    cluster_stat["memory_detail"] = cluster_memory_detail
-    cluster_stat["pod_detail"] = cluster_pod_detail
-    cluster_stat["disk_cap"] = cluster_disk_cap
-
-
+    # cluster_stat["cpu_detail"] = cluster_cpu_detail
+    # cluster_stat["memory_detail"] = cluster_memory_detail
+    # cluster_stat["pod_detail"] = cluster_pod_detail
+    # cluster_stat["disk_cap"] = cluster_disk_cap
     # CPU详情
     cluster_stat["cpu_total"] = cluster_cpu
     cluster_stat["cpu_usage"] = cluster_cpu_usage
     cluster_stat["cpu_usage_percent"] = cluster_cpu_usage_percent
     #内存详情
-    cluster_stat["memory_total"] = cluster_memory
-    cluster_stat["memory_usage"] = cluster_memory_usage
+    cluster_stat["memory_total"] = format_float(cluster_memory/1024)
+    cluster_stat["memory_usage"] = format_float(cluster_memory_usage/1024)
     cluster_stat["memory_usage_percent"] = cluster_memory_usage_percent
     #POD详情
     cluster_stat["pod_total"] = cluster_pod_cap
     cluster_stat["pod_usage"] = cluster_pod_usage
     cluster_stat["pod_usage_percent"] = cluster_pod_usage_percent
+
+    cluster_stat["disk"] = cluster_disk_cap
 
     cluster_stat_list.append(cluster_stat)
     return json.dumps(cluster_stat_list,indent=4,cls=MyEncoder)
@@ -686,7 +706,7 @@ def get_cm_detail_by_name():
     cm_name = handle_input(data.get('name'))
     myclient = client.CoreV1Api()
     field_selector="metadata.name={}".format(cm_name)
-    current_app.logger.debug(field_selector)
+    # current_app.logger.debug(field_selector)
     configmaps = myclient.list_namespaced_config_map(namespace=namespace,field_selector=field_selector)
     configmap = None
     for item in configmaps.items:
@@ -772,14 +792,19 @@ def get_secret_detail_by_name():
     secret_type = secret.type
     # current_app.logger.debug(type(data),data)
     data_list = []
-    for k,v in data.items():
-        # print(k, my_decode(v))
-        value = my_decode(v)
-        item = {
-            "key":k,
-            "value":value,
-        }
-        data_list.append(item)
+    if data != None:
+        for k,v in data.items():
+            value = ""
+            try:
+                value = my_decode(v)
+            except Exception as e:
+                print("secret base64解密失败")
+                value = v
+            item = {
+                "key":k,
+                "value":value,
+            }
+            data_list.append(item)
 
     #     data返回列表吧
     mysecret = {
@@ -1140,7 +1165,7 @@ def get_virtualservice_name_list():
     data = json.loads(request.get_data().decode("utf-8"))
     namespace = data.get("namespace").strip()
     myclient = client.CustomObjectsApi()
-    print(namespace)
+    # print(namespace)
     if namespace == "" or namespace == "all": 
         virtualservices = myclient.list_cluster_custom_object(group="networking.istio.io",
                                                           version="v1alpha3",
@@ -1167,7 +1192,7 @@ def get_hpa_list():
         hpas = myclient.list_horizontal_pod_autoscaler_for_all_namespaces()
     else:
         hpas =myclient.list_namespaced_horizontal_pod_autoscaler(namespace=namespace)
-    print(type(hpas.items))
+    # print(type(hpas.items))
     hpa_list = []
     for hpa in hpas.items:
         # print(hpa)
@@ -1190,7 +1215,7 @@ def get_hpa_list():
         myhpa["scaleTargetRef"] =scaleTargetRef
         myhpa["targetCPUUtilizationPercentage"] =targetCPUUtilizationPercentage
 
-        print(myhpa)
+        # print(myhpa)
         hpa_list.append(myhpa)
     # return json.dumps({"ok":"123"})
     return json.dumps(hpa_list,indent=4,cls=MyEncoder)
@@ -1299,5 +1324,53 @@ def get_component_status_list():
         i = i +1
     return json.dumps(component_status_list,indent=4)
 
+
+@k8s.route('/get_network_policy_list',methods=('GET','POST'))
+def get_network_policy_list():
+    data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("policy接收的数据:{}".format(data))
+    namespace = handle_input(data.get("namespace"))
+    myclient = client.NetworkingV1Api()
+    if namespace == "" or namespace == "all":
+        policys = myclient.list_network_policy_for_all_namespaces()
+    else:
+        policys =myclient.list_namespaced_network_policy(namespace=namespace)
+    i = 0
+    policy_list = []
+    for policy in policys.items:
+        if (i >= 0):
+            # print(policy)
+            meta = policy.metadata
+            create_time = time_to_string(meta.creation_timestamp)
+            name = meta.name
+            namespace = meta.namespace
+            labels = meta.labels
+
+            spec = policy.spec
+
+            pod_selector = spec.pod_selector
+            policy_types = spec.policy_types
+            egress = spec.egress
+            ingress = spec.ingress
+            combine_policy = {}
+            if ingress != None:
+                combine_policy["ingress"] = ingress
+            if egress != None:
+                combine_policy["egress"] = egress
+            my_policy = {}
+            my_policy["name"] = name
+            my_policy["namespace"] =namespace
+            my_policy["labels"] = labels
+            # my_policy["egress"] = egress
+            # my_policy["ingress"] =ingress
+            my_policy["policy_types"] = policy_types
+            my_policy["源(egress)/目标(ingress)Pod"] =pod_selector
+            my_policy["ingress/egress"] = combine_policy
+            my_policy["create_time"] =create_time
+            policy_list.append(my_policy)
+            # print(policy_list)
+        i= i+1
+    return json.dumps(policy_list,indent=4,cls=MyEncoder)
+    # return jsonify({"ok":"get policy list"})
 
 

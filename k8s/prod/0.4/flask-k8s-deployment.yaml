@@ -18,7 +18,7 @@ spec:
         app: flask-k8s
         version: "0.4"
     spec:
-      serviceAccountName: ms-prod-flask-k8s
+      serviceAccountName: flask-k8s-sa
       tolerations:
         - key: "server"
           operator: "Equal"

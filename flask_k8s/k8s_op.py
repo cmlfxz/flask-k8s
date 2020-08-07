@@ -71,7 +71,7 @@ def create_namespace_resource(name,labels=None):
         )
         try:
             result = myclient.create_namespace(body=namespace)
-            print(type(result),result)
+            # print(type(result),result)
         except ApiException as e:
             # print("status:{}".format(e.status))
             # print("reason:{}".format(e.reason))
@@ -94,15 +94,15 @@ def create_namespace():
     project_name = handle_input(data.get('project_name'))
     env_name = handle_input(data.get('env_name'))
     name = "{}-{}".format(project_name,env_name)
-    print(name)
+    # print(name)
     labels = {}
     istio_inject = handle_input(data.get('istio_inject'))
-    print("istio_inject:{}".format(istio_inject))
+    # print("istio_inject:{}".format(istio_inject))
     if istio_inject:
         labels['istio-injection'] = "enabled"
     else:
         labels = None
-    print("labels:{}".format(labels))
+    # print("labels:{}".format(labels))
     return create_namespace_resource(name=name,labels=labels)
 
 @k8s_op.route('/delete_namespace', methods=('GET', 'POST'))
@@ -140,10 +140,10 @@ def delete_multi_pv():
     # pod_list  = data['pod_list']
     # current_app.logger.debug(type(pod_list),pod_list)
     data = json.loads(request.get_data().decode('utf-8'))
-    print(type(data),data)
+    # print(type(data),data)
     try:
         list = data['pod_list']
-        print(list)
+        # print(list)
     except Exception as e:
         print(e)
         return jsonify({"fail ":e})
@@ -188,7 +188,7 @@ def get_node_by_name(name=None):
     # limit=3
     node = None
     node_list = client.CoreV1Api().list_node(limit=1,field_selector=field_selector)
-    print(type(node_list),len(node_list.items))
+    # print(type(node_list),len(node_list.items))
     # node = node_list.items
     # i = 0
     for item in node_list.items:
@@ -196,7 +196,7 @@ def get_node_by_name(name=None):
             node = item
             break
 
-    print(type(node))
+    # print(type(node))
     return node
 
 @k8s_op.route('/update_node', methods=('GET', 'POST'))
@@ -214,19 +214,19 @@ def update_node():
         effect = handle_input(data.get('taint_effect'))
         key = handle_input(data.get('taint_key'))   
         value = handle_input(data.get('taint_value'))
-        print(type(node.spec.taints))
+        # print(type(node.spec.taints))
         if node.spec.taints == None:
             node.spec.taints = []
         taint = client.V1Taint(effect=effect,key=key,value=value)
         node.spec.taints.append(taint)
-        print(node.spec.taints)
+        # print(node.spec.taints)
     elif action=="delete_taint":
         print("正在删除node污点")
         effect = handle_input(data.get('taint_effect'))
         key = handle_input(data.get('taint_key'))
         value = handle_input(data.get('taint_value'))
-        print(key,value)
-        print(type(node.spec.taints))
+        # print(key,value)
+        # print(type(node.spec.taints))
         if node.spec.taints == None:
             return jsonify({"error":"taint列表为空"})
         # 查找元素
@@ -235,7 +235,7 @@ def update_node():
         has_taint = False
         for taint in node.spec.taints:
             i = i + 1
-            print(taint)
+            # print(taint)
             if effect == taint.effect and key==taint.key and value ==taint.value:
                 has_taint = True
                 break
@@ -244,7 +244,7 @@ def update_node():
             return jsonify({"error": "没有此taint"})
         else:
             node.spec.taints.pop(i)
-            print(node.spec.taints)
+            # print(node.spec.taints)
     elif action=="update_taint":
         print("正在更新node污点")
         old_effect = handle_input(data.get('old_taint_effect'))
@@ -257,7 +257,7 @@ def update_node():
         if node.spec.taints == None:
             node.spec.taints = []
         new_taint = client.V1Taint(effect=new_effect,key=new_key,value=new_value)
-        print(new_taint)
+        # print(new_taint)
         # 思路，找到index，替换
         # 查找元素
         i = -1
@@ -265,7 +265,7 @@ def update_node():
         has_taint = False
         for taint in node.spec.taints:
             i = i + 1
-            print(taint)
+            # print(taint)
             if old_effect == taint.effect and old_key==taint.key and old_value ==taint.value:
                 has_taint = True
                 break
@@ -274,7 +274,7 @@ def update_node():
             return jsonify({"error": "没有此taint"})
         else:
             node.spec.taints[i] = new_taint
-            print(node.spec.taints)
+            # print(node.spec.taints)
     #增加标签
     elif action == "add_labels":
         current_app.logger.debug("正在执行:{}".format(action))
@@ -354,7 +354,7 @@ def update_namespace():
         return jsonify({"error":"找不到此名称空间"})
     # labels = json.loads(handle_input(data.get('labels')))
     labels = handle_input(data.get('labels'))
-    print(labels,type(labels))
+    # print(labels,type(labels))
     # print(labels)
     if labels == None:
         labels = {}
@@ -374,8 +374,6 @@ def update_namespace():
     # print("命名空间:{}\n".format(namespace))
     try:
         result = myclient.replace_namespace(name,body=namespace)
-        # print(result)
-        # print(result.status)
     except Exception as e:
         print(e)
         return jsonify({"error":"更新命名空间出现异常"})
@@ -412,7 +410,7 @@ def create_pv_object(name,**kwargs):
         ),
         storage_class_name=storage_class_name,
     )
-    print(spec)
+    # print(spec)
     pv = client.V1PersistentVolume(
         api_version="v1",
         kind="PersistentVolume",
@@ -567,7 +565,7 @@ def update_vs():
     print("接受到的数据:{}".format(data))
     namespace = handle_input(data.get('namespace'))
     vs_name = handle_input(data.get('vs_name'))
-    print(type(data.get('canary_weight')))
+    # print(type(data.get('canary_weight')))
     canary_weight = math.ceil( str_to_int(handle_input(data.get('canary_weight'))))
     if(canary_weight < 0 or canary_weight > 100):
         return jsonify({"error":1003,"msg":"灰度值需在1-100之间"})
@@ -768,8 +766,28 @@ def get_event_list_by_name(namespace=None,input_kind=None,input_name=None):
                 # my_event["type"] =type
                 # my_event["object"] =object
                 event_list.append(my_event)
-                print(event_list)
+                # print(event_list)
 
         i= i+1
     return json.dumps(event_list,indent=4,cls=MyEncoder)
     # return jsonify({"ok":"get event list"})
+
+
+@k8s_op.route('/delete_network_policy', methods=('GET', 'POST'))
+def delete_network_policy():
+    data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("接收到的数据:{}".format(data))
+    name = handle_input(data.get('name'))
+    namespace = handle_input(data.get("namespace"))
+
+    if namespace == '' or namespace == 'all':
+        return simple_error_handle("namespace不能为空，并且不能选择all")
+    myclient = client.NetworkingV1Api()
+    try:
+        # body=client.V1DeleteOptions(propagation_policy='Foreground',grace_period_seconds=5)
+        result = myclient.delete_namespaced_network_policy(namespace=namespace, name=name)
+    except ApiException as e:
+        body = json.loads(e.body)
+        msg = {"status": e.status, "reason": e.reason, "message": body['message']}
+        return jsonify({'error': 'network_policy', "msg": msg})
+    return jsonify({"ok": "删除成功"})

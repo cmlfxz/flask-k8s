@@ -17,7 +17,7 @@ spec:
 apiVersion: v1
 kind: ServiceAccount
 metadata:
-  name: ms-prod-flask-k8s
+  name: flask-k8s-sa
   namespace: ms-prod
   labels:
     account: flask-k8s
