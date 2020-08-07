@@ -60,25 +60,25 @@ spec:
       #           values:
       #           - flask-k8s
       #       topologyKey: "kubernetes.io/hostname"
-#      affinity:
-#        nodeAffinity:
-#          preferredDuringSchedulingIgnoredDuringExecution:
-#          - weight: 1
-#            preference:
-#              matchExpressions:
-#              - key: server
-#                operator: In
-#                values:
-#                - elk
-        # nodeAffinity:
-        #   requiredDuringSchedulingIgnoredDuringExecution:
-        #   nodeSelectorTerms:
-        #   - matchExpressions:
-        #     - key: server
-        #       operator: In
-        #       values:
-        #       - elk
-
+      #      affinity:
+      #        nodeAffinity:
+      #          preferredDuringSchedulingIgnoredDuringExecution:
+      #          - weight: 1
+      #            preference:
+      #              matchExpressions:
+      #              - key: server
+      #                operator: In
+      #                values:
+      #                - elk
+      # nodeAffinity:
+      #   requiredDuringSchedulingIgnoredDuringExecution:
+      #   nodeSelectorTerms:
+      #   - matchExpressions:
+      #     - key: server
+      #       operator: In
+      #       values:
+      #       - elk
+      affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
           - podAffinityTerm:
@@ -94,7 +94,7 @@ spec:
       - name: harborsecret 
       containers:
       - name: flask-k8s
-        image: myhub.mydocker.com/ms-dev/flask-k8s:f2aae65
+        image: myhub.mydocker.com/ms-dev/flask-k8s:ef9daf2
         imagePullPolicy: Always
         ports:
         - containerPort: 8082

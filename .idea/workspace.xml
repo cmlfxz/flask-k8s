@@ -3,14 +3,7 @@
   <component name="ChangeListManager">
     <list default="true" id="3edec4b2-d54a-4ca3-972d-e91344879c01" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change beforePath="$PROJECT_DIR$/flask_k8s/k8s.py" afterPath="$PROJECT_DIR$/flask_k8s/k8s.py" />
-      <change beforePath="$PROJECT_DIR$/flask_k8s/k8s_auth.py" afterPath="$PROJECT_DIR$/flask_k8s/k8s_auth.py" />
-      <change beforePath="$PROJECT_DIR$/flask_k8s/k8s_decode.py" afterPath="$PROJECT_DIR$/flask_k8s/k8s_decode.py" />
-      <change beforePath="$PROJECT_DIR$/flask_k8s/k8s_deployment.py" afterPath="$PROJECT_DIR$/flask_k8s/k8s_deployment.py" />
-      <change beforePath="$PROJECT_DIR$/flask_k8s/k8s_op.py" afterPath="$PROJECT_DIR$/flask_k8s/k8s_op.py" />
       <change beforePath="$PROJECT_DIR$/k8s/dev/flask-k8s-deployment.yaml" afterPath="$PROJECT_DIR$/k8s/dev/flask-k8s-deployment.yaml" />
-      <change beforePath="$PROJECT_DIR$/k8s/prod/0.4/flask-k8s-deployment.yaml" afterPath="$PROJECT_DIR$/k8s/prod/0.4/flask-k8s-deployment.yaml" />
-      <change beforePath="$PROJECT_DIR$/k8s/prod/0.4/flask-k8s-service.yaml" afterPath="$PROJECT_DIR$/k8s/prod/0.4/flask-k8s-service.yaml" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -21,11 +14,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="deployment_patch.yaml" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/k8s/dev/deployment_patch.yaml">
+      <file leaf-file-name="flask-k8s-deployment.yaml" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/k8s/dev/flask-k8s-deployment.yaml">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="0">
-              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+            <state relative-caret-position="183">
+              <caret line="80" column="9" lean-forward="false" selection-start-line="80" selection-start-column="9" selection-end-line="80" selection-end-column="9" />
               <folding />
             </state>
           </provider>
@@ -35,7 +28,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>et_node_detail_list</find>
       <find>get_deployment_list</find>
       <find>request.args.</find>
       <find>request</find>
@@ -65,6 +57,7 @@
       <find>spec</find>
       <find>get_pod_num_by_node</find>
       <find>get_named_node_usage_detail</find>
+      <find>get_network_policy_list</find>
     </findStrings>
     <replaceStrings>
       <replace>secret</replace>
@@ -270,7 +263,7 @@
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.43194" sideWeight="0.49842396" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.13719185" sideWeight="0.49842396" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
@@ -487,13 +480,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/k8s/dev/filebeat-configmap.yaml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/k8s/prod/0.4/configmap.yaml">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -578,76 +564,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/flask_k8s/k8s.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="27">
-          <caret line="600" column="15" lean-forward="false" selection-start-line="600" selection-start-column="15" selection-end-line="600" selection-end-column="15" />
-          <folding>
-            <element signature="e#0#86#0" expanded="true" />
-            <element signature="e#1708#2776#0" expanded="true" />
-            <element signature="e#2821#3744#0" expanded="true" />
-            <element signature="e#5241#5544#0" expanded="true" />
-            <element signature="e#13815#15731#0" expanded="true" />
-            <element signature="e#15820#18310#0" expanded="true" />
-            <element signature="e#18418#18655#0" expanded="true" />
-            <element signature="e#18709#21377#0" expanded="true" />
-            <element signature="e#21935#22200#0" expanded="true" />
-            <element signature="e#22242#22450#0" expanded="true" />
-            <element signature="e#30502#32077#0" expanded="true" />
-            <element signature="e#33637#35156#0" expanded="true" />
-            <element signature="e#51685#53452#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/k8s/dev/flask-k8s-deployment.yaml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="783">
-          <caret line="62" column="16" lean-forward="true" selection-start-line="62" selection-start-column="16" selection-end-line="62" selection-end-column="16" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/k8s/dev/flask-k8s-dr.yaml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="26" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/k8s/dev/flask-k8s-pvc.yaml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/k8s/dev/flask-k8s-vs.yaml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="162">
-          <caret line="6" column="8" lean-forward="true" selection-start-line="6" selection-start-column="8" selection-end-line="6" selection-end-column="8" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/k8s/dev/hpa.yaml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/k8s/dev/kustomization.yaml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="324">
-          <caret line="12" column="0" lean-forward="true" selection-start-line="12" selection-start-column="0" selection-end-line="12" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/k8s/dev/sub.sh">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -664,6 +580,85 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/k8s/dev/deployment_patch.yaml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-162">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/k8s/dev/flask-k8s-pvc.yaml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/k8s/dev/flask-k8s-dr.yaml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="10" column="10" lean-forward="true" selection-start-line="10" selection-start-column="10" selection-end-line="10" selection-end-column="10" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/k8s/dev/kustomization.yaml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="324">
+          <caret line="12" column="0" lean-forward="true" selection-start-line="12" selection-start-column="0" selection-end-line="12" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/k8s/dev/filebeat-configmap.yaml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/k8s/dev/hpa.yaml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/k8s/dev/flask-k8s-vs.yaml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="540">
+          <caret line="20" column="20" lean-forward="true" selection-start-line="20" selection-start-column="20" selection-end-line="20" selection-end-column="20" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/flask_k8s/k8s.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1344">
+          <caret line="1374" column="0" lean-forward="true" selection-start-line="1374" selection-start-column="0" selection-end-line="1374" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#86#0" expanded="true" />
+            <element signature="e#1708#2776#0" expanded="true" />
+            <element signature="e#2821#3744#0" expanded="true" />
+            <element signature="e#5241#5544#0" expanded="true" />
+            <element signature="e#13815#15731#0" expanded="true" />
+            <element signature="e#15820#18310#0" expanded="true" />
+            <element signature="e#18418#18655#0" expanded="true" />
+            <element signature="e#18709#21377#0" expanded="true" />
+            <element signature="e#21935#22200#0" expanded="true" />
+            <element signature="e#22242#22450#0" expanded="true" />
+            <element signature="e#22536#26656#0" expanded="true" />
+            <element signature="e#30502#32077#0" expanded="true" />
+            <element signature="e#33637#35156#0" expanded="true" />
+            <element signature="e#51685#53452#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/k8s/dev/configmap.yaml">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -672,10 +667,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/k8s/dev/deployment_patch.yaml">
+    <entry file="file://$PROJECT_DIR$/k8s/dev/flask-k8s-deployment.yaml">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+        <state relative-caret-position="183">
+          <caret line="80" column="9" lean-forward="false" selection-start-line="80" selection-start-column="9" selection-end-line="80" selection-end-column="9" />
           <folding />
         </state>
       </provider>
