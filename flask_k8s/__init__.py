@@ -16,6 +16,7 @@ from .k8s_demo import k8s_demo
 from .k8s_pod import k8s_pod
 from .k8s_deployment import k8s_deployment
 from .k8s_auth import k8s_auth
+from .k8s_istio import k8s_istio
 from concurrent_log_handler import ConcurrentRotatingFileHandler
 
 from flask_cors import *
@@ -148,6 +149,7 @@ def create_app():
     app.register_blueprint(k8s_deployment)
     app.register_blueprint(k8s_pod)
     app.register_blueprint(k8s_auth)
+    app.register_blueprint(k8s_istio)
     # app.add_url_rule('/',endpoint='index')
 
     # 调试信息
