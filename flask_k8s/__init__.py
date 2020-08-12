@@ -10,7 +10,7 @@ import os
 
 from .k8s import k8s
 from .k8s_op import k8s_op
-from .k8s_demo import k8s_demo
+#from .k8s_demo import k8s_demo
 from .k8s_pod import k8s_pod
 from .k8s_deployment import k8s_deployment
 from .k8s_auth import k8s_auth
