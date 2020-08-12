@@ -40,7 +40,7 @@ pipeline {
             steps {
                  sh '''
                     cd $WORKSPACE/k8s/
-                    sh  build.sh deploy $ENV $PROJECT $SERVICE $TAG ${params.REPLICAS}
+                    sh  build.sh deploy $ENV $PROJECT $SERVICE $TAG ${REPLICAS}
                 '''
             }
         }
