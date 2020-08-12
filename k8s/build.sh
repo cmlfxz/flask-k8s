@@ -64,17 +64,28 @@ deploy(){
   if [ "$env" == "dev" ];then
     echo "当前正在部署开发环境"
     cd $workdir/k8s/$env
-    /usr/bin/kubectl create namespace $namespace
-    /usr/bin/kubectl label namespace $namespace istio-injection=enabled
-    /usr/bin/kubectl create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
+    kubectl create namespace $namespace
+    kubectl label namespace $namespace istio-injection=enabled
+    kubectl create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
                --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
-    /usr/bin/kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
-    /usr/bin/kustomize edit set namespace $namespace
-    # /usr/bin/kustomize edit set replicas $service=$replicas
-    /usr/bin/kustomize build .
-    /usr/bin/kubectl apply -k ./
-    /usr/bin/kubectl get namespace
-    /usr/bin/kubectl get pod,svc,vs,dr,gateway -n $namespace
+    kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
+    kustomize edit set namespace $namespace
+    kustomize edit set replicas $service=$replicas
+    kustomize build .
+    kustomize build . |kubectl apply -f -
+    kubectl get pod,svc,vs,dr,gateway -n $namespace
+  elif [ "$env" == "release"  ];then
+    echo "当前正在部署预发布环境"
+    cd $workdir/k8s/$env
+    kubectl create namespace $namespace
+    kubectl label namespace $namespace istio-injection=enabled
+    kubectl create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
+             --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
+    kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
+    kustomize edit set namespace $namespace
+    kustomize build .
+    kustomize build . |kubectl apply -f -
+    kubectl get pod,svc,vs,dr,gateway -n $namespace
   elif [ "$env" == "prod" ];then
     echo "当前正在部署生产环境,生产环境yaml保存在各自版本的目录下"
     #根据用户输入进入ab还是灰度
@@ -97,7 +108,7 @@ deploy(){
             break
           else
             echo "你输入的$canary_weight不是小于等于100的数字，5次机会,重新输入!"
-          fi 
+          fi
         done
         ############
         echo "$canary_weight $prod_weight"
@@ -121,22 +132,22 @@ deploy(){
       ########################
       echo "发布deployment,svc"
       cd $workdir/k8s/$env/$tag
-      /usr/bin/kubectl create namespace $namespace
-      /usr/bin/kubectl label namespace $namespace istio-injection=enabled
-      /usr/bin/kubectl create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
+      kubectl create namespace $namespace
+      kubectl label namespace $namespace istio-injection=enabled
+      kubectl create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
             --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
-      /usr/bin/kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
-      /usr/bin/kustomize edit set namespace $namespace
-      /usr/bin/kustomize build . &&  /usr/bin/kustomize build . |/usr/bin/kubectl apply -f -
-      
+      kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
+      kustomize edit set namespace $namespace
+      kustomize build . &&  kustomize build . |kubectl apply -f -
+
       ########################
       echo "发布$type部分"
       cd $workdir/k8s/$env/$tag/$type
-      /usr/bin/kustomize edit set namespace $namespace
-      /usr/bin/kustomize build . &&  /usr/bin/kustomize build . |/usr/bin/kubectl apply -f -
-      /usr/bin/kubectl get pod,svc,vs,dr,gateway -n $namespace
+      kustomize edit set namespace $namespace
+      kustomize build . &&  kustomize build . |kubectl apply -f -
+      kubectl get pod,svc,vs,dr,gateway -n $namespace
       #######################
-      
+
     elif [ `echo "$type" |egrep -i "rollout" |wc -l` -eq 1 ];then
       echo "你正在执行$env环境回滚操作"
       rollout_dir = "$workdir/k8s/$env/$tag/$type"
@@ -144,9 +155,9 @@ deploy(){
         echo "没有$rollout_dir回滚目录，请检查" && exit 1
       fi
       cd $rollout_dir
-      /usr/bin/kustomize edit set namespace $namespace
-      /usr/bin/kustomize build . &&  /usr/bin/kustomize build . |/usr/bin/kubectl apply -f -
-      /usr/bin/kubectl get pod,svc,vs,dr,gateway -n $namespace
+      kustomize edit set namespace $namespace
+      kustomize build . &&  kustomize build . |kubectl apply -f -
+      kubectl get pod,svc,vs,dr,gateway -n $namespace
     else
       echo "没有$type这种发布模式" && exit 1
     fi

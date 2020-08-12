@@ -17,8 +17,8 @@
       <file leaf-file-name="build.sh" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/k8s/build.sh">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="351">
-              <caret line="72" column="6" lean-forward="false" selection-start-line="72" selection-start-column="6" selection-end-line="72" selection-end-column="6" />
+            <state relative-caret-position="594">
+              <caret line="167" column="2" lean-forward="false" selection-start-line="167" selection-start-column="2" selection-end-line="167" selection-end-column="2" />
               <folding />
             </state>
           </provider>
@@ -623,14 +623,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/flask-k8s.sh">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="326">
-          <caret line="19" column="8" lean-forward="true" selection-start-line="19" selection-start-column="8" selection-end-line="19" selection-end-column="54" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/k8s/dev/kustomization.yaml">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="324">
@@ -655,10 +647,18 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/flask-k8s.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="270">
+          <caret line="10" column="28" lean-forward="true" selection-start-line="10" selection-start-column="28" selection-end-line="10" selection-end-column="28" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/k8s/build.sh">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="351">
-          <caret line="72" column="6" lean-forward="false" selection-start-line="72" selection-start-column="6" selection-end-line="72" selection-end-column="6" />
+        <state relative-caret-position="594">
+          <caret line="167" column="2" lean-forward="false" selection-start-line="167" selection-start-column="2" selection-end-line="167" selection-end-column="2" />
           <folding />
         </state>
       </provider>
