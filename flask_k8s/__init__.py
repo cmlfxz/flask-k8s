@@ -1,18 +1,16 @@
 
 
-from flask import Flask, render_template
-from flask_migrate import Migrate
+from flask import Flask
 from flask_session import Session
 # from flasgger import Swagger,swag_from
 
 import logging
-from logging.handlers import RotatingFileHandler
 import re
 import os
 
 from .k8s import k8s
 from .k8s_op import k8s_op
-from .k8s_demo import k8s_demo
+from bak.k8s_demo import k8s_demo
 from .k8s_pod import k8s_pod
 from .k8s_deployment import k8s_deployment
 from .k8s_auth import k8s_auth
@@ -20,7 +18,7 @@ from .k8s_istio import k8s_istio
 from concurrent_log_handler import ConcurrentRotatingFileHandler
 
 from flask_cors import *
-from kubernetes import client, config
+from kubernetes import config
 # from .models import db
 
 dir_path = os.path.dirname(os.path.abspath(__file__))

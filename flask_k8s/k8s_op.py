@@ -521,77 +521,6 @@ def delete_ingress():
         return jsonify({'error': '删除异常',"msg":msg})
     return jsonify({"ok":"删除成功"})
 
-def get_vs_by_name(namespace,vs_name):
-    virtual_services = client.CustomObjectsApi().list_namespaced_custom_object(group="networking.istio.io",
-                                                                               version="v1alpha3",
-                                                                               plural="virtualservices",namespace=namespace)
-    virtual_service = None
-    for vs in virtual_services['items']:
-        if vs['metadata']['name'] == vs_name:
-            virtual_service = vs
-            break 
-    return virtual_service
-            
-def update_virtual_service(vs_name,namespace,prod_weight,canary_weight):
-    myclient = client.CustomObjectsApi()
-    #先获取到对应的vs名称
-    vs = get_vs_by_name(namespace,vs_name)
-    if vs == None:
-        return jsonify({"error":"1003","msg":"找不到该vs"})
-    # print(vs)
-    #这样必须规定第一条route是生产版本，第二条是灰度版本
-    # print(vs['spec']['http'][0]['route'][0]['weight'])
-    # print(vs['spec']['http'][0]['route'][1]['weight'])
-    try:
-        vs['spec']['http'][0]['route'][0]['weight'] = prod_weight
-        vs['spec']['http'][0]['route'][1]['weight'] = canary_weight
-        api_response = myclient.patch_namespaced_custom_object( group="networking.istio.io",
-                                                                version="v1alpha3",
-                                                                plural="virtualservices",
-                                                                name=vs_name,
-                                                                namespace=namespace,
-                                                                body=vs)
-        # print(api_response['spec'])
-        status="{}".format(api_response['spec']['http'])
-    except Exception as e:
-        print(e)
-        return jsonify({"异常":"可能非生产环境，没有设置灰度"})
-
-    return jsonify({"update_status":status})
-
-@k8s_op.route('/update_vs',methods=('GET','POST'))
-def update_vs():
-    data = json.loads(request.get_data().decode('UTF-8'))
-    print("接受到的数据:{}".format(data))
-    namespace = handle_input(data.get('namespace'))
-    vs_name = handle_input(data.get('vs_name'))
-    # print(type(data.get('canary_weight')))
-    canary_weight = math.ceil( str_to_int(handle_input(data.get('canary_weight'))))
-    if(canary_weight < 0 or canary_weight > 100):
-        return jsonify({"error":1003,"msg":"灰度值需在1-100之间"})
-    prod_weight = 100 - canary_weight
-    return update_virtual_service(vs_name=vs_name,namespace=namespace,prod_weight=prod_weight,canary_weight=canary_weight)
-
-def delete_virtual_service(namespace,virtual_service_name=None):
-    myclient = client.CustomObjectsApi()
-    api_response = myclient.delete_namespaced_custom_object(group="networking.istio.io",
-                                                            version="v1alpha3",
-                                                            plural="virtualservices",
-                                                            namespace=namespace,
-                                                            name=virtual_service_name,
-                                                            body=client.V1DeleteOptions(propagation_policy='Foreground',grace_period_seconds=5))
-
-    # print(api_response)
-    result="{}".format(api_response)
-    return jsonify({"update_status":result})
-
-@k8s_op.route('/delete_vs',methods=('GET','POST'))
-def delete_vs():
-    data = json.loads(request.get_data().decode('UTF-8'))
-    current_app.logger.debug("接受到的数据:{}".format(data))
-    namespace = handle_input(data.get('namespace'))
-    virtual_service_name = handle_input(data.get('virtual_service_name'))
-    return delete_virtual_service(namespace=namespace,virtual_service_name=virtual_service_name)
 
 @k8s_op.route('/delete_daemonset',methods=('GET','POST'))
 def delete_daemonset():
@@ -771,7 +700,6 @@ def get_event_list_by_name(namespace=None,input_kind=None,input_name=None):
         i= i+1
     return json.dumps(event_list,indent=4,cls=MyEncoder)
     # return jsonify({"ok":"get event list"})
-
 
 @k8s_op.route('/delete_network_policy', methods=('GET', 'POST'))
 def delete_network_policy():
