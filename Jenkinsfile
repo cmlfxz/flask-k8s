@@ -35,7 +35,7 @@ pipeline {
                 '''
             }
         }
-        /* stage('deploy'){
+        stage('deploy'){
             // sh  build.sh deploy dev ms flask-k8s $commit 1
             steps {
                  sh '''
@@ -43,7 +43,7 @@ pipeline {
                     sh  build.sh deploy $ENV $PROJECT $SERVICE $TAG ${params.REPLICAS}
                 '''
             }
-        } */
+        }
     }
 
 }
