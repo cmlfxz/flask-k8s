@@ -143,7 +143,7 @@ def create_app():
     # 加载蓝图
     app.register_blueprint(k8s)
     app.register_blueprint(k8s_op)
-    app.register_blueprint(k8s_demo)
+    # app.register_blueprint(k8s_demo)
     app.register_blueprint(k8s_deployment)
     app.register_blueprint(k8s_pod)
     app.register_blueprint(k8s_auth)
