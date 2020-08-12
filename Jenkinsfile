@@ -37,9 +37,11 @@ pipeline {
         }
         stage('deploy'){
             // sh  build.sh deploy dev ms flask-k8s $commit 1
-            sh '''
-                kubectl get pod
-            '''
+            steps {
+                sh '''
+                    kubectl get pod
+                '''
+            }
             /*
             steps {
                  sh '''
