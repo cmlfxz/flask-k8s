@@ -73,7 +73,7 @@ deploy(){
     /usr/bin/kustomize edit set replicas $service=$replicas
     /usr/bin/kustomize build .
     /usr/bin/kubectl apply -k ./
-    /usr/bin/kubectl get ns
+    /usr/bin/kubectl get namespace
     /usr/bin/kubectl get pod,svc,vs,dr,gateway -n $namespace
   elif [ "$env" == "prod" ];then
     echo "当前正在部署生产环境,生产环境yaml保存在各自版本的目录下"
