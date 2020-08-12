@@ -30,7 +30,7 @@ pipeline {
             // sh  build.sh build dev ms flask-k8s $commit
             steps {
                 sh '''
-                    cd $WORKSPACE/k8s/$ENV
+                    cd $WORKSPACE/k8s/
                     sh build.sh build $ENV $PROJECT $SERVICE $TAG
                 '''
             }
@@ -39,7 +39,7 @@ pipeline {
             // sh  build.sh deploy dev ms flask-k8s $commit 1
             steps {
                  sh '''
-                    cd $WORKSPACE/k8s/$ENV
+                    cd $WORKSPACE/k8s/
                     sh  build.sh deploy $ENV $PROJECT $SERVICE $TAG $params.REPLICAS
                 '''
             }
