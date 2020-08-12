@@ -14,7 +14,7 @@ pipeline {
         PROJECT = 'ms'
         SERVICE = 'flask-k8s'
         HARBOR_REGISTRY = 'myhun.mydocker.com'
-        // 用这个作为dev的tag
+        // 用这个作为dev的tag 最新的commit id
         TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
     }
     // 必须包含此步骤
@@ -23,7 +23,7 @@ pipeline {
             steps {
                 echo "Runing ${env.BUILD_ID}"
                 echo "BRANCH ${params.BRANCH}"
-                echo "tag: $COMMIT_ID  replicas: $params.REPLICAS"
+                echo "tag: $TAG  replicas: $params.REPLICAS"
             }
         }
         stage('build'){
