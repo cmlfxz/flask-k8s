@@ -2,8 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="3edec4b2-d54a-4ca3-972d-e91344879c01" name="Default" comment="">
+      <change beforePath="" afterPath="$PROJECT_DIR$/k8s/build_bak.sh" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/k8s/template/build.sh" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change beforePath="$PROJECT_DIR$/k8s/build.sh" afterPath="$PROJECT_DIR$/k8s/build.sh" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -17,8 +18,8 @@
       <file leaf-file-name="build.sh" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/k8s/build.sh">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="247">
-              <caret line="70" column="13" lean-forward="false" selection-start-line="70" selection-start-column="4" selection-end-line="70" selection-end-column="13" />
+            <state relative-caret-position="366">
+              <caret line="74" column="5" lean-forward="false" selection-start-line="74" selection-start-column="5" selection-end-line="74" selection-end-column="32" />
               <folding />
             </state>
           </provider>
@@ -28,7 +29,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>secret</find>
       <find>cluster_rule</find>
       <find>cluster_role</find>
       <find>delete_de</find>
@@ -58,9 +58,9 @@
       <find>k8s</find>
       <find>job</find>
       <find>k</find>
+      <find>kustomize</find>
     </findStrings>
     <replaceStrings>
-      <replace>hpas</replace>
       <replace>hpa</replace>
       <replace>job</replace>
       <replace>cronjob</replace>
@@ -90,6 +90,7 @@
       <replace>k8s_istio</replace>
       <replace>vs</replace>
       <replace>/usr/bin/kubectl</replace>
+      <replace>/usr/bin/kustomize</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -202,14 +203,15 @@
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="G:\flask-k8s\k8s\prod" />
-      <recent name="G:\flask-k8s\k8s" />
-      <recent name="G:\flask-k8s\instance" />
-    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="G:\flask-k8s\bak" />
       <recent name="G:\flask-k8s\k8s\prod\0.1" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="G:\flask-k8s\k8s" />
+      <recent name="G:\flask-k8s\k8s\template" />
+      <recent name="G:\flask-k8s\k8s\prod" />
+      <recent name="G:\flask-k8s\instance" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -279,20 +281,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/tmp/cluster_role">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="12285">
-          <caret line="455" column="33" lean-forward="false" selection-start-line="455" selection-start-column="33" selection-end-line="455" selection-end-column="33" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/tmp/cluster_role_binding">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="278">
-          <caret line="16" column="58" lean-forward="true" selection-start-line="2" selection-start-column="14" selection-end-line="16" selection-end-column="58" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/tmp/role">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="621">
@@ -644,10 +632,26 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/k8s/template/build.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/k8s/build_bak.sh">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/k8s/build.sh">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="247">
-          <caret line="70" column="13" lean-forward="false" selection-start-line="70" selection-start-column="4" selection-end-line="70" selection-end-column="13" />
+        <state relative-caret-position="366">
+          <caret line="74" column="5" lean-forward="false" selection-start-line="74" selection-start-column="5" selection-end-line="74" selection-end-column="32" />
           <folding />
         </state>
       </provider>
