@@ -23,7 +23,7 @@ pipeline {
             steps {
                 echo "Runing ${env.BUILD_ID}"
                 echo "BRANCH ${params.BRANCH}"
-                echo "tag: $TAG  replicas: $params.REPLICAS"
+                echo "tag: $TAG  replicas: ${params.REPLICAS}"
             }
         }
         stage('build'){
@@ -35,15 +35,15 @@ pipeline {
                 '''
             }
         }
-        stage('deploy'){
+        /* stage('deploy'){
             // sh  build.sh deploy dev ms flask-k8s $commit 1
             steps {
                  sh '''
                     cd $WORKSPACE/k8s/
-                    sh  build.sh deploy $ENV $PROJECT $SERVICE $TAG $params.REPLICAS
+                    sh  build.sh deploy $ENV $PROJECT $SERVICE $TAG ${params.REPLICAS}
                 '''
             }
-        }
+        } */
     }
 
 }
