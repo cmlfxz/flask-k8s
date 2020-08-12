@@ -4,7 +4,7 @@ pipeline {
         gitParameter branchFilter: 'origin/(.*)', defaultValue: 'develop', name: 'BRANCH', \
                         type: 'PT_BRANCH',description:"git branch choice"
     }
-    # 必须包含此步骤
+    // 必须包含此步骤
     stages {
         stage('display var') {
             steps {
