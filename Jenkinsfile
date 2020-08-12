@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('display var') {
             steps {
-                echo "Runing $(env.BUILD_ID)"
+                echo "Runing ${env.BUILD_ID}"
                 echo "BRANCH ${params.BRANCH}"
             }
         }
