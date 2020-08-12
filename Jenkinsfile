@@ -14,7 +14,7 @@ pipeline {
         PROJECT = 'ms'
         SERVICE = 'flask-k8s'
         HARBOR_REGISTRY = 'myhun.mydocker.com'
-        #用这个作为dev的tag
+        // 用这个作为dev的tag
         TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
     }
     // 必须包含此步骤
