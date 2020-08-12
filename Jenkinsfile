@@ -39,7 +39,7 @@ pipeline {
             // sh  build.sh deploy dev ms flask-k8s $commit 1
             steps {
                 sh '''
-                    kubectl get pod
+                    /usr/bin/kubectl get pod
                 '''
             }
             /*
