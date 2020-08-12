@@ -28,14 +28,16 @@ pipeline {
         }
         stage('build'){
             // sh  build.sh build dev ms flask-k8s $commit
-            cd $WORKSPACE/k8s/$ENV
+
             '''
+                cd $WORKSPACE/k8s/$ENV
                 sh build.sh build $ENV $PROJECT $SERVICE $TAG
             '''
         }
         stage('deploy'){
             // sh  build.sh deploy dev ms flask-k8s $commit 1
             '''
+                cd $WORKSPACE/k8s/$ENV
                 sh  build.sh deploy $ENV $PROJECT $SERVICE $TAG $params.REPLICAS
             '''
         }
