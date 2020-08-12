@@ -70,7 +70,7 @@ deploy(){
                --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
     /usr/bin/kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
     /usr/bin/kustomize edit set namespace $namespace
-    /usr/bin/kustomize edit set replicas $service=$replicas
+    /usr/bin/kustomize edit set replicas $service=1
     /usr/bin/kustomize build .
     /usr/bin/kubectl apply -k ./
     /usr/bin/kubectl get namespace
