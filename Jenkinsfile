@@ -8,6 +8,11 @@ pipeline {
             name: 'REPLICAS',
             defaultValue: "1"
         )
+        choice(
+            description: '你需要选择哪个模块进行构建 ?',
+            name: 'SERVICE',
+            choices: ['flask-k8s', 'flask-tutorial']
+        )
     }
     environment {
         ENV = 'dev'
@@ -31,7 +36,7 @@ pipeline {
             steps {
                 sh '''
                     cd $WORKSPACE/k8s/
-                    sh build.sh build $ENV $PROJECT $SERVICE $TAG
+                    sh build.sh --action=build --env=$ENV --project=$PROJECT --service=$SERVICE --tag=$TAG --harbor_registry=$HARBOR_REGISTRY
                 '''
             }
         }
@@ -40,7 +45,7 @@ pipeline {
             steps {
                  sh '''
                     cd $WORKSPACE/k8s/
-                    sh  build.sh deploy $ENV $PROJECT $SERVICE $TAG $REPLICAS
+                    sh  build.sh -action=deploy --env=$ENV --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS --harbor_registry=$HARBOR_REGISTRY 
                 '''
             }
         }

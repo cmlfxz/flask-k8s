@@ -128,24 +128,6 @@ mod_yaml() {
 deploy_prod() {
     echo "当前正在部署生产环境"
     read -p "请输入发布模式(ab|canary|rollout)大小写敏感:" type
-    # if [ `echo "$type" |egrep -i "ab|canary" |wc -l` -eq 1 ];then
-    #     cd $workdir/k8s/$env/$tag/$type
-    #     if [ `echo "$type" |egrep -i "canary" |wc -l` -eq 1 ];then
-    #         input_canary
-    #         mod_yaml
-    #     fi
-    #     echo "发布deployment,svc"
-    #     cd $workdir/k8s/$env/$tag
-    #     common_deploy
-    #     echo "发布ab/canary部分"
-    #     ab_canary_deploy
-    #     $CLI get pod,svc,vs,dr,gateway -n $namespace
-
-    # elif [ `echo "$type" |egrep -i "rollout" |wc -l` -eq 1 ];then
-    #     rollout
-    # else
-    #   echo "没有$type这种发布模式" && exit 1
-    # fi
     case $type in
         ab | canary )
             cd $workdir/k8s/$env/$tag/$type
