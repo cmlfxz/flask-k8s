@@ -17,7 +17,7 @@ pipeline {
     environment {
         ENV = 'dev'
         PROJECT = 'ms'
-        SERVICE = 'flask-k8s'
+        // SERVICE = 'flask-k8s'
         HARBOR_REGISTRY = 'myhub.mydocker.com'
         // 用这个作为dev的tag 最新的commit id
         TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
