@@ -45,7 +45,7 @@ harbor_email="915613275@qq.com"
 #cd $workdir
 #mvn clean package -DskipTests
 
-CLI = "/usr/bin/kubectl --kubeconfig ~/.kube/config"
+CLI="/usr/bin/kubectl --kubeconfig ~/.kube/config"
 
 build() {
    if [ -z "${harbor_registry}" ];then

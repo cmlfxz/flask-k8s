@@ -2,9 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="3edec4b2-d54a-4ca3-972d-e91344879c01" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change beforePath="$PROJECT_DIR$/k8s/build.sh" afterPath="$PROJECT_DIR$/k8s/build.sh" />
-      <change beforePath="$PROJECT_DIR$/k8s/build_bak.sh" afterPath="" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -18,8 +16,8 @@
       <file leaf-file-name="build.sh" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/k8s/build.sh">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2887">
-              <caret line="157" column="8" lean-forward="true" selection-start-line="157" selection-start-column="8" selection-end-line="157" selection-end-column="8" />
+            <state relative-caret-position="459">
+              <caret line="47" column="3" lean-forward="false" selection-start-line="47" selection-start-column="3" selection-end-line="47" selection-end-column="3" />
               <folding />
             </state>
           </provider>
@@ -642,8 +640,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/k8s/build.sh">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2887">
-          <caret line="157" column="8" lean-forward="true" selection-start-line="157" selection-start-column="8" selection-end-line="157" selection-end-column="8" />
+        <state relative-caret-position="459">
+          <caret line="47" column="3" lean-forward="false" selection-start-line="47" selection-start-column="3" selection-end-line="47" selection-end-column="3" />
           <folding />
         </state>
       </provider>
