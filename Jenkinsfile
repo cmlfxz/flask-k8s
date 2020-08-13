@@ -6,7 +6,7 @@ pipeline {
         string(
             description: '副本数',
             name: 'REPLICAS',
-            defaultValue: 1
+            defaultValue: "1"
         )
     }
     environment {
@@ -36,7 +36,7 @@ pipeline {
             }
         }
         stage('deploy'){
-            // sh  build.sh deploy dev ms flask-k8s $commit 1\
+            // sh  build.sh deploy dev ms flask-k8s $commit 1
             steps {
                  sh '''
                     cd $WORKSPACE/k8s/
