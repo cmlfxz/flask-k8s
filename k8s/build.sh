@@ -91,16 +91,9 @@ CLI="/usr/bin/kubectl --kubeconfig /root/.kube/config"
 #     echo "$canary_weight $prod_weight"
 # }
 
-case $action in
-    build)
-        build_image
-    ;;
-    deploy)
-        deploy_$env
-    ;;
-esac
 
-build_image() {
+
+build() {
    echo "当前正在构建$env环境"
    cd $workdir/
    image_name=$harbor_registry/$namespace/${service}:$tag
@@ -186,3 +179,12 @@ rollout(){
     kustomize build . &&  kustomize build . |$CLI apply -f -
 }
 
+
+case $action in
+    build)
+        build
+    ;;
+    deploy)
+        deploy_$env
+    ;;
+esac
