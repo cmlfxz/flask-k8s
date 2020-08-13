@@ -108,7 +108,12 @@ common_deploy() {
                --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
     kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
     kustomize edit set namespace $namespace
-    kustomize edit set replicas $service-$tag=$replicas
+    #bug 副本数匹配的是deployment的名字，生产版本deployment name是带版本号的
+    if [ "$env"=="prod" ];then
+        kustomize edit set replicas $service-$tag=$replicas
+    else
+        kustomize edit set replicas $service=$replicas
+    fi
     kustomize build . 
     kustomize build . |$CLI apply -f -
 }
