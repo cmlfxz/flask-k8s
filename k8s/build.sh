@@ -62,51 +62,9 @@ harbor_pass="DUgu16829987"
 harbor_email="915613275@qq.com"
 CLI="/usr/bin/kubectl --kubeconfig /root/.kube/config"
 
-case $action in
-    build)
-        build
-    ;;
-    deploy)
-        deploy_$env
-    ;;
-
-
-build(){
-   echo "当前正在构建$env环境"
-   cd $workdir/
-   image_name=$harbor_registry/$namespace/${service}:$tag
-   docker build -t ${image_name} .
-   docker login -u $harbor_user -p $harbor_pass $harbor_registry
-   docker push ${image_name} 
-}
-common_deploy(){
-    $CLI create namespace $namespace
-    $CLI label namespace $namespace istio-injection=enabled
-    $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
-               --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
-    kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
-    kustomize edit set namespace $namespace
-    kustomize edit set replicas $service=$replicas
-    kustomize build . &&  kustomize build . |$CLI apply -f -
-}
-deploy_dev(){
-    echo "当前正在部署开发环境"
-    cd $workdir/k8s/$env
-    # $CLI create namespace $namespace
-    # $CLI label namespace $namespace istio-injection=enabled
-    # $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
-    #            --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
-    # kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
-    # kustomize edit set namespace $namespace
-    # kustomize edit set replicas $service=$replicas
-    # kustomize build . &&  kustomize build . |$CLI apply -f -
-    common_deploy
-    # 可以封装一个检测函数
-    $CLI get pod,svc,vs,dr,gateway -n $namespace
-}
 prod_weight=100
 canary_weight=0
-input_canary(){
+input_canary() {
     for i in $(seq 1 5)
     do
         read -p "请输入灰度数值(10.20..100):" number
@@ -123,7 +81,43 @@ input_canary(){
     echo "$canary_weight $prod_weight"
 }
 
-deploy_prod(){
+
+build() {
+   echo "当前正在构建$env环境"
+   cd $workdir/
+   image_name=$harbor_registry/$namespace/${service}:$tag
+   docker build -t ${image_name} .
+   docker login -u $harbor_user -p $harbor_pass $harbor_registry
+   docker push ${image_name} 
+}
+common_deploy() {
+    $CLI create namespace $namespace
+    $CLI label namespace $namespace istio-injection=enabled
+    $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
+               --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
+    kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
+    kustomize edit set namespace $namespace
+    kustomize edit set replicas $service=$replicas
+    kustomize build . &&  kustomize build . |$CLI apply -f -
+}
+deploy_dev() {
+    echo "当前正在部署开发环境"
+    cd $workdir/k8s/$env
+    # $CLI create namespace $namespace
+    # $CLI label namespace $namespace istio-injection=enabled
+    # $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
+    #            --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
+    # kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
+    # kustomize edit set namespace $namespace
+    # kustomize edit set replicas $service=$replicas
+    # kustomize build . &&  kustomize build . |$CLI apply -f -
+    common_deploy
+    # 可以封装一个检测函数
+    $CLI get pod,svc,vs,dr,gateway -n $namespace
+}
+
+
+deploy_prod() {
     echo "当前正在部署生产环境,生产环境yaml保存在各自版本的目录下"
     read -p "请输入发布模式(ab|canary|rollout):" type
     if [ `echo "$type" |egrep -i "ab|canary" |wc -l` -eq 1 ];then
@@ -212,3 +206,12 @@ rollout(){
     kustomize edit set namespace $namespace
     kustomize build . &&  kustomize build . |$CLI apply -f -
 }
+
+case $action in
+    build)
+        build
+    ;;
+    deploy)
+        deploy_$env
+    ;;
+esac
