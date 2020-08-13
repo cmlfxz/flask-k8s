@@ -92,7 +92,7 @@ CLI="/usr/bin/kubectl --kubeconfig /root/.kube/config"
 # }
 
 
-build() {
+build_image() {
    echo "当前正在构建$env环境"
    cd $workdir/
    image_name=$harbor_registry/$namespace/${service}:$tag
@@ -165,7 +165,6 @@ deploy_prod() {
 ab_canary_deploy(){
     dir="$workdir/k8s/$env/$tag/$type"
     [ ! -d "$dir"] && echo "没有$dir $type目录，请检查" && exit 1
-
     cd $dir
     kustomize edit set namespace $namespace
     kustomize build . &&  kustomize build . |$CLI apply -f -
@@ -181,7 +180,7 @@ rollout(){
 
 case $action in
     build)
-        build
+        build_image
     ;;
     deploy)
         deploy_$env

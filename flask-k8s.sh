@@ -56,7 +56,7 @@ elif [ "$1" == "prod" ];then
       ab | AB)
         type=ab
         ;;
-      canary | CANARY |gray |GRAY)
+      canary|CANARY|gray|GRAY)
         type=canary
         input_canary
         ;;
@@ -66,5 +66,7 @@ elif [ "$1" == "prod" ];then
       *)
         echo "没有$type这种发布模式" && exit 1
         ;;
+    esac
+    echo $type $canary_weight
     sh -x   build.sh --action=deploy --env=prod  --project=ms --service=flask-k8s --tag=$tag --replicas=1 --type=$type --canary_weight=$canary_weight
 fi
