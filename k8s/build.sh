@@ -109,7 +109,7 @@ common_deploy() {
     kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
     kustomize edit set namespace $namespace
     #bug 副本数匹配的是deployment的名字，生产版本deployment name是带版本号的
-    if [ "$env"=="prod" ];then
+    if [ "$env" = "prod" ];then
         kustomize edit set replicas $service-$tag=$replicas
     else
         kustomize edit set replicas $service=$replicas
