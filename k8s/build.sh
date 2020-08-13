@@ -108,81 +108,82 @@ build_image() {
    docker login -u $harbor_user -p $harbor_pass $harbor_registry
    docker push ${image_name} 
 }
-common_deploy() {
-    $CLI create namespace $namespace
-    $CLI label namespace $namespace istio-injection=enabled
-    $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
-               --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
-    kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
-    kustomize edit set namespace $namespace
-    kustomize edit set replicas $service=$replicas
-    kustomize build . &&  kustomize build . |$CLI apply -f -
-}
-deploy_dev() {
-    echo "当前正在部署开发环境"
-    cd $workdir/k8s/$env
-    common_deploy
-    $CLI get pod,svc,vs,dr,gateway -n $namespace
-}
-mod_yaml() {
-    prod_weight=$(( 100 -$canary_weight))
-     echo "canary_weight: $canary_weight prod_weight:$prod_weight"
-    if [ -f "$service-vs.yaml" ];then
-        sed -i  "s/\$canary_weight/$canary_weight/g"  $service-vs.yaml
-        sed -i  "s/\$prod_weight/$prod_weight/g"  $service-vs.yaml
-    else
-        echo "灰度文件$service-vs.yaml 不存在,请检查" && exit 1
-    fi
-    #修改gateway文件，假如存在的话
-    if [ -f "$namespace-gateway.yaml" ];then
-        sed -i  "s/\$canary_weight/$canary_weight/g"  $namespace-gateway.yaml
-        sed -i  "s/\$prod_weight/$prod_weight/g"  $namespace-gateway.yaml
-    else
-        echo "灰度文件$namespace-gateway.yaml 不存在,请检查"
-        # exit 1
-    fi  
-}
+# common_deploy() {
+#     $CLI create namespace $namespace
+#     $CLI label namespace $namespace istio-injection=enabled
+#     $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
+#                --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
+#     kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
+#     kustomize edit set namespace $namespace
+#     kustomize edit set replicas $service=$replicas
+#     kustomize build . &&  kustomize build . |$CLI apply -f -
+# }
+# deploy_dev() {
+#     echo "当前正在部署开发环境"
+#     cd $workdir/k8s/$env
+#     common_deploy
+#     $CLI get pod,svc,vs,dr,gateway -n $namespace
+# }
+# mod_yaml() {
+#     canary_weight=100
+#     prod_weight=0
+#      echo "canary_weight: $canary_weight prod_weight:$prod_weight"
+#     if [ -f "$service-vs.yaml" ];then
+#         sed -i  "s/\$canary_weight/$canary_weight/g"  $service-vs.yaml
+#         sed -i  "s/\$prod_weight/$prod_weight/g"  $service-vs.yaml
+#     else
+#         echo "灰度文件$service-vs.yaml 不存在,请检查" && exit 1
+#     fi
+#     #修改gateway文件，假如存在的话
+#     if [ -f "$namespace-gateway.yaml" ];then
+#         sed -i  "s/\$canary_weight/$canary_weight/g"  $namespace-gateway.yaml
+#         sed -i  "s/\$prod_weight/$prod_weight/g"  $namespace-gateway.yaml
+#     else
+#         echo "灰度文件$namespace-gateway.yaml 不存在,请检查"
+#         # exit 1
+#     fi  
+# }
 
-deploy_prod() {
-    echo "当前正在部署生产环境"
-    # read -p "请输入发布模式(ab|canary|rollout)大小写敏感:" type
-    case $type in
-        ab | canary )
-            cd $workdir/k8s/$env/$tag/$type
-            if [ "$type"=='$canary' ];then
-                #input_canary
-                mod_yaml
-            fi
-            echo "发布deployment,svc"
-            cd $workdir/k8s/$env/$tag
-            common_deploy
-            echo "发布ab/canary部分"
-            ab_canary_deploy
-            $CLI get pod,svc,vs,dr,gateway -n $namespace
-        ;;
-        rollout )
-            rollout
-        ;;
-        *)
-            echo "没有$type这种发布模式" && exit 1
-        ;;
+# deploy_prod() {
+#     echo "当前正在部署生产环境"
+#     # read -p "请输入发布模式(ab|canary|rollout)大小写敏感:" type
+#     case $type in
+#         ab|canary)
+#             cd $workdir/k8s/$env/$tag/$type
+#             if [ "$type"=='$canary' ];then
+#                 #input_canary
+#                 mod_yaml
+#             fi
+#             echo "发布deployment,svc"
+#             cd $workdir/k8s/$env/$tag
+#             common_deploy
+#             echo "发布ab/canary部分"
+#             ab_canary_deploy
+#             $CLI get pod,svc,vs,dr,gateway -n $namespace
+#         ;;
+#         rollout)
+#             rollout
+#         ;;
+#         *)
+#             echo "没有$type这种发布模式" && exit 1
+#         ;;
 
-    esac
-}
-#执行ab_canary的yaml
-ab_canary_deploy(){
-    dir="$workdir/k8s/$env/$tag/$type"
-    [ ! -d "$dir"] && echo "没有$dir $type目录，请检查" && exit 1
-    cd $dir
-    kustomize edit set namespace $namespace
-    kustomize build . &&  kustomize build . |$CLI apply -f -
-}
-rollout(){
-    echo "你正在执行$env环境回滚操作"
-    dir="$workdir/k8s/$env/$tag/$type"
-    [ ! -d "$dir"] && echo "没有$dir回滚目录，请检查" && exit 1
-    cd $dir
-    kustomize edit set namespace $namespace
-    kustomize build . &&  kustomize build . |$CLI apply -f -
-}
+#     esac
+# }
+# #执行ab_canary的yaml
+# ab_canary_deploy(){
+#     dir="$workdir/k8s/$env/$tag/$type"
+#     [ ! -d "$dir"] && echo "没有$dir $type目录，请检查" && exit 1
+#     cd $dir
+#     kustomize edit set namespace $namespace
+#     kustomize build . &&  kustomize build . |$CLI apply -f -
+# }
+# rollout(){
+#     echo "你正在执行$env环境回滚操作"
+#     dir="$workdir/k8s/$env/$tag/$type"
+#     [ ! -d "$dir"] && echo "没有$dir回滚目录，请检查" && exit 1
+#     cd $dir
+#     kustomize edit set namespace $namespace
+#     kustomize build . &&  kustomize build . |$CLI apply -f -
+# }
 
