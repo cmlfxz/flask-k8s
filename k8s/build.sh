@@ -52,7 +52,7 @@ if [ "$#" -lt 5 ];then
     echo "缺少参数"
     echo "Usage sh build.sh --action=build/deploy --env=dev/test/prod --project=ms --service=flask-k8s \
             --tag=commit_id/v1.0 --replicas=1 --harbor_registry=myhub.mydocker.com --type=ab|canary|rollout --canary_weight=10"
-    exit
+    exit 1
 fi
 if [ -z "$replicas" ];then
   replicas=1
@@ -91,6 +91,14 @@ CLI="/usr/bin/kubectl --kubeconfig /root/.kube/config"
 #     echo "$canary_weight $prod_weight"
 # }
 
+case $action in
+    build)
+        build_image
+    ;;
+    deploy)
+        deploy_$env
+    ;;
+esac
 
 build_image() {
    echo "当前正在构建$env环境"
@@ -178,11 +186,3 @@ rollout(){
     kustomize build . &&  kustomize build . |$CLI apply -f -
 }
 
-case $action in
-    build)
-        build_image
-    ;;
-    deploy)
-        deploy_$env
-    ;;
-esac
