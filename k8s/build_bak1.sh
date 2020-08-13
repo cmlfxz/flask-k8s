@@ -7,8 +7,6 @@ service=""
 tag=""
 replicas=""
 harbor_registry=""
-type=""
-canary_weight=""
 
 for COMMAND in $COMMANDLINE
 do
@@ -37,21 +35,15 @@ do
         --harbor_registry)
             harbor_registry=$val
         ;;
-        --type)
-            type=$val
-        ;;
-        --canary_weight)
-            canary_weight=$val
-        ;;
     esac
 done
 #----------参数处理
-echo "$action $env $project $service $tag $replicas $harbor_registry $type $canary_weight"
+echo "$action $env $project $service $tag $replicas $harbor_registry"
 # if [[ "$action"=="" || "$env"=="" || "$project"==""  || "$service"=="" || "$tag"=="" ]];then
 if [ "$#" -lt 5 ];then
     echo "缺少参数"
     echo "Usage sh build.sh --action=build/deploy --env=dev/test/prod --project=ms --service=flask-k8s \
-            --tag=commit_id/v1.0 --replicas=1 --harbor_registry=myhub.mydocker.com --type=ab|canary|rollout --canary_weight=10"
+            --tag=commit_id/v1.0 --replicas=1 --harbor_registry=myhub.mydocker.com"
     exit
 fi
 if [ -z "$replicas" ];then
@@ -71,25 +63,25 @@ harbor_pass="DUgu16829987"
 harbor_email="915613275@qq.com"
 CLI="/usr/bin/kubectl --kubeconfig /root/.kube/config"
 
-# prod_weight=100
-# canary_weight=0
-# input_canary() {
-#     for i in $(seq 1 5)
-#     do
-#         read -p "请输入灰度数值(10.20..100):" number
+prod_weight=100
+canary_weight=0
+input_canary() {
+    for i in $(seq 1 5)
+    do
+        read -p "请输入灰度数值(10.20..100):" number
 
-#         #判断输入是不是数字,命令结果为1 为数字,为0 不是数字
-#         echo $number | grep -q '[^0-9]'
-#         if [[ $? -eq 1 ]] &&  [[ "$number" -le 100 ]]; then
-#             canary_weight=$number
-#             prod_weight=$(( 100 -$canary_weight))
-#             break
-#         else
-#             echo "你输入的$canary_weight不是小于等于100的数字，5次机会,重新输入!"
-#         fi
-#     done
-#     echo "$canary_weight $prod_weight"
-# }
+        #判断输入是不是数字,命令结果为1 为数字,为0 不是数字
+        echo $number | grep -q '[^0-9]'
+        if [[ $? -eq 1 ]] &&  [[ "$number" -le 100 ]]; then
+            canary_weight=$number
+            prod_weight=$(( 100 -$canary_weight))
+            break
+        else
+            echo "你输入的$canary_weight不是小于等于100的数字，5次机会,重新输入!"
+        fi
+    done
+    echo "$canary_weight $prod_weight"
+}
 
 
 build() {
@@ -117,8 +109,6 @@ deploy_dev() {
     $CLI get pod,svc,vs,dr,gateway -n $namespace
 }
 mod_yaml() {
-    prod_weight=$(( 100 -$canary_weight))
-     echo "canary_weight: $canary_weight prod_weight:$prod_weight"
     if [ -f "$service-vs.yaml" ];then
         sed -i  "s/\$canary_weight/$canary_weight/g"  $service-vs.yaml
         sed -i  "s/\$prod_weight/$prod_weight/g"  $service-vs.yaml
@@ -137,12 +127,12 @@ mod_yaml() {
 
 deploy_prod() {
     echo "当前正在部署生产环境"
-    # read -p "请输入发布模式(ab|canary|rollout)大小写敏感:" type
+    read -p "请输入发布模式(ab|canary|rollout)大小写敏感:" type
     case $type in
         ab | canary )
             cd $workdir/k8s/$env/$tag/$type
-            if [ "$type"=='$canary' ];then
-                #input_canary
+            if [ `echo "$type" |egrep -i "canary" |wc -l` -eq 1 ];then
+                input_canary
                 mod_yaml
             fi
             echo "发布deployment,svc"
@@ -160,6 +150,7 @@ deploy_prod() {
         ;;
 
     esac
+
 }
 #执行ab_canary的yaml
 ab_canary_deploy(){
