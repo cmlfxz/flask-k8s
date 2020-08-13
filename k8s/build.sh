@@ -103,19 +103,25 @@ common_deploy() {
 deploy_dev() {
     echo "当前正在部署开发环境"
     cd $workdir/k8s/$env
-    # $CLI create namespace $namespace
-    # $CLI label namespace $namespace istio-injection=enabled
-    # $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
-    #            --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
-    # kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
-    # kustomize edit set namespace $namespace
-    # kustomize edit set replicas $service=$replicas
-    # kustomize build . &&  kustomize build . |$CLI apply -f -
     common_deploy
-    # 可以封装一个检测函数
     $CLI get pod,svc,vs,dr,gateway -n $namespace
 }
-
+mod_yaml() {
+    if [ -f "$service-vs.yaml" ];then
+        sed -i  "s/\$canary_weight/$canary_weight/g"  $service-vs.yaml
+        sed -i  "s/\$prod_weight/$prod_weight/g"  $service-vs.yaml
+    else
+        echo "灰度文件$service-vs.yaml 不存在,请检查" && exit 1
+    fi
+    #修改gateway文件，假如存在的话
+    if [ -f "$namespace-gateway.yaml" ];then
+        sed -i  "s/\$canary_weight/$canary_weight/g"  $namespace-gateway.yaml
+        sed -i  "s/\$prod_weight/$prod_weight/g"  $namespace-gateway.yaml
+    else
+        echo "灰度文件$namespace-gateway.yaml 不存在,请检查"
+    # exit 1
+    fi  
+}
 
 deploy_prod() {
     echo "当前正在部署生产环境,生产环境yaml保存在各自版本的目录下"
@@ -123,67 +129,35 @@ deploy_prod() {
     if [ `echo "$type" |egrep -i "ab|canary" |wc -l` -eq 1 ];then
         cd $workdir/k8s/$env/$tag/$type
         if [ `echo "$type" |egrep -i "canary" |wc -l` -eq 1 ];then
-            # for i in $(seq 1 5)
-            # do
-            #     read -p "请输入灰度数值(10.20..100):" canary_weight
-            #     #判断输入是不是数字,命令结果为1 为数字,为0 不是数字
-            #     echo $canary_weight | grep -q '[^0-9]'
-            #     if [[ $? -eq 1 ]] &&  [[ "$canary_weight" -le 100 ]]; then
-            #         prod_weight=$(( 100 -$canary_weight))
-            #         break
-            #     else
-            #         echo "你输入的$canary_weight不是小于等于100的数字，5次机会,重新输入!"
-            #     fi
-            # done
-            # echo "$canary_weight $prod_weight"
             input_canary
-            if [ -f "$service-vs.yaml" ];then
-                sed -i  "s/\$canary_weight/$canary_weight/g"  $service-vs.yaml
-                sed -i  "s/\$prod_weight/$prod_weight/g"  $service-vs.yaml
-            else
-                echo "灰度文件$service-vs.yaml 不存在,请检查" && exit 1
-            fi
-            #修改gateway文件，假如存在的话
-            if [ -f "$namespace-gateway.yaml" ];then
-                sed -i  "s/\$canary_weight/$canary_weight/g"  $namespace-gateway.yaml
-                sed -i  "s/\$prod_weight/$prod_weight/g"  $namespace-gateway.yaml
-            else
-                echo "灰度文件$namespace-gateway.yaml 不存在,请检查"
-                # exit 1
-            fi
+            mod_yaml
+            # if [ -f "$service-vs.yaml" ];then
+            #     sed -i  "s/\$canary_weight/$canary_weight/g"  $service-vs.yaml
+            #     sed -i  "s/\$prod_weight/$prod_weight/g"  $service-vs.yaml
+            # else
+            #     echo "灰度文件$service-vs.yaml 不存在,请检查" && exit 1
+            # fi
+            # #修改gateway文件，假如存在的话
+            # if [ -f "$namespace-gateway.yaml" ];then
+            #     sed -i  "s/\$canary_weight/$canary_weight/g"  $namespace-gateway.yaml
+            #     sed -i  "s/\$prod_weight/$prod_weight/g"  $namespace-gateway.yaml
+            # else
+            #     echo "灰度文件$namespace-gateway.yaml 不存在,请检查"
+            #     # exit 1
+            # fi
         fi
 
         echo "发布deployment,svc"
         cd $workdir/k8s/$env/$tag
         common_deploy
-        #   $CLI create namespace $namespace
-        #   $CLI label namespace $namespace istio-injection=enabled
-        #   $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
-        #         --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
-        #   kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
-        #   kustomize edit set namespace $namespace
-        #   kustomize build . &&  kustomize build . |$CLI apply -f -
 
         echo "发布ab/canary部分"
         ab_canary
-        #   cd $workdir/k8s/$env/$tag/$type
-        #   kustomize edit set namespace $namespace
-        #   kustomize build . &&  kustomize build . |$CLI apply -f -
 
         $CLI get pod,svc,vs,dr,gateway -n $namespace
 
-
     elif [ `echo "$type" |egrep -i "rollout" |wc -l` -eq 1 ];then
         rollout
-        #   echo "你正在执行$env环境回滚操作"
-        #   rollout_dir = "$workdir/k8s/$env/$tag/$type"
-        #   if [ ! -d "$rollout_dir"];then
-        #     echo "没有$rollout_dir回滚目录，请检查" && exit 1
-        #   fi
-        #   cd $rollout_dir
-        #   kustomize edit set namespace $namespace
-        #   kustomize build . &&  kustomize build . |$CLI apply -f -
-        #   $CLI get pod,svc,vs,dr,gateway -n $namespace
     else
       echo "没有$type这种发布模式" && exit 1
     fi
