@@ -45,7 +45,7 @@ pipeline {
             steps {
                  sh '''
                     cd $WORKSPACE/k8s/
-                    sh  build.sh -action=deploy --env=$ENV --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS --harbor_registry=$HARBOR_REGISTRY 
+                    sh  build.sh --action=deploy --env=$ENV --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS --harbor_registry=$HARBOR_REGISTRY 
                 '''
             }
         }
