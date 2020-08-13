@@ -45,6 +45,8 @@ harbor_email="915613275@qq.com"
 #cd $workdir
 #mvn clean package -DskipTests
 
+CLI = "/usr/bin/kubectl --kubeconfig ~/.kube/config"
+
 build() {
    if [ -z "${harbor_registry}" ];then
       echo "$harbor_registey 没设置harbor地址"
@@ -64,28 +66,16 @@ deploy(){
   if [ "$env" == "dev" ];then
     echo "当前正在部署开发环境"
     cd $workdir/k8s/$env
-    kubectl create namespace $namespace
-    kubectl label namespace $namespace istio-injection=enabled
-    kubectl create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
+    $CLI create namespace $namespace
+    $CLI label namespace $namespace istio-injection=enabled
+    $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
                --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
     kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
     kustomize edit set namespace $namespace
     kustomize edit set replicas $service=$replicas
     kustomize build .
-    kustomize build . |kubectl apply -f -
-    kubectl get pod,svc,vs,dr,gateway -n $namespace
-  elif [ "$env" == "release"  ];then
-    echo "当前正在部署预发布环境"
-    cd $workdir/k8s/$env
-    kubectl create namespace $namespace
-    kubectl label namespace $namespace istio-injection=enabled
-    kubectl create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
-             --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
-    kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
-    kustomize edit set namespace $namespace
-    kustomize build .
-    kustomize build . |kubectl apply -f -
-    kubectl get pod,svc,vs,dr,gateway -n $namespace
+    kustomize build . |$CLI apply -f -
+    $CLI get pod,svc,vs,dr,gateway -n $namespace
   elif [ "$env" == "prod" ];then
     echo "当前正在部署生产环境,生产环境yaml保存在各自版本的目录下"
     #根据用户输入进入ab还是灰度
@@ -132,20 +122,20 @@ deploy(){
       ########################
       echo "发布deployment,svc"
       cd $workdir/k8s/$env/$tag
-      kubectl create namespace $namespace
-      kubectl label namespace $namespace istio-injection=enabled
-      kubectl create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
+      $CLI create namespace $namespace
+      $CLI label namespace $namespace istio-injection=enabled
+      $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
             --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
       kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
       kustomize edit set namespace $namespace
-      kustomize build . &&  kustomize build . |kubectl apply -f -
+      kustomize build . &&  kustomize build . |$CLI apply -f -
 
       ########################
       echo "发布$type部分"
       cd $workdir/k8s/$env/$tag/$type
       kustomize edit set namespace $namespace
-      kustomize build . &&  kustomize build . |kubectl apply -f -
-      kubectl get pod,svc,vs,dr,gateway -n $namespace
+      kustomize build . &&  kustomize build . |$CLI apply -f -
+      $CLI get pod,svc,vs,dr,gateway -n $namespace
       #######################
 
     elif [ `echo "$type" |egrep -i "rollout" |wc -l` -eq 1 ];then
@@ -156,8 +146,8 @@ deploy(){
       fi
       cd $rollout_dir
       kustomize edit set namespace $namespace
-      kustomize build . &&  kustomize build . |kubectl apply -f -
-      kubectl get pod,svc,vs,dr,gateway -n $namespace
+      kustomize build . &&  kustomize build . |$CLI apply -f -
+      $CLI get pod,svc,vs,dr,gateway -n $namespace
     else
       echo "没有$type这种发布模式" && exit 1
     fi
