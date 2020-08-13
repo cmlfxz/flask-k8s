@@ -165,7 +165,7 @@ deploy_prod() {
 #执行ab_canary的yaml
 ab_canary_deploy(){
     dir="$workdir/k8s/$env/$tag/$type"
-    [ ! -d "$dir"] && echo "没有$dir $type目录，请检查" && exit 1
+    [ ! -d "$dir" ] && echo "没有$dir $type目录，请检查" && exit 1
     cd $dir
     kustomize edit set namespace $namespace
     kustomize build . &&  kustomize build . |$CLI apply -f -
