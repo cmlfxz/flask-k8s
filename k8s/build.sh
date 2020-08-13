@@ -71,27 +71,6 @@ harbor_pass="DUgu16829987"
 harbor_email="915613275@qq.com"
 CLI="/usr/bin/kubectl --kubeconfig /root/.kube/config"
 
-# prod_weight=100
-# canary_weight=0
-# input_canary() {
-#     for i in $(seq 1 5)
-#     do
-#         read -p "请输入灰度数值(10.20..100):" number
-
-#         #判断输入是不是数字,命令结果为1 为数字,为0 不是数字
-#         echo $number | grep -q '[^0-9]'
-#         if [[ $? -eq 1 ]] &&  [[ "$number" -le 100 ]]; then
-#             canary_weight=$number
-#             prod_weight=$(( 100 -$canary_weight))
-#             break
-#         else
-#             echo "你输入的$canary_weight不是小于等于100的数字，5次机会,重新输入!"
-#         fi
-#     done
-#     echo "$canary_weight $prod_weight"
-# }
-
-
 
 build() {
    echo "当前正在构建$env环境"
@@ -149,7 +128,7 @@ deploy_prod() {
         ab|canary)
             cd $workdir/k8s/$env/$tag/$type
             if [ "$type"=='$canary' ];then
-                #input_canary
+                #input_canary(已经把这部分代码移出去)
                 mod_yaml
             fi
             echo "发布deployment,svc"
