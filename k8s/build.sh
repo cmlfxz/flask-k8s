@@ -42,7 +42,8 @@ echo "$action $env $project $service $tag $replicas $harbor_registry"
 # if [[ "$action"=="" || "$env"=="" || "$project"==""  || "$service"=="" || "$tag"=="" ]];then
 if [ "$#" -lt 5 ];then
     echo "缺少参数"
-    echo "Usage sh build.sh --action=build/deploy --env=dev/test/prod --project=ms --service=flask-k8s --tag=commit_id/v1.0 --replicas=1 --harbor_registry=myhub.mydocker.com"
+    echo "Usage sh build.sh --action=build/deploy --env=dev/test/prod --project=ms --service=flask-k8s \
+            --tag=commit_id/v1.0 --replicas=1 --harbor_registry=myhub.mydocker.com"
     exit
 fi
 if [ -z "$replicas" ];then
@@ -56,7 +57,7 @@ fi
 namespace=$project-$env
 workdir=$(dirname $PWD)
 
-#正式测试保持同一套密码，不然就得相应修改
+#正式测试保持同一套密码
 harbor_user="cmlfxz"
 harbor_pass="DUgu16829987"
 harbor_email="915613275@qq.com"
@@ -68,6 +69,7 @@ input_canary() {
     for i in $(seq 1 5)
     do
         read -p "请输入灰度数值(10.20..100):" number
+
         #判断输入是不是数字,命令结果为1 为数字,为0 不是数字
         echo $number | grep -q '[^0-9]'
         if [[ $? -eq 1 ]] &&  [[ "$number" -le 100 ]]; then
@@ -119,52 +121,57 @@ mod_yaml() {
         sed -i  "s/\$prod_weight/$prod_weight/g"  $namespace-gateway.yaml
     else
         echo "灰度文件$namespace-gateway.yaml 不存在,请检查"
-    # exit 1
+        # exit 1
     fi  
 }
 
 deploy_prod() {
-    echo "当前正在部署生产环境,生产环境yaml保存在各自版本的目录下"
-    read -p "请输入发布模式(ab|canary|rollout):" type
-    if [ `echo "$type" |egrep -i "ab|canary" |wc -l` -eq 1 ];then
-        cd $workdir/k8s/$env/$tag/$type
-        if [ `echo "$type" |egrep -i "canary" |wc -l` -eq 1 ];then
-            input_canary
-            mod_yaml
-            # if [ -f "$service-vs.yaml" ];then
-            #     sed -i  "s/\$canary_weight/$canary_weight/g"  $service-vs.yaml
-            #     sed -i  "s/\$prod_weight/$prod_weight/g"  $service-vs.yaml
-            # else
-            #     echo "灰度文件$service-vs.yaml 不存在,请检查" && exit 1
-            # fi
-            # #修改gateway文件，假如存在的话
-            # if [ -f "$namespace-gateway.yaml" ];then
-            #     sed -i  "s/\$canary_weight/$canary_weight/g"  $namespace-gateway.yaml
-            #     sed -i  "s/\$prod_weight/$prod_weight/g"  $namespace-gateway.yaml
-            # else
-            #     echo "灰度文件$namespace-gateway.yaml 不存在,请检查"
-            #     # exit 1
-            # fi
-        fi
+    echo "当前正在部署生产环境"
+    read -p "请输入发布模式(ab|canary|rollout)大小写敏感:" type
+    # if [ `echo "$type" |egrep -i "ab|canary" |wc -l` -eq 1 ];then
+    #     cd $workdir/k8s/$env/$tag/$type
+    #     if [ `echo "$type" |egrep -i "canary" |wc -l` -eq 1 ];then
+    #         input_canary
+    #         mod_yaml
+    #     fi
+    #     echo "发布deployment,svc"
+    #     cd $workdir/k8s/$env/$tag
+    #     common_deploy
+    #     echo "发布ab/canary部分"
+    #     ab_canary_deploy
+    #     $CLI get pod,svc,vs,dr,gateway -n $namespace
 
-        echo "发布deployment,svc"
-        cd $workdir/k8s/$env/$tag
-        common_deploy
+    # elif [ `echo "$type" |egrep -i "rollout" |wc -l` -eq 1 ];then
+    #     rollout
+    # else
+    #   echo "没有$type这种发布模式" && exit 1
+    # fi
+    case $type in
+        ab | canary )
+            cd $workdir/k8s/$env/$tag/$type
+            if [ `echo "$type" |egrep -i "canary" |wc -l` -eq 1 ];then
+                input_canary
+                mod_yaml
+            fi
+            echo "发布deployment,svc"
+            cd $workdir/k8s/$env/$tag
+            common_deploy
+            echo "发布ab/canary部分"
+            ab_canary_deploy
+            $CLI get pod,svc,vs,dr,gateway -n $namespace
+        ;;
+        rollout )
+            rollout
+        ;;
+        *)
+            echo "没有$type这种发布模式" && exit 1
+        ;;
 
-        echo "发布ab/canary部分"
-        ab_canary
-
-        $CLI get pod,svc,vs,dr,gateway -n $namespace
-
-    elif [ `echo "$type" |egrep -i "rollout" |wc -l` -eq 1 ];then
-        rollout
-    else
-      echo "没有$type这种发布模式" && exit 1
-    fi
+    esac
 
 }
 #执行ab_canary的yaml
-ab_canary(){
+ab_canary_deploy(){
     dir="$workdir/k8s/$env/$tag/$type"
     [ ! -d "$dir"] && echo "没有$dir $type目录，请检查" && exit 1
 
