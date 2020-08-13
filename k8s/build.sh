@@ -40,7 +40,7 @@ done
 #----------参数处理
 echo "$action $env $project $service $tag $replicas $harbor_registry"
 # if [[ "$action"=="" || "$env"=="" || "$project"==""  || "$service"=="" || "$tag"=="" ]];then
-if [[ "$action"=="" || "$env"=="" ]];then
+if [ "$#" -lt 5 ];then
     echo "缺少参数"
     echo "Usage sh build.sh --action=build/deploy --env=dev/test/prod --project=ms --service=flask-k8s --tag=commit_id/v1.0 --replicas=1 --harbor_registry=myhub.mydocker.com"
     exit
