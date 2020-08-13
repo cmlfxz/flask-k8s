@@ -108,8 +108,9 @@ common_deploy() {
                --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
     kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
     kustomize edit set namespace $namespace
-    kustomize edit set replicas $service=$replicas
-    kustomize build . &&  kustomize build . |$CLI apply -f -
+    kustomize edit set replicas $service-$tag=$replicas
+    kustomize build . 
+    kustomize build . |$CLI apply -f -
 }
 deploy_dev() {
     echo "当前正在部署开发环境"
