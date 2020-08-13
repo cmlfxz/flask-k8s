@@ -71,10 +71,9 @@ case $action in
     ;;
 
 
-build() {
+build(){
    echo "当前正在构建$env环境"
    cd $workdir/
-   #service=${service%-*}
    image_name=$harbor_registry/$namespace/${service}:$tag
    docker build -t ${image_name} .
    docker login -u $harbor_user -p $harbor_pass $harbor_registry
