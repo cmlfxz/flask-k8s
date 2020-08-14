@@ -63,6 +63,45 @@ pipeline {
     }
     // 必须包含此步骤
     stages {
+        // stage('get tag') {
+        //     // when {
+        //     //     expression { return params.ACTION == "deploy" }
+        //     // }
+        //     steps {
+        //         script {
+        //             if(params.BRANCH=='master'){
+        //                 // TAG= params.TAG
+        //                 TAG = sh(returnStdout: true,script: 'git describe --tags `git rev-list --tags --max-count=1`')
+        //                 ENV='prod'
+        //             }else {
+        //                 TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
+        //                 ENV='dev'
+        //             }
+        //         }
+        //     }
+        // }
+
+        stage('set TAG & ENV'){
+            steps {
+                script {
+                    if(params.BRANCH=='master'){
+                            env.TAG= sh(returnStdout: true,script: 'git describe --tags `git rev-list --tags --max-count=1`')
+                            env.ENV='prod'
+                    }else {
+                            env.TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
+                            env.ENV='dev'
+                    }
+                }
+
+            }
+        }
+        stage('display var') {
+            steps {
+                echo "Runing ${env.BUILD_ID}"
+                echo "BRANCH ${params.BRANCH}"
+                echo "tag: $TAG  replicas: ${params.REPLICAS} type: $TYPE, canary_weight: $CANARY_WEIGHT"
+            }
+        }
         stage('checkout') {
             // when {
             //     expression { return params.ACTION == "deploy" }
@@ -70,7 +109,8 @@ pipeline {
             steps {
                 script {
                     if(params.BRANCH=='master') {
-                        revision = params.TAG 
+                        // revision = params.TAG 
+                        revision = env.TAG 
                     }else { 
                         revision = params.BRANCH 
                     }
@@ -87,44 +127,7 @@ pipeline {
                 ])
             }
         }
-        stage('get tag') {
-            // when {
-            //     expression { return params.ACTION == "deploy" }
-            // }
-            steps {
-                script {
-                    if(params.BRANCH=='master'){
-                        // TAG= params.TAG
-                        TAG = sh(returnStdout: true,script: 'git describe --tags `git rev-list --tags --max-count=1`')
-                        ENV='prod'
-                    }else {
-                        TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
-                        ENV='dev'
-                    }
-                }
-            }
-        }
-        stage('display var') {
-            steps {
-                echo "Runing ${env.BUILD_ID}"
-                echo "BRANCH ${params.BRANCH}"
-                echo "tag: $TAG  replicas: ${params.REPLICAS} type: $TYPE, canary_weight: $CANARY_WEIGHT"
-            }
-        }
-        stage('set TAG & ENV'){
-            steps {
-                script {
-                    if(params.BRANCH=='master'){
-                            env.TAG= params.TAG
-                            env.ENV='prod'
-                    }else {
-                            env.TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
-                            env.ENV='dev'
-                    }
-                }
 
-            }
-        }
         stage('build') {
             when {
                 expression { return params.ACTION == "deploy" }
