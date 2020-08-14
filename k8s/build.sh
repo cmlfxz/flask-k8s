@@ -165,7 +165,7 @@ ab_canary_deploy(){
 rollout(){
     echo "你正在执行$env环境回滚操作"
     dir="$workdir/k8s/$env/$tag/rollout"
-    [  -d "$dir" ] && echo "没有$dir回滚目录，请检查" && exit 1
+    [ ! -d "$dir" ] && echo "没有$dir回滚目录，请检查" && exit 1
     cd $dir
     kustomize edit set namespace $namespace
     kustomize build . &&  kustomize build . |$CLI apply -f -

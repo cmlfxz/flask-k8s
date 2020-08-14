@@ -64,9 +64,9 @@ pipeline {
     // 必须包含此步骤
     stages {
         stage('checkout') {
-            when {
-                expression { return params.ACTION == "deploy" }
-            }
+            // when {
+            //     expression { return params.ACTION == "deploy" }
+            // }
             steps {
                 script {
                     if(params.BRANCH=='master') {
@@ -88,9 +88,9 @@ pipeline {
             }
         }
         stage('get tag') {
-            when {
-                expression { return params.ACTION == "deploy" }
-            }
+            // when {
+            //     expression { return params.ACTION == "deploy" }
+            // }
             steps {
                 script {
                     if(params.BRANCH=='master'){
