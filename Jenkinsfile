@@ -209,18 +209,19 @@ pipeline {
 
             stages {
                 stage('input deploy type') {
-                    steps {
-                        input {
-                            message "Should we continue?"
-                            ok "Yes, we should."
-                            parameters {
-                                choice(
-                                    description: '正式环境发布类型 ?',
-                                    name: 'TYPE',
-                                    choices: ['canary', 'ab']
-                                )
-                            }
+                    input {
+                        message "Should we continue?"
+                        ok "Yes, we should."
+                        parameters {
+                            choice(
+                                description: '正式环境发布类型 ?',
+                                name: 'TYPE',
+                                choices: ['canary', 'ab']
+                            )
                         }
+                    }
+                    steps {
+                        echo  "$TYPE ${env.TYPE}"
                     }
 
                 }
