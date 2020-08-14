@@ -253,7 +253,7 @@ pipeline {
                                 }
                             }
                             steps {
-                                echo "$TYPE $CANARY_WEIGHT"
+                                echo "${env.TYPE} $CANARY_WEIGHT"
                                 echo "pp执行灰度发布"
                                 sh '''
                                     cd $WORKSPACE/k8s/
