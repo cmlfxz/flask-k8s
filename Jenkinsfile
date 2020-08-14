@@ -199,7 +199,7 @@ pipeline {
             steps {
                  sh '''
                     cd $WORKSPACE/k8s/
-                    sh  build.sh --action=rollout --env=prod --project=$PROJECT 
+                    sh  build.sh --action=rollout --env=prod --project=$PROJECT  --tag=$TAG
                 '''
             }
         }
