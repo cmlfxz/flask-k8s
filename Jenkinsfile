@@ -171,7 +171,6 @@ pipeline {
         //     }
         // }
         stage('deploy dev'){
-            echo env.BRANCH
             when {
                 allOf {
                     // branch 'develop';
@@ -188,7 +187,6 @@ pipeline {
             }
         }
         stage('deploy prod'){
-
             when {
                 allOf {
                     // branch 'master';
