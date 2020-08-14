@@ -197,6 +197,7 @@ pipeline {
                 }
             }
             steps {
+                //  bug build.sh检查rollout存不存在需要用到tag
                  sh '''
                     cd $WORKSPACE/k8s/
                     sh  build.sh --action=rollout --env=prod --project=$PROJECT  --tag=$TAG
