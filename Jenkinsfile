@@ -4,7 +4,6 @@ pipeline {
         choice(
             description: '发布还是回滚，生产才有回滚操作',
             name: 'ACTION',
-            defaultValue: 'deploy',
             choices: ['deploy','rollout']
         )
         string(
