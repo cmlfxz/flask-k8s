@@ -64,6 +64,9 @@ pipeline {
     // 必须包含此步骤
     stages {
         stage('checkout') {
+            when {
+                expression { return params.ACTION == "deploy" }
+            }
             steps {
                 script {
                     if(params.BRANCH=='master') {
@@ -85,6 +88,9 @@ pipeline {
             }
         }
         stage('get tag') {
+            when {
+                expression { return params.ACTION == "deploy" }
+            }
             steps {
                 script {
                     if(params.BRANCH=='master'){
@@ -151,7 +157,8 @@ pipeline {
         stage('deploy dev'){
             when {
                 allOf {
-                    branch 'develop';
+                    // branch 'develop';
+                    environment name: 'BRANCH', value: 'develop';
                     environment name: 'ACTION', value: 'deploy' 
                 }
                 
@@ -166,7 +173,8 @@ pipeline {
         stage('deploy prod'){
             when {
                 allOf {
-                    branch 'master';
+                    // branch 'master';
+                    environment name: 'BRANCH', value: 'master';
                     environment name: 'ACTION', value: 'deploy' 
                 }
             }
@@ -180,9 +188,11 @@ pipeline {
             }
         }
         stage('rollout'){
+            
             when {
                 allOf {
-                    branch 'master' ;
+                    // branch 'master' ;
+                    environment name: 'BRANCH', value: 'master';
                     environment name: 'ACTION', value: 'rollout' 
                 }
             }
