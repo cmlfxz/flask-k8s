@@ -225,9 +225,9 @@ pipeline {
                     }
 
                 }
-                stage('get canary_weight & exec canary deploy') {
+                stage('input canary_weight & exec canary deploy') {
                     when {
-                        expression { return env.TYPE == "ab" }
+                        environment name: 'TYPE', value: 'ab' 
                     }
                     stages{
                         stage('input canary type') {
@@ -244,6 +244,7 @@ pipeline {
                             }
                             steps {
                                 echo "$TYPE $CANARY_WEIGHT"
+                                echo "pp执行灰度发布"
                                 sh '''
                                     cd $WORKSPACE/k8s/
                                     sh  build.sh --action=deploy --env=prod --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS  --type=canary --canary_weight=$CANARY_WEIGHT --harbor_registry=$HARBOR_REGISTRY 
