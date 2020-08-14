@@ -222,6 +222,31 @@ pipeline {
 
                     steps {
                         echo  "$TYPE ${env.TYPE}"
+                        script{
+                            script {
+                                if(params.TYPE=='ab') {
+                                    echo "1"
+                                    // env.TYPE='ab'
+                                }else{
+                                    echo  "2"
+                                    // env.TYPE='canary'
+                                    input {
+                                        message "Should we continue?"
+                                        ok "Yes, we should."
+                                        parameters {
+                                            choice(
+                                                description: '正式环境初始灰度值',
+                                                name: 'CANARY_WEIGHT',
+                                                choices: ['10','20','30','40','50','60','70','80','90','100']
+                                            )
+                                        }
+                                    }
+                                    steps {
+                                        echo "$CANARY_WEIGHT"
+                                    }
+                                }
+                            }
+                        }
                         // script {
                         //     if(params.TYPE=='ab') {
                         //         echo "1"
@@ -234,36 +259,36 @@ pipeline {
                     }
 
                 }
-                stage('exec canary deploy') {
-                    // when {
-                    //     True
-                    //     // expression { return params.TYPE=='ab' } 
-                    // }
-                    stages{
-                        stage('input canary type') {
-                            input {
-                                message "Should we continue?"
-                                ok "Yes, we should."
-                                parameters {
-                                    choice(
-                                        description: '正式环境初始灰度值',
-                                        name: 'CANARY_WEIGHT',
-                                        choices: ['10','20','30','40','50','60','70','80','90','100']
-                                    )
-                                }
-                            }
-                            steps {
-                                echo "${env.TYPE} $CANARY_WEIGHT"
-                                echo "pp执行灰度发布"
-                                sh '''
-                                    cd $WORKSPACE/k8s/
-                                    sh  build.sh --action=deploy --env=prod --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS  --type=canary --canary_weight=$CANARY_WEIGHT --harbor_registry=$HARBOR_REGISTRY 
-                                '''
-                            }
-                        }
-                    }
+                // stage('exec canary deploy') {
+                //     // when {
+                //     //     True
+                //     //     // expression { return params.TYPE=='ab' } 
+                //     // }
+                //     stages{
+                //         stage('input canary type') {
+                //             input {
+                //                 message "Should we continue?"
+                //                 ok "Yes, we should."
+                //                 parameters {
+                //                     choice(
+                //                         description: '正式环境初始灰度值',
+                //                         name: 'CANARY_WEIGHT',
+                //                         choices: ['10','20','30','40','50','60','70','80','90','100']
+                //                     )
+                //                 }
+                //             }
+                //             steps {
+                //                 echo "${env.TYPE} $CANARY_WEIGHT"
+                //                 echo "pp执行灰度发布"
+                //                 sh '''
+                //                     cd $WORKSPACE/k8s/
+                //                     sh  build.sh --action=deploy --env=prod --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS  --type=canary --canary_weight=$CANARY_WEIGHT --harbor_registry=$HARBOR_REGISTRY 
+                //                 '''
+                //             }
+                //         }
+                //     }
 
-                }
+                // }
                 stage('exec ab deploy') {
                     when {
                         expression { return env.TYPE == "ab" }
