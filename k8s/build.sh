@@ -48,10 +48,17 @@ done
 #----------参数处理
 echo "$action $env $project $service $tag $replicas $harbor_registry $type $canary_weight"
 # if [[ "$action"=="" || "$env"=="" || "$project"==""  || "$service"=="" || "$tag"=="" ]];then
-if [ "$#" -lt 5 ];then
+if [ "$#" -lt 3 ];then
     echo "缺少参数"
-    echo "Usage sh build.sh --action=build/deploy --env=dev/test/prod --project=ms --service=flask-k8s \
-            --tag=commit_id/v1.0 --replicas=1 --harbor_registry=myhub.mydocker.com --type=ab|canary|rollout --canary_weight=10"
+    echo "Usage sh build.sh --action=build/deploy/rollout \
+                            --env=dev/test/prod \
+                            --project=ms \
+                            --service=flask-k8s \
+                            --tag=commit_id/v1.0 \
+                            --replicas=1 \
+                            --harbor_registry=myhub.mydocker.com \
+                            --type=ab|canary \
+                            --canary_weight=10"
     exit 1
 fi
 if [ -z "$replicas" ];then
@@ -138,9 +145,9 @@ deploy_prod() {
             ab_canary_deploy
             $CLI get pod,svc,vs,dr,gateway -n $namespace
         ;;
-        rollout)
-            rollout
-        ;;
+        # rollout)
+        #     rollout
+        # ;;
         *)
             echo "没有$type这种发布模式" && exit 1
         ;;
@@ -157,7 +164,7 @@ ab_canary_deploy(){
 }
 rollout(){
     echo "你正在执行$env环境回滚操作"
-    dir="$workdir/k8s/$env/$tag/$type"
+    dir="$workdir/k8s/$env/$tag/rollout"
     [ ! -d "$dir"] && echo "没有$dir回滚目录，请检查" && exit 1
     cd $dir
     kustomize edit set namespace $namespace
@@ -171,5 +178,8 @@ case $action in
     ;;
     deploy)
         deploy_$env
+    ;;
+    rollout)
+        rollout
     ;;
 esac

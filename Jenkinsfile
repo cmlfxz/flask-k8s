@@ -113,6 +113,9 @@ pipeline {
             }
         }
         stage('build') {
+            when {
+                expression { return params.TYPE != "rollout" }
+            }
             steps {
                 echo  "$TAG, $ENV" 
                 sh '''
@@ -141,7 +144,11 @@ pipeline {
         // }
         stage('deploy dev'){
             when {
-                expression { return params.BRANCH == "develop" }
+                allOf {
+                    expression { return params.BRANCH == "develop" },
+                    expression { return params.TYPE != "rollout" }
+                }
+                
             }
             steps {
                  sh '''
@@ -152,7 +159,10 @@ pipeline {
         }
         stage('deploy prod'){
             when {
-                expression { return params.BRANCH == "master" }
+                allOf {
+                    expression { return params.BRANCH == "master" },
+                    expression { return params.TYPE != "rollout" }
+                }
             }
             steps {
                  //  sh -x   build.sh --action=deploy --env=prod  --project=ms --service=flask-k8s --tag=$tag --replicas=1 --type=$type --canary_weight=$canary_weight
@@ -160,6 +170,20 @@ pipeline {
                  sh '''
                     cd $WORKSPACE/k8s/
                     sh  build.sh --action=deploy --env=prod --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS  --type=$TYPE --canary_weight=$CANARY_WEIGHT --harbor_registry=$HARBOR_REGISTRY 
+                '''
+            }
+        }
+        stage('rollout'){
+            when {
+                allOf {
+                    expression { return params.BRANCH == "master" },
+                    expression { return params.TYPE == "rollout" }
+                }
+            }
+            steps {
+                 sh '''
+                    cd $WORKSPACE/k8s/
+                    sh  build.sh --action=rollout --env=prod --project=$PROJECT 
                 '''
             }
         }
