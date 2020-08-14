@@ -120,7 +120,7 @@ pipeline {
         }
         stage('build') {
             when {
-                expression { return params.ACTION != "rollout" }
+                expression { return params.ACTION == "deploy" }
             }
             steps {
                 echo  "$TAG, $ENV" 
@@ -151,9 +151,8 @@ pipeline {
         stage('deploy dev'){
             when {
                 allOf {
-                    expression { return params.BRANCH == "develop" },
-                    expression { return params.ACTION != "rollout" }
-
+                    BRANCH:"develop" ,
+                    ACTION:"deploy" 
                 }
                 
             }
@@ -167,8 +166,8 @@ pipeline {
         stage('deploy prod'){
             when {
                 allOf {
-                    expression { return params.BRANCH == "master" },
-                    expression { return params.ACTION != "rollout" }
+                    BRANCH:"master" ,
+                    ACTION:"deploy" 
                 }
             }
             steps {
@@ -183,8 +182,8 @@ pipeline {
         stage('rollout'){
             when {
                 allOf {
-                    expression { return params.BRANCH == "master" },
-                    expression { return params.ACTION == "rollout" }
+                    BRANCH:"master" ,
+                    ACTION:"rollout" 
                 }
             }
             steps {
