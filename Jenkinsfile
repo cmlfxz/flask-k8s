@@ -125,7 +125,8 @@ pipeline {
             steps {
                 echo  "$TAG, $ENV" 
                 sh '''
-                    if [[ "BRANCH" = "master" ]];then
+                    echo "$BRANCH"
+                    if [[ "$BRANCH" = "master" ]];then
                         ENV='prod'
                     else
                         TAG=$(git rev-parse --short HEAD)
