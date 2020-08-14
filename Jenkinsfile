@@ -171,6 +171,7 @@ pipeline {
         //     }
         // }
         stage('deploy dev'){
+            echo env.BRANCH
             when {
                 allOf {
                     // branch 'develop';
@@ -187,11 +188,18 @@ pipeline {
             }
         }
         stage('deploy prod'){
+            echo "params"
+            echo params.BRANCH
+            echo params.ACTION
+            echo "env"
+            echo env.BRANCH
+            echo env.ACTION
             when {
                 allOf {
                     // branch 'master';
-                    environment name: 'BRANCH', value: 'master';
-                    environment name: 'ACTION', value: 'deploy' 
+                    expression { return params.BRANCH == "master" };
+                    expression { return params.ACTION == "deploy" }
+                    // environment name: 'ACTION', value: 'deploy' 
                 }
             }
             input {
