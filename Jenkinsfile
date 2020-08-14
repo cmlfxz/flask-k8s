@@ -1,6 +1,12 @@
 pipeline {
     agent any
     parameters {
+        choice(
+            description: '发布还是回滚，生产才有回滚操作',
+            name: 'ACTION',
+            defaultValue: 'deploy',
+            choices: ['deploy','rollout']
+        )
         string(
             description: '项目',
             name: 'PROJECT',
@@ -9,7 +15,7 @@ pipeline {
         choice(
             description: '你需要选择哪个模块进行构建 ?',
             name: 'SERVICE',
-            choices: ['flask-k8s', 'flask-tutorial']
+            choices: ['flask-k8s']
         )
         string (
             name: 'URL',
@@ -39,7 +45,7 @@ pipeline {
         choice(
             description: '正式环境发布类型 ?',
             name: 'TYPE',
-            choices: ['canary', 'ab','rollout']
+            choices: ['canary', 'ab']
         )
         choice(
             description: '正式环境灰度值',
@@ -114,7 +120,7 @@ pipeline {
         }
         stage('build') {
             when {
-                expression { return params.TYPE != "rollout" }
+                expression { return params.ACTION != "rollout" }
             }
             steps {
                 echo  "$TAG, $ENV" 
@@ -146,7 +152,8 @@ pipeline {
             when {
                 allOf {
                     expression { return params.BRANCH == "develop" },
-                    expression { return params.TYPE != "rollout" }
+                    expression { return params.ACTION != "rollout" }
+
                 }
                 
             }
@@ -161,7 +168,7 @@ pipeline {
             when {
                 allOf {
                     expression { return params.BRANCH == "master" },
-                    expression { return params.TYPE != "rollout" }
+                    expression { return params.ACTION != "rollout" }
                 }
             }
             steps {
@@ -177,7 +184,7 @@ pipeline {
             when {
                 allOf {
                     expression { return params.BRANCH == "master" },
-                    expression { return params.TYPE == "rollout" }
+                    expression { return params.ACTION == "rollout" }
                 }
             }
             steps {
