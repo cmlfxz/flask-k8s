@@ -229,25 +229,29 @@ pipeline {
                     when {
                         expression { return env.TYPE == "ab" }
                     }
-                    input {
-                        message "Should we continue?"
-                        ok "Yes, we should."
-                        parameters {
-                            choice(
-                                description: '正式环境初始灰度值',
-                                name: 'CANARY_WEIGHT',
-                                choices: ['10','20','30','40','50','60','70','80','90','100']
-                            )
+                    stages{
+                        stage('input canary type') {
+                            input {
+                                message "Should we continue?"
+                                ok "Yes, we should."
+                                parameters {
+                                    choice(
+                                        description: '正式环境初始灰度值',
+                                        name: 'CANARY_WEIGHT',
+                                        choices: ['10','20','30','40','50','60','70','80','90','100']
+                                    )
+                                }
+                            }
+                            steps {
+                                echo "$TYPE $CANARY_WEIGHT"
+                                sh '''
+                                    cd $WORKSPACE/k8s/
+                                    sh  build.sh --action=deploy --env=prod --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS  --type=canary --canary_weight=$CANARY_WEIGHT --harbor_registry=$HARBOR_REGISTRY 
+                                '''
+                            }
                         }
                     }
-                    steps {
-                        //  sh -x   build.sh --action=deploy --env=prod  --project=ms --service=flask-k8s --tag=$tag --replicas=1 --type=$type --canary_weight=$canary_weight
-                        echo "$TYPE $CANARY_WEIGHT"
-                        sh '''
-                            cd $WORKSPACE/k8s/
-                            sh  build.sh --action=deploy --env=prod --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS  --type=canary --canary_weight=$CANARY_WEIGHT --harbor_registry=$HARBOR_REGISTRY 
-                        '''
-                    }
+
                 }
                 stage('exec ab deploy') {
                     when {
