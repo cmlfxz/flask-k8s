@@ -114,11 +114,13 @@ pipeline {
             }
         }
         stage('build') {
-            echo  "$TAG" "$ENV"
-            sh '''
-                cd $WORKSPACE/k8s/
-                sh build.sh --action=build --env=$ENV --project=$PROJECT --service=$SERVICE --tag=$TAG --harbor_registry=$HARBOR_REGISTRY
-            '''
+            steps {
+                echo  "$TAG" "$ENV"
+                sh '''
+                    cd $WORKSPACE/k8s/
+                    sh build.sh --action=build --env=$ENV --project=$PROJECT --service=$SERVICE --tag=$TAG --harbor_registry=$HARBOR_REGISTRY
+                '''
+            }
         }
         stage('deploy dev'){
             when {
