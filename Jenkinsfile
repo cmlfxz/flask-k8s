@@ -151,8 +151,8 @@ pipeline {
         stage('deploy dev'){
             when {
                 allOf {
-                    BRANCH "develop";
-                    ACTION "deploy" 
+                    BRANCH 'develop';
+                    ACTION 'deploy' 
                 }
                 
             }
@@ -166,8 +166,8 @@ pipeline {
         stage('deploy prod'){
             when {
                 allOf {
-                    BRANCH "master";
-                    ACTION "deploy" 
+                    BRANCH 'master';
+                    ACTION 'deploy' 
                 }
             }
             steps {
@@ -182,8 +182,8 @@ pipeline {
         stage('rollout'){
             when {
                 allOf {
-                    BRANCH "master" ;
-                    ACTION "rollout" 
+                    BRANCH 'master' ;
+                    ACTION 'rollout'
                 }
             }
             steps {
