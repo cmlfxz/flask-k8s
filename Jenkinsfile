@@ -11,6 +11,11 @@ pipeline {
             name: 'SERVICE',
             choices: ['flask-k8s', 'flask-tutorial']
         )
+        string (
+            name: 'URL',
+            defaultValue: 'https://gitee.com/cmlfxz/flask-k8s.git',
+            description: 'git url'
+        )
         gitParameter (
             name: 'BRANCH', 
             branchFilter: 'origin/(.*)', 
@@ -23,11 +28,6 @@ pipeline {
             defaultValue: '0.1',
             name: 'TAG', 
             description:"git tag choice"
-        )
-        string (
-            name: 'URL',
-            defaultValue: 'https://gitee.com/cmlfxz/flask-k8s.git',
-            description: 'git url'
         )
 
         string(
@@ -42,7 +42,7 @@ pipeline {
             choices: ['canary', 'ab','rollout']
         )
         choice(
-            description: '灰度值 ?',
+            description: '正式环境灰度值',
             name: 'CANARY_WEIGHT',
             choices: ['10','20','30','40','50','60','70','80','90','100']
         )
@@ -73,7 +73,7 @@ pipeline {
                     extensions: [],
                     submoduleCfg: [], 
                     userRemoteConfigs: [[
-                        credentialsId: '	7c6a16ea-308d-47aa-9d95-6487cc215c03',
+                        credentialsId: '7c6a16ea-308d-47aa-9d95-6487cc215c03',
                         url: "${params.URL}" ]]
                 ])
             }
