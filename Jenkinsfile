@@ -46,11 +46,11 @@ pipeline {
         //     name: 'TYPE',
         //     choices: ['canary', 'ab']
         // )
-        // choice(
-        //     description: '正式环境灰度值',
-        //     name: 'CANARY_WEIGHT',
-        //     choices: ['10','20','30','40','50','60','70','80','90','100']
-        // )
+        choice(
+            description: '正式环境灰度值',
+            name: 'CANARY_WEIGHT',
+            choices: ['10','20','30','40','50','60','70','80','90','100']
+        )
     }
     // environment {
     //     ENV = 'dev'
@@ -226,24 +226,18 @@ pipeline {
                             script {
                                 if(params.TYPE=='ab') {
                                     echo "1"
-                                    // env.TYPE='ab'
+                                    sh '''
+                                        cd $WORKSPACE/k8s/
+                                        sh  build.sh --action=deploy --env=prod --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS  --type=ab  --harbor_registry=$HARBOR_REGISTRY 
+                                    '''
                                 }else{
                                     echo  "2"
+                                    sh '''
+                                        cd $WORKSPACE/k8s/
+                                        sh  build.sh --action=deploy --env=prod --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS  --type=canary --canary_weight=$CANARY_WEIGHT --harbor_registry=$HARBOR_REGISTRY 
+                                    '''
                                     // env.TYPE='canary'
-                                    input {
-                                        message "Should we continue?"
-                                        ok "Yes, we should."
-                                        parameters {
-                                            choice(
-                                                description: '正式环境初始灰度值',
-                                                name: 'CANARY_WEIGHT',
-                                                choices: ['10','20','30','40','50','60','70','80','90','100']
-                                            )
-                                        }
-                                    }
-                                    steps {
-                                        echo "$CANARY_WEIGHT"
-                                    }
+ 
                                 }
                             }
                         }
