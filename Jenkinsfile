@@ -73,10 +73,9 @@ pipeline {
                     extensions: [],
                     submoduleCfg: [], 
                     userRemoteConfigs: [[
-                        credentialsId: 'c581119d-6196-4e6a-bd86-482e0c7d94a7',
+                        credentialsId: '	7c6a16ea-308d-47aa-9d95-6487cc215c03',
                         url: "${params.URL}" ]]
                 ])
-
             }
         }
         stage('get tag') {
