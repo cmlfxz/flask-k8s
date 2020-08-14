@@ -29,27 +29,23 @@ pipeline {
             defaultValue: "1"
         )
     }
-    // environment {
-    //     ENV = 'dev'
-    //     PROJECT = 'ms'
-    //     SERVICE = 'flask-k8s'
-    //     HARBOR_REGISTRY = 'myhub.mydocker.com'
-    //     ACTION = params.ACTION
-    //     用这个作为dev的tag 最新的commit id
-    //     TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
-    // }
+    environment {
+        TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
+        ENV='dev'
+        HARBOR_REGISTRY = 'myhub.mydocker.com'
+    }
     // 必须包含此步骤
     stages {
-        stage('set TAG & ENV & harbor_registry'){
-            steps {
-                script {
-                        env.TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
-                        env.ENV='dev'
-                        env.HARBOR_REGISTRY = 'myhub.mydocker.com'
-                }
+        // stage('set TAG & ENV & harbor_registry'){
+        //     steps {
+        //         script {
+        //                 env.TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
+        //                 env.ENV='dev'
+        //                 env.HARBOR_REGISTRY = 'myhub.mydocker.com'
+        //         }
 
-            }
-        }
+        //     }
+        // }
         stage('display var') {
             steps {
                 echo "Runing ${env.BUILD_ID}"
@@ -89,7 +85,7 @@ pipeline {
             steps {
                  sh '''
                     cd $WORKSPACE/k8s/
-                    sh  build.sh --action=deploy --env=dev --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS --harbor_registry=$HARBOR_REGISTRY 
+                    sh  build.sh --action=deploy --env=$ENV --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS --harbor_registry=$HARBOR_REGISTRY 
                 '''
             }
         }
