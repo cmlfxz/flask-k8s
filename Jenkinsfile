@@ -188,12 +188,7 @@ pipeline {
             }
         }
         stage('deploy prod'){
-            echo "params"
-            echo params.BRANCH
-            echo params.ACTION
-            echo "env"
-            echo env.BRANCH
-            echo env.ACTION
+
             when {
                 allOf {
                     // branch 'master';
@@ -201,6 +196,14 @@ pipeline {
                     expression { return params.ACTION == "deploy" }
                     // environment name: 'ACTION', value: 'deploy' 
                 }
+            }
+            steps {
+                echo "params"
+                echo params.BRANCH
+                echo params.ACTION
+                echo "env"
+                echo env.BRANCH
+                echo env.ACTION
             }
             input {
                 message "Should we continue?"
