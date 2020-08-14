@@ -197,9 +197,10 @@ pipeline {
             when {
                 allOf {
                     // branch 'master';
-                    expression { return params.BRANCH == "master" };
-                    expression { return params.ACTION == "deploy" }
-                    // environment name: 'ACTION', value: 'deploy' 
+                    // expression { return params.BRANCH == "master" };
+                    // expression { return params.ACTION == "deploy" }
+                    environment name: 'BRANCH', value: 'xxx';
+                    // environment name: 'ACTION', value: 'de312312312ploy' 
                 }
             }
             input {
