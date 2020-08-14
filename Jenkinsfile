@@ -208,17 +208,15 @@ pipeline {
 
             stages {
                 stage('input deploy type') {
-                    timeout(1){
-                        input {
-                            message "Should we continue?"
-                            ok "Yes, we should."
-                            parameters {
-                                choice(
-                                    description: '正式环境发布类型 ?',
-                                    name: 'TYPE',
-                                    choices: ['canary', 'ab']
-                                )
-                            }
+                    input {
+                        message "Should we continue?"
+                        ok "Yes, we should."
+                        parameters {
+                            choice(
+                                description: '正式环境发布类型 ?',
+                                name: 'TYPE',
+                                choices: ['canary', 'ab']
+                            )
                         }
                     }
 
@@ -229,7 +227,7 @@ pipeline {
                 }
                 stage('get canary_weight & exec canary deploy') {
                     when {
-                        expression { return env.TYPE == "canary" }
+                        expression { return env.TYPE == "ab" }
                     }
                     input {
                         message "Should we continue?"
