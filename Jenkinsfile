@@ -86,6 +86,13 @@ pipeline {
                 echo "Runing ${env.BUILD_ID}"
                 echo "BRANCH ${params.BRANCH}"
                 echo "tag: $TAG  replicas: ${params.REPLICAS} "
+
+                echo "params"
+                echo "${params.BRANCH}"
+                echo "${params.ACTION}"
+                echo "env"
+                echo "${env.BRANCH}"
+                echo "${env.ACTION}"
             }
         }
         stage('checkout') {
@@ -194,14 +201,6 @@ pipeline {
                     expression { return params.ACTION == "deploy" }
                     // environment name: 'ACTION', value: 'deploy' 
                 }
-            }
-            steps {
-                echo "params"
-                echo params.BRANCH
-                echo params.ACTION
-                echo "env"
-                echo env.BRANCH
-                echo env.ACTION
             }
             input {
                 message "Should we continue?"
