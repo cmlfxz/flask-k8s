@@ -206,56 +206,57 @@ pipeline {
             steps {
                 echo  "${env.BRANCH}"
             }
-            // input {
-            //     message "Should we continue?"
-            //     ok "Yes, we should."
-            //     parameters {
-            //         choice(
-            //             description: '正式环境发布类型 ?',
-            //             name: 'TYPE',
-            //             choices: ['canary', 'ab']
-            //         )
-            //     }
-            // }
-            // stages {
-            //     stage('get canary_weight & exec canary deploy') {
-            //         when {
-            //             expression { return env.TYPE == "canary" }
-            //         }
-            //         input {
-            //             message "Should we continue?"
-            //             ok "Yes, we should."
-            //             parameters {
-            //                 choice(
-            //                     description: '正式环境初始灰度值',
-            //                     name: 'CANARY_WEIGHT',
-            //                     choices: ['10','20','30','40','50','60','70','80','90','100']
-            //                 )
-            //             }
-            //         }
-            //         steps {
-            //             //  sh -x   build.sh --action=deploy --env=prod  --project=ms --service=flask-k8s --tag=$tag --replicas=1 --type=$type --canary_weight=$canary_weight
-            //             echo "$TYPE $CANARY_WEIGHT"
-            //             sh '''
-            //                 cd $WORKSPACE/k8s/
-            //                 sh  build.sh --action=deploy --env=prod --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS  --type=canary --canary_weight=$CANARY_WEIGHT --harbor_registry=$HARBOR_REGISTRY 
-            //             '''
-            //         }
-            //     }
-            //     stage('exec ab deploy') {
-            //         when {
-            //             expression { return env.TYPE == "ab" }
-            //         }
-            //         steps {
-            //             sh '''
-            //                 cd $WORKSPACE/k8s/
-            //                 sh  build.sh --action=deploy --env=prod --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS  --type=ab  --harbor_registry=$HARBOR_REGISTRY 
-            //             '''
-            //         }
 
-            //     }
+            stages {
+                input {
+                    message "Should we continue?"
+                    ok "Yes, we should."
+                    parameters {
+                        choice(
+                            description: '正式环境发布类型 ?',
+                            name: 'TYPE',
+                            choices: ['canary', 'ab']
+                        )
+                    }
+                }
+                stage('get canary_weight & exec canary deploy') {
+                    when {
+                        expression { return env.TYPE == "canary" }
+                    }
+                    input {
+                        message "Should we continue?"
+                        ok "Yes, we should."
+                        parameters {
+                            choice(
+                                description: '正式环境初始灰度值',
+                                name: 'CANARY_WEIGHT',
+                                choices: ['10','20','30','40','50','60','70','80','90','100']
+                            )
+                        }
+                    }
+                    steps {
+                        //  sh -x   build.sh --action=deploy --env=prod  --project=ms --service=flask-k8s --tag=$tag --replicas=1 --type=$type --canary_weight=$canary_weight
+                        echo "$TYPE $CANARY_WEIGHT"
+                        sh '''
+                            cd $WORKSPACE/k8s/
+                            sh  build.sh --action=deploy --env=prod --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS  --type=canary --canary_weight=$CANARY_WEIGHT --harbor_registry=$HARBOR_REGISTRY 
+                        '''
+                    }
+                }
+                stage('exec ab deploy') {
+                    when {
+                        expression { return env.TYPE == "ab" }
+                    }
+                    steps {
+                        sh '''
+                            cd $WORKSPACE/k8s/
+                            sh  build.sh --action=deploy --env=prod --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS  --type=ab  --harbor_registry=$HARBOR_REGISTRY 
+                        '''
+                    }
+
+                }
                 
-            // }
+            }
 
         }
         stage('rollout'){
