@@ -203,9 +203,9 @@ pipeline {
                     // environment name: 'ACTION', value: 'de312312312ploy' 
                 }
             }
-            steps {
-                echo  "${env.BRANCH}"
-            }
+            // steps {
+            //     echo  "${env.BRANCH}"
+            // }
 
             stages {
                 input {
