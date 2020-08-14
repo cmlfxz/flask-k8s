@@ -208,15 +208,18 @@ pipeline {
             // }
 
             stages {
-                input {
-                    message "Should we continue?"
-                    ok "Yes, we should."
-                    parameters {
-                        choice(
-                            description: '正式环境发布类型 ?',
-                            name: 'TYPE',
-                            choices: ['canary', 'ab']
-                        )
+
+                stage('input deploy type') {
+                    input {
+                        message "Should we continue?"
+                        ok "Yes, we should."
+                        parameters {
+                            choice(
+                                description: '正式环境发布类型 ?',
+                                name: 'TYPE',
+                                choices: ['canary', 'ab']
+                            )
+                        }
                     }
                 }
                 stage('get canary_weight & exec canary deploy') {
