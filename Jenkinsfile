@@ -108,10 +108,6 @@ pipeline {
                             env.TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
                             env.ENV='dev'
                     }
-                    // sh '''
-                    //     cd $WORKSPACE/k8s/
-                    //     sh build.sh --action=build --env=$ENV --project=$PROJECT --service=$SERVICE --tag=$TAG --harbor_registry=$HARBOR_REGISTRY
-                    // '''
                 }
 
             }
@@ -160,6 +156,7 @@ pipeline {
             }
             steps {
                  //  sh -x   build.sh --action=deploy --env=prod  --project=ms --service=flask-k8s --tag=$tag --replicas=1 --type=$type --canary_weight=$canary_weight
+                 echo "$TYPE $CANARY_WEIGHT"
                  sh '''
                     cd $WORKSPACE/k8s/
                     sh  build.sh --action=deploy --env=prod --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS  --type=$TYPE --canary_weight=$CANARY_WEIGHT --harbor_registry=$HARBOR_REGISTRY 
