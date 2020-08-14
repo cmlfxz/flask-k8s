@@ -85,7 +85,7 @@ pipeline {
             steps {
                 echo "Runing ${env.BUILD_ID}"
                 echo "BRANCH ${params.BRANCH}"
-                echo "tag: $TAG  replicas: ${params.REPLICAS} type: $TYPE, canary_weight: $CANARY_WEIGHT"
+                echo "tag: $TAG  replicas: ${params.REPLICAS} "
             }
         }
         stage('checkout') {
