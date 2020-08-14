@@ -1,0 +1,4 @@
+namespace: ms-prod
+resources:
+- flask-k8s-vs.yaml
+

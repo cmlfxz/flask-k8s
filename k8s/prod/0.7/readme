@@ -1,0 +1,15 @@
+1、deployment: 改version 0.1
+
+
+2、dr增加：
+  - name: canary
+    labels:
+      version: "0.2"
+
+3、 vs增加：
+     - destination:
+        host: lask-k8s
+        subset: canary
+      weight: 0
+
+4、ab这里不需要，这个vs是给内部调用的，看不到效果，我是外部进来时需要根据用户展示的页面不一样

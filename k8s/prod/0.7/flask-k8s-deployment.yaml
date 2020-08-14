@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-k8s-0.7
+  namespace: ms-prod
+  labels:
+    app: flask-k8s
+    version: "0.7"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-k8s
+      version: "0.7"
+  template:
+    metadata:
+      labels:
+        app: flask-k8s
+        version: "0.7"
+    spec:
+      serviceAccountName: flask-k8s-sa
+      tolerations:
+        - key: "server"
+          operator: "Equal"
+          value: "elk"
+          effect: "NoSchedule"  
+      # affinity:
+      #   podAntiAffinity:
+      #     requiredDuringSchedulingIgnoredDuringExecution:
+      #     - labelSelector:
+      #         matchExpressions:
+      #         - key: app
+      #           operator: In
+      #           values:
+      #           - flask-k8s
+      #       topologyKey: "kubernetes.io/hostname"
+
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - flask-k8s
+              topologyKey: "kubernetes.io/hostname"
+            weight: 100
+      imagePullSecrets: 
+      - name: harborsecret 
+      containers:
+      - name: flask-k8s
+        image: myhub.mydocker.com/ms-prod/flask-k8s:0.7
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8082
+        volumeMounts:
+        - name: log
+          mountPath: /opt/microservices/logs
+        - name: file-config
+          mountPath: /opt/microservices/instance
+      volumes:
+      - name: log
+        emptyDir: {}
+      - name: file-config
+        configMap:
+          name: flask-k8s-configmap

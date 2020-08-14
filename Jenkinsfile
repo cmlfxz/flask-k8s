@@ -28,12 +28,12 @@ pipeline {
             type: 'PT_BRANCH',
             description:"git branch choice"
         )
-        gitParameter (
-            type: 'PT_TAG',
-            defaultValue: '0.1',
-            name: 'TAG', 
-            description:"git tag choice"
-        )
+        // gitParameter (
+        //     type: 'PT_TAG',
+        //     defaultValue: '0.1',
+        //     name: 'TAG', 
+        //     description:"git tag choice"
+        // )
 
         string(
             description: '副本数',
@@ -94,7 +94,8 @@ pipeline {
             steps {
                 script {
                     if(params.BRANCH=='master'){
-                        TAG= params.TAG
+                        // TAG= params.TAG
+                        TAG = sh(returnStdout: true,script: 'git describe --tags `git rev-list --tags --max-count=1`')
                         ENV='prod'
                     }else {
                         TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
@@ -135,7 +136,6 @@ pipeline {
                     sh build.sh --action=build --env=$ENV --project=$PROJECT --service=$SERVICE --tag=$TAG --harbor_registry=$HARBOR_REGISTRY
                 '''
             }
-
         }
         // stage('build') {
         //     steps {
