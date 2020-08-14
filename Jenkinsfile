@@ -222,6 +222,15 @@ pipeline {
 
                     steps {
                         echo  "$TYPE ${env.TYPE}"
+                        script {
+                            if(params.TYPE=='ab') {
+                                echo "1"
+                                env.TYPE='ab'
+                            }else{
+                                echo  "2"
+                                env.TYPE='canary'
+                            }
+                        }
                     }
 
                 }
