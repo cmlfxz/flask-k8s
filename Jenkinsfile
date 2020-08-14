@@ -208,7 +208,7 @@ pipeline {
 
             stages {
                 stage('input deploy type') {
-                    time(1){
+                    timeout(1){
                         input {
                             message "Should we continue?"
                             ok "Yes, we should."
