@@ -52,15 +52,15 @@ pipeline {
         //     choices: ['10','20','30','40','50','60','70','80','90','100']
         // )
     }
-    environment {
-        // ENV = 'dev'
-        // PROJECT = 'ms'
-        // SERVICE = 'flask-k8s'
-        // HARBOR_REGISTRY = 'myhub.mydocker.com'
-        // ACTION = params.ACTION
-        // 用这个作为dev的tag 最新的commit id
-        // TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
-    }
+    // environment {
+    //     ENV = 'dev'
+    //     PROJECT = 'ms'
+    //     SERVICE = 'flask-k8s'
+    //     HARBOR_REGISTRY = 'myhub.mydocker.com'
+    //     ACTION = params.ACTION
+    //     用这个作为dev的tag 最新的commit id
+    //     TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
+    // }
     // 必须包含此步骤
     stages {
 
