@@ -227,7 +227,7 @@ pipeline {
                 }
                 stage('input canary_weight & exec canary deploy') {
                     when {
-                        environment name: 'TYPE', value: 'ab' 
+                        expression { return params.TYPE=='ab' } 
                     }
                     stages{
                         stage('input canary type') {
