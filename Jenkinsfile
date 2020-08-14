@@ -58,6 +58,7 @@ pipeline {
         // PROJECT = 'ms'
         // SERVICE = 'flask-k8s'
         HARBOR_REGISTRY = 'myhub.mydocker.com'
+        ACTION = params.ACTION
         // 用这个作为dev的tag 最新的commit id
         // TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
     }
@@ -152,7 +153,7 @@ pipeline {
             when {
                 allOf {
                     branch 'develop';
-                    ACTION 'deploy' 
+                    environment name: 'ACTION', value: 'deploy' 
                 }
                 
             }
@@ -167,7 +168,7 @@ pipeline {
             when {
                 allOf {
                     branch 'master';
-                    ACTION 'deploy' 
+                    environment name: 'ACTION', value: 'deploy' 
                 }
             }
             steps {
@@ -183,7 +184,7 @@ pipeline {
             when {
                 allOf {
                     branch 'master' ;
-                    ACTION 'rollout'
+                    environment name: 'ACTION', value: 'rollout' 
                 }
             }
             steps {
