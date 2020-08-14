@@ -123,7 +123,7 @@ pipeline {
         // }
         stage('build') {
             steps {
-                echo  "$TAG, $ENV" "$ENV"
+                echo  "$TAG, $ENV" 
                 sh '''
                     if [[ "BRANCH" = "master" ]];then
                         ENV='prod'
