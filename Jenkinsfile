@@ -115,7 +115,7 @@ pipeline {
         }
         stage('build') {
             steps {
-                echo  "$TAG" "$ENV"
+                echo  "$TAG, $ENV"
                 sh '''
                     cd $WORKSPACE/k8s/
                     sh build.sh --action=build --env=$ENV --project=$PROJECT --service=$SERVICE --tag=$TAG --harbor_registry=$HARBOR_REGISTRY
