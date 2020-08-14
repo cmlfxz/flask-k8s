@@ -102,26 +102,34 @@ pipeline {
             steps {
                 script {
                     if(params.BRANCH=='master'){
-                        TAG= params.TAG
-                        ENV='prod'
+                        environment {
+                            TAG= params.TAG
+                            ENV='prod'
+                        }
 
                     }else {
-                        TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
-                        ENV='dev'
+                        environment {
+                            TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
+                            ENV='dev'
+                        }
                     }
+                    sh '''
+                        cd $WORKSPACE/k8s/
+                        sh build.sh --action=build --env=$ENV --project=$PROJECT --service=$SERVICE --tag=$TAG --harbor_registry=$HARBOR_REGISTRY
+                    '''
                 }
 
             }
         }
-        stage('build') {
-            steps {
-                echo  "$TAG, $ENV"
-                sh '''
-                    cd $WORKSPACE/k8s/
-                    sh build.sh --action=build --env=$ENV --project=$PROJECT --service=$SERVICE --tag=$TAG --harbor_registry=$HARBOR_REGISTRY
-                '''
-            }
-        }
+        // stage('build') {
+        //     steps {
+        //         echo  "$TAG, $ENV" "$ENV"
+        //         sh '''
+        //             cd $WORKSPACE/k8s/
+        //             sh build.sh --action=build --env=$ENV --project=$PROJECT --service=$SERVICE --tag=$TAG --harbor_registry=$HARBOR_REGISTRY
+        //         '''
+        //     }
+        // }
         stage('deploy dev'){
             when {
                 expression { return params.BRANCH == "develop" }
