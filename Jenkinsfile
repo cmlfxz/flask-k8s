@@ -235,10 +235,10 @@ pipeline {
 
                 }
                 stage('exec canary deploy') {
-                    when {
-                        False
-                        // expression { return params.TYPE=='ab' } 
-                    }
+                    // when {
+                    //     True
+                    //     // expression { return params.TYPE=='ab' } 
+                    // }
                     stages{
                         stage('input canary type') {
                             input {
