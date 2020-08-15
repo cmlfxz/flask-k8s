@@ -97,7 +97,10 @@ pipeline {
         success {
                 //当此Pipeline成功时打印消息
                 echo 'success'
-                env.TIME = ${currentBuild.duration}/1000
+                steps {
+                    env.TIME = ${currentBuild.duration}/1000
+                }
+                
                 dingTalk (
                     robot: '4def1f0b-4f7c-4793-b1d0-6f5394afa257',
                     type: 'ACTION_CARD',
