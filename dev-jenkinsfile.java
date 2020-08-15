@@ -120,7 +120,7 @@ pipeline {
                 robot: '4def1f0b-4f7c-4793-b1d0-6f5394afa257',
                 type: 'LINK',
                 messageUrl:'https://oapi.dingtalk.com/robot/send?access_token=bba613c1e866e921d3075c21c8eda6aac020d6a7f679974645ddd05cb33a59e8', 
-                title:'${SERVICE}更新成功', 
+                title:'$PROJECT >> ${ENV} >> ${SERVICE} 更新成功\n任务: #${BUILD_ID}\nCheck console output at "<a href="${env.BUILD_URL}">${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>"', 
                 text:["xxx"],
                 picUrl:'http://kmzsccfile.kmzscc.com/upload/2020/success.jpg',
                 // jenkinsUrl:'http://http://192.168.11.142:8080/jenkins/', 
