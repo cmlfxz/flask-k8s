@@ -81,7 +81,7 @@ pipeline {
             }
             steps {
                 echo  "$TAG, $ENV" 
-                withCredentials([usernamePassword(credentialsId: "DOCKER_HUB_ID", passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
+                withCredentials([usernamePassword(credentialsId: "$DOCKER_HUB_ID", passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
                     sh '''
                         docker login -u ${dockerHubUser} -p ${dockerHubPassword} $HARBOR_REGISTRY
                         cd $WORKSPACE/k8s/
@@ -100,8 +100,8 @@ pipeline {
             }
             steps {
                 echo "$TYPE $CANARY_WEIGHT"
-                withCredentials([usernamePassword(credentialsId: "DOCKER_HUB_ID", passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
-                    configFileProvider([configFile(fileId: 'dev-k8s-config', targetLocation: '/root/.kube/config')]) {
+                withCredentials([usernamePassword(credentialsId: "$DOCKER_HUB_ID", passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
+                    configFileProvider([configFile(fileId: 'prod-k8s-config', targetLocation: '/root/.kube/config')]) {
                         sh '''
                             namespace="$PROJECT-$ENV"
                             $CLI create secret docker-registry harborsecret --docker-server=$HARBOR_REGISTRY --docker-username=$dockerHubUser \
