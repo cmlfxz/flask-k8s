@@ -21,19 +21,6 @@ pipeline {
             defaultValue: 'https://gitee.com/cmlfxz/flask-k8s.git',
             description: 'git url'
         )
-        // gitParameter (
-        //     name: 'BRANCH', 
-        //     branchFilter: 'origin/(.*)', 
-        //     defaultValue: 'develop', 
-        //     type: 'PT_BRANCH',
-        //     description:"git branch choice"
-        // )
-        // gitParameter (
-        //     type: 'PT_TAG',
-        //     defaultValue: '0.1',
-        //     name: 'TAG', 
-        //     description:"git tag choice"
-        // )
 
         string(
             description: '副本数',
@@ -55,29 +42,12 @@ pipeline {
     environment {
         TAG= sh(returnStdout: true,script: 'git describe --tags `git rev-list --tags --max-count=1`')
         ENV='prod'
-        // 正式应该是阿里云
+        // 正式对应修改
         HARBOR_REGISTRY = 'myhub.mydocker.com'
+        CLI="/usr/bin/kubectl --kubeconfig /root/.kube/config"
     }
     // 必须包含此步骤
     stages {
-
-        // stage('set TAG & ENV & harbor_registry'){
-        //     steps {
-        //         script {
-        //             if(params.BRANCH=='master'){
-        //                     env.TAG= sh(returnStdout: true,script: 'git describe --tags `git rev-list --tags --max-count=1`')
-        //                     env.ENV='prod'
-        //                     // 正式应该是阿里云
-        //                     env.HARBOR_REGISTRY = 'myhub.mydocker.com'
-        //             }else {
-        //                     env.TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
-        //                     env.ENV='dev'
-        //                     env.HARBOR_REGISTRY = 'myhub.mydocker.com'
-        //             }
-        //         }
-
-        //     }
-        // }
         stage('display var') {
             steps {
                 echo "Runing ${env.BUILD_ID}"
@@ -86,9 +56,6 @@ pipeline {
             }
         }
         stage('checkout') {
-            // when {
-            //     expression { return params.ACTION == "deploy" }
-            // }
             steps {
                 script {
                     revision = env.TAG
@@ -112,10 +79,13 @@ pipeline {
             }
             steps {
                 echo  "$TAG, $ENV" 
-                sh '''
-                    cd $WORKSPACE/k8s/
-                    sh build.sh --action=build --env=$ENV --project=$PROJECT --service=$SERVICE --tag=$TAG --harbor_registry=$HARBOR_REGISTRY
-                '''
+                withCredentials([usernamePassword(credentialsId: 'dev-dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
+                    sh '''
+                        cd $WORKSPACE/k8s/
+                        sh build.sh --action=build --env=$ENV --project=$PROJECT --service=$SERVICE --tag=$TAG --harbor_registry=$HARBOR_REGISTRY
+                    '''
+                }
+
             }
         }
 
@@ -126,12 +96,17 @@ pipeline {
                 }
             }
             steps {
-                 //  sh -x   build.sh --action=deploy --env=prod  --project=ms --service=flask-k8s --tag=$tag --replicas=1 --type=$type --canary_weight=$canary_weight
                  echo "$TYPE $CANARY_WEIGHT"
-                 sh '''
-                    cd $WORKSPACE/k8s/
-                    sh  build.sh --action=deploy --env=prod --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS  --type=$TYPE --canary_weight=$CANARY_WEIGHT --harbor_registry=$HARBOR_REGISTRY 
-                '''
+                withCredentials([usernamePassword(credentialsId: 'dev-dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
+                    sh '''
+                        namespace="$PROJECT-$ENV"
+                        $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user \
+                            --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace 
+                        cd $WORKSPACE/k8s/
+                        sh  build.sh --action=deploy --env=prod --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS  --type=$TYPE --canary_weight=$CANARY_WEIGHT --harbor_registry=$HARBOR_REGISTRY 
+                    '''
+                }
+
             }
         }
         stage('rollout'){

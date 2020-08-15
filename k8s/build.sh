@@ -45,9 +45,9 @@ do
         ;;
     esac
 done
-#----------参数处理
+
 echo "$action $env $project $service $tag $replicas $harbor_registry $type $canary_weight"
-# if [[ "$action"=="" || "$env"=="" || "$project"==""  || "$service"=="" || "$tag"=="" ]];then
+
 if [ "$#" -lt 3 ];then
     echo "缺少参数"
     echo "Usage sh build.sh --action=build/deploy/rollout \
@@ -71,11 +71,12 @@ fi
 namespace=$project-$env
 workdir=$(dirname $PWD)
 
-#正式测试保持同一套密码
-# harbor_user="cmlfxz"
-# harbor_pass="DUgu16829987"
-# harbor_email="915613275@qq.com"
 CLI="/usr/bin/kubectl --kubeconfig /root/.kube/config"
+
+#正式测试保持同一套密码
+# harbor_user="xxx"
+# harbor_pass="xxx"
+# harbor_email="xxx"
 
 
 build() {
@@ -110,7 +111,7 @@ deploy_dev() {
 }
 mod_yaml() {
     prod_weight=$(( 100 -$canary_weight))
-     echo "canary_weight: $canary_weight prod_weight:$prod_weight"
+    echo "canary_weight: $canary_weight prod_weight:$prod_weight"
     if [ -f "$service-vs.yaml" ];then
         sed -i  "s/\$canary_weight/$canary_weight/g"  $service-vs.yaml
         sed -i  "s/\$prod_weight/$prod_weight/g"  $service-vs.yaml
@@ -122,7 +123,7 @@ mod_yaml() {
         sed -i  "s/\$canary_weight/$canary_weight/g"  $namespace-gateway.yaml
         sed -i  "s/\$prod_weight/$prod_weight/g"  $namespace-gateway.yaml
     else
-        echo "灰度文件$namespace-gateway.yaml 不存在,请检查"
+        echo "灰度文件$namespace-gateway.yaml 不存在"
         # exit 1
     fi  
 }
