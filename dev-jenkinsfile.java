@@ -112,7 +112,7 @@ pipeline {
                         "- 执行人：Administrator",
                     
                     ],
-                    picUrl:'http://kmzsccfile.kmzscc.com/upload/2020/success.jpg',
+                    // picUrl:'http://kmzsccfile.kmzscc.com/upload/2020/success.jpg',
                     btns: [
                             [
                                 title: '更改记录',
