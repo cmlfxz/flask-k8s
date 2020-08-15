@@ -79,8 +79,9 @@ pipeline {
             }
             steps {
                 echo  "$TAG, $ENV" 
-                withCredentials([usernamePassword(credentialsId: 'dev-dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
+                withCredentials([usernamePassword(credentialsId: 'prod-dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
                     sh '''
+                        docker login -u ${dockerHubUser} -p ${dockerHubPassword} $HARBOR_REGISTRY
                         cd $WORKSPACE/k8s/
                         sh build.sh --action=build --env=$ENV --project=$PROJECT --service=$SERVICE --tag=$TAG --harbor_registry=$HARBOR_REGISTRY
                     '''
@@ -97,7 +98,7 @@ pipeline {
             }
             steps {
                  echo "$TYPE $CANARY_WEIGHT"
-                withCredentials([usernamePassword(credentialsId: 'dev-dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
+                withCredentials([usernamePassword(credentialsId: 'prod-dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
                     sh '''
                         namespace="$PROJECT-$ENV"
                         $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user \
