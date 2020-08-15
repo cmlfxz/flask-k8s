@@ -100,7 +100,9 @@ pipeline {
                 dingTalk (
                     robot: '4def1f0b-4f7c-4793-b1d0-6f5394afa257',
                     type: 'LINK',
-                    at: [18688376362],
+                    at: [ 
+                        '18688376362'
+                    ],
                     messageUrl:'https://oapi.dingtalk.com/robot/send?access_token=bba613c1e866e921d3075c21c8eda6aac020d6a7f679974645ddd05cb33a59e8', 
                     title:'$PROJECT >> dev >> ${SERVICE} 更新成功', 
                     text:[
