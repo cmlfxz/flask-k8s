@@ -99,7 +99,7 @@ pipeline {
                 echo 'success'
                 dingTalk (
                     robot: '4def1f0b-4f7c-4793-b1d0-6f5394afa257',
-                    type: 'LINK',
+                    type: 'ACTION_CARD',
                     at: [ 
                         '18688376362'
                     ],
@@ -113,17 +113,17 @@ pipeline {
                     
                     ],
                     // picUrl:'http://kmzsccfile.kmzscc.com/upload/2020/success.jpg',
-                    btns: [
-                            [
-                                title: '更改记录',
-                                actionUrl: '${currentBuild.BUILD_URL}/changes'
-                            ],
-                            [
-                                title: '控制台',
-                                actionUrl: '${currentBuild.BUILD_URL}/console'
-                            ]
-                        ],
-                    btnLayout: 'V'
+                    // btns: [
+                    //         [
+                    //             title: '更改记录',
+                    //             actionUrl: '${currentBuild.BUILD_URL}/changes'
+                    //         ],
+                    //         [
+                    //             title: '控制台',
+                    //             actionUrl: '${currentBuild.BUILD_URL}/console'
+                    //         ]
+                    //     ],
+                    // btnLayout: 'V'
                     // jenkinsUrl:'http://http://192.168.11.142:8080/jenkins/', 
 
                     
