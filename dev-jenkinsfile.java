@@ -99,25 +99,26 @@ pipeline {
                 echo 'success'
                 dingTalk (
                     robot: '4def1f0b-4f7c-4793-b1d0-6f5394afa257',
-                    type: 'ACTION_CARD',
+                    type: 'LINK',
+                    at: [18688376362],
                     messageUrl:'https://oapi.dingtalk.com/robot/send?access_token=bba613c1e866e921d3075c21c8eda6aac020d6a7f679974645ddd05cb33a59e8', 
                     title:'$PROJECT >> dev >> ${SERVICE} 更新成功', 
                     text:[
                         "- 任务: #${BUILD_ID}",
                         "- 状态: 成功",
-                        "- 持续时间: ${currentBuild.duration}",
-                        "- 执行人：${env.BUILD_USER}",
+                        "- 持续时间: ${currentBuild.durationString}",
+                        "- 执行人：${BUILD_USER}",
                     
                     ],
                     picUrl:'http://kmzsccfile.kmzscc.com/upload/2020/success.jpg',
                     btns: [
                             [
                                 title: '更改记录',
-                                actionUrl: '${currentBuild.JOB_URL}/changes'
+                                actionUrl: '${currentBuild. BUILD_URL}/changes'
                             ],
                             [
                                 title: '控制台',
-                                actionUrl: '${currentBuild.JOB_URL}/console'
+                                actionUrl: '${currentBuild. BUILD_URL}/console'
                             ]
                         ],
                     btnLayout: 'V'
