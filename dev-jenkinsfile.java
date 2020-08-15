@@ -106,12 +106,14 @@ pipeline {
                     messageUrl:'https://oapi.dingtalk.com/robot/send?access_token=bba613c1e866e921d3075c21c8eda6aac020d6a7f679974645ddd05cb33a59e8', 
                     // title:'$PROJECT >> dev >> ${SERVICE} 更新成功', 
                     text:[
-                        "#[ $PROJECT >> dev >> ${SERVICE} ](${JOB_URL})",
+                        "[ $PROJECT >> dev >> ${SERVICE} ](${JOB_URL})",
                         // "$PROJECT >> dev >> ${SERVICE} 更新成功",
+                        '',
                         '---',
-                        "- 任务: $BUILD_DISPLAY_NAME",
+                        "- 任务: [$BUILD_DISPLAY_NAME](${currentBuild.BUILD_URL})"
+                        // "- 任务: $BUILD_DISPLAY_NAME",
                         "- 状态: <font color=#52c41a>成功</font>",
-                        "- 持续时间: ${currentBuild.durationString}",
+                        "- 持续时间: ${currentBuild.duration}/1000 秒",
                         "- 执行人：Administrator",
                     
                     ],
