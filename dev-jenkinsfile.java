@@ -93,73 +93,73 @@ pipeline {
         }
 
     }
-    post {
-        success {
-                //当此Pipeline成功时打印消息
-                echo 'success'
-                steps {
-                    script {
-                        env.TIME = ${currentBuild.duration}/1000
-                    }
-                }
+    // post {
+    //     success {
+    //             //当此Pipeline成功时打印消息
+    //             echo 'success'
+    //             // steps {
+    //             //     script {
+    //             //         env.TIME = ${currentBuild.duration}/1000
+    //             //     }
+    //             // }
                 
-                dingTalk (
-                    robot: '4def1f0b-4f7c-4793-b1d0-6f5394afa257',
-                    type: 'ACTION_CARD',
-                    at: [ 
-                        '18688376362'
-                    ],
-                    messageUrl:'https://oapi.dingtalk.com/robot/send?access_token=bba613c1e866e921d3075c21c8eda6aac020d6a7f679974645ddd05cb33a59e8', 
-                    // title:'$PROJECT >> dev >> ${SERVICE} 更新成功', 
-                    text:[
-                        "[ $PROJECT >> dev >> ${SERVICE} ](${JOB_URL})",
-                        // "$PROJECT >> dev >> ${SERVICE} 更新成功",
-                        '',
-                        '---',
-                        "- 任务: [ $BUILD_DISPLAY_NAME ](${BUILD_URL})",
-                        // "- 任务: $BUILD_DISPLAY_NAME",
-                        "- 状态: <font color=#52c41a>成功</font>",
-                        '- 持续时间: ${TIME} 秒',
-                        "- 执行人：Administrator",
+    //             dingTalk (
+    //                 robot: '4def1f0b-4f7c-4793-b1d0-6f5394afa257',
+    //                 type: 'ACTION_CARD',
+    //                 at: [ 
+    //                     '18688376362'
+    //                 ],
+    //                 messageUrl:'https://oapi.dingtalk.com/robot/send?access_token=bba613c1e866e921d3075c21c8eda6aac020d6a7f679974645ddd05cb33a59e8', 
+    //                 // title:'$PROJECT >> dev >> ${SERVICE} 更新成功', 
+    //                 text:[
+    //                     "[ $PROJECT >> dev >> ${SERVICE} ](${JOB_URL})",
+    //                     // "$PROJECT >> dev >> ${SERVICE} 更新成功",
+    //                     '',
+    //                     '---',
+    //                     "- 任务: [ $BUILD_DISPLAY_NAME ](${BUILD_URL})",
+    //                     // "- 任务: $BUILD_DISPLAY_NAME",
+    //                     "- 状态: <font color=#52c41a>成功</font>",
+    //                     '- 持续时间: ${TIME} 秒',
+    //                     "- 执行人：Administrator",
                     
-                    ],
-                    // picUrl:'http://kmzsccfile.kmzscc.com/upload/2020/success.jpg',
-                    // btns: [
-                    //         [
-                    //             title: '更改记录',
-                    //             actionUrl: '${currentBuild.BUILD_URL}/changes'
-                    //         ],
-                    //         [
-                    //             title: '控制台',
-                    //             actionUrl: '${currentBuild.BUILD_URL}/console'
-                    //         ]
-                    //     ],
-                    // btnLayout: 'V'
-                    // jenkinsUrl:'http://http://192.168.11.142:8080/jenkins/', 
+    //                 ],
+    //                 // picUrl:'http://kmzsccfile.kmzscc.com/upload/2020/success.jpg',
+    //                 // btns: [
+    //                 //         [
+    //                 //             title: '更改记录',
+    //                 //             actionUrl: '${currentBuild.BUILD_URL}/changes'
+    //                 //         ],
+    //                 //         [
+    //                 //             title: '控制台',
+    //                 //             actionUrl: '${currentBuild.BUILD_URL}/console'
+    //                 //         ]
+    //                 //     ],
+    //                 // btnLayout: 'V'
+    //                 // jenkinsUrl:'http://http://192.168.11.142:8080/jenkins/', 
 
                     
-                    // notifyPeople:'Administrator'
-                )
-            }
-            // failure {
-            //     echo "上线失败"
-            //     dingtalk (
-            //         robot: '4def1f0b-4f7c-4793-b1d0-6f5394afa257',
-            //         type: 'LINK',
-            //         messageUrl:'https://oapi.dingtalk.com/robot/send?access_token=bba613c1e866e921d3075c21c8eda6aac020d6a7f679974645ddd05cb33a59e8', 
-            //         // at:["12333333333"],
-            //         // atAll: false,
-            //         title: "$PROJECT >> dev >> ${SERVICE} 更新失败!",
-            //         text:["请管理员及时处理！"],
-            //         picUrl:'http://kmzsccfile.kmzscc.com/upload/2020/error.jpg',
-            //         // singleTitle:'',
-            //         // btns: [],
-            //         // hideAvatar: false
-            //     )
-            // }
-            // aborted {
-            //     //当此Pipeline 终止时打印消息
-            //     echo 'aborted'  
-            // }
-    }
+    //                 // notifyPeople:'Administrator'
+    //             )
+    //         }
+    //         // failure {
+    //         //     echo "上线失败"
+    //         //     dingtalk (
+    //         //         robot: '4def1f0b-4f7c-4793-b1d0-6f5394afa257',
+    //         //         type: 'LINK',
+    //         //         messageUrl:'https://oapi.dingtalk.com/robot/send?access_token=bba613c1e866e921d3075c21c8eda6aac020d6a7f679974645ddd05cb33a59e8', 
+    //         //         // at:["12333333333"],
+    //         //         // atAll: false,
+    //         //         title: "$PROJECT >> dev >> ${SERVICE} 更新失败!",
+    //         //         text:["请管理员及时处理！"],
+    //         //         picUrl:'http://kmzsccfile.kmzscc.com/upload/2020/error.jpg',
+    //         //         // singleTitle:'',
+    //         //         // btns: [],
+    //         //         // hideAvatar: false
+    //         //     )
+    //         // }
+    //         // aborted {
+    //         //     //当此Pipeline 终止时打印消息
+    //         //     echo 'aborted'  
+    //         // }
+    // }
 }
