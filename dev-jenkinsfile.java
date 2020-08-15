@@ -61,9 +61,9 @@ pipeline {
                 echo  "$TAG, $ENV" 
                 withCredentials([usernamePassword(credentialsId: 'dev-dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
                     sh '''
-                        sh build.sh --action=build --env=$ENV --project=$PROJECT --service=$SERVICE --tag=$TAG --harbor_registry=$HARBOR_REGISTRY
-                        cd $WORKSPACE/k8s/
                         docker login -u ${dockerHubUser} -p ${dockerHubPassword} $HARBOR_REGISTRY
+                        cd $WORKSPACE/k8s/
+                        sh build.sh --action=build --env=$ENV --project=$PROJECT --service=$SERVICE --tag=$TAG --harbor_registry=$HARBOR_REGISTRY
                     '''
                 }
 
