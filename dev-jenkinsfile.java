@@ -62,7 +62,7 @@ pipeline {
         stage('build') {
             steps {
                 echo  "$TAG, $ENV" 
-                withCredentials([usernamePassword(credentialsId: $DOCKER_HUB_ID, passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
+                withCredentials([usernamePassword(credentialsId: "$DOCKER_HUB_ID", passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
                     sh '''
                         docker login -u ${dockerHubUser} -p ${dockerHubPassword} $HARBOR_REGISTRY
                         cd $WORKSPACE/k8s/
@@ -74,7 +74,7 @@ pipeline {
         }
         stage('deploy dev'){
             steps {
-                withCredentials([usernamePassword(credentialsId: $DOCKER_HUB_ID, passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
+                withCredentials([usernamePassword(credentialsId: "$DOCKER_HUB_ID", passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
                     sh '''
                         namespace="$PROJECT-$ENV"
                         $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user \
