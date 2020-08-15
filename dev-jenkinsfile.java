@@ -24,13 +24,13 @@ pipeline {
     }
     environment {
         TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
-        ENV='dev'
-        CLI="/usr/bin/kubectl --kubeconfig /root/.kube/config"
+        ENV = 'dev'
+        CLI = "/usr/bin/kubectl --kubeconfig /root/.kube/config"
 
         HARBOR_REGISTRY = 'myhub.mydocker.com'
         HARBOR_EMAIL = '915613275@qq.com'
         // docker账号密码的保存在jenkins的Cred ID
-        DOCKER_HUB_ID='dev-dockerHub'
+        DOCKER_HUB_ID = 'dev-dockerHub'
     }
     // 必须包含此步骤
     stages {
@@ -38,7 +38,7 @@ pipeline {
             steps {
                 echo "Runing ${env.BUILD_ID}"
                 echo "BRANCH ${params.BRANCH}"
-                echo "tag: $TAG  replicas: ${params.REPLICAS} "
+                echo "tag: $TAG  replicas: ${params.REPLICAS}  ${ENV}"
             }
         }
         stage('checkout') {
@@ -120,8 +120,8 @@ pipeline {
                 robot: '4def1f0b-4f7c-4793-b1d0-6f5394afa257',
                 type: 'LINK',
                 messageUrl:'https://oapi.dingtalk.com/robot/send?access_token=bba613c1e866e921d3075c21c8eda6aac020d6a7f679974645ddd05cb33a59e8', 
-                title:'$PROJECT >> ${ENV} >> ${SERVICE} 更新成功\n任务: #${BUILD_ID}\nCheck console output at "<a href="${env.BUILD_URL}">${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>"', 
-                text:["xxx"],
+                title:'$PROJECT >> $ENV >> ${SERVICE} 更新成功', 
+                text:["任务: #${BUILD_ID}\n11","Check console output at "<a href="${env.BUILD_URL}">${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>""],
                 picUrl:'http://kmzsccfile.kmzscc.com/upload/2020/success.jpg',
                 // jenkinsUrl:'http://http://192.168.11.142:8080/jenkins/', 
                 
