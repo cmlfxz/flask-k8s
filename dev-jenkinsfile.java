@@ -107,7 +107,7 @@ pipeline {
                         "- 任务: $BUILD_DISPLAY_NAME",
                         "- 状态: 成功",
                         "- 持续时间: ${currentBuild.durationString}",
-                        "- 执行人：${CHANGE_AUTHOR}",
+                        "- 执行人：Administrator",
                     
                     ],
                     picUrl:'http://kmzsccfile.kmzscc.com/upload/2020/success.jpg',
