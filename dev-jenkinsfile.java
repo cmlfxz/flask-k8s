@@ -27,6 +27,9 @@ pipeline {
         ENV='dev'
         HARBOR_REGISTRY = 'myhub.mydocker.com'
         CLI="/usr/bin/kubectl --kubeconfig /root/.kube/config"
+
+        // docker账号密码的保存在jenkins的Cred ID
+        DOCKER_HUB_ID='dev-dockerHub'
     }
     // 必须包含此步骤
     stages {
@@ -59,7 +62,7 @@ pipeline {
         stage('build') {
             steps {
                 echo  "$TAG, $ENV" 
-                withCredentials([usernamePassword(credentialsId: 'dev-dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
+                withCredentials([usernamePassword(credentialsId: $DOCKER_HUB_ID, passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
                     sh '''
                         docker login -u ${dockerHubUser} -p ${dockerHubPassword} $HARBOR_REGISTRY
                         cd $WORKSPACE/k8s/
@@ -71,7 +74,7 @@ pipeline {
         }
         stage('deploy dev'){
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dev-dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
+                withCredentials([usernamePassword(credentialsId: $DOCKER_HUB_ID, passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
                     sh '''
                         namespace="$PROJECT-$ENV"
                         $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user \
