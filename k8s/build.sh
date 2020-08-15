@@ -66,13 +66,12 @@ if [ -z "$replicas" ];then
   echo "副本数没设置，默认为1"
 fi
 if [ -z "$harbor_registry" ];then
-  harbor_registry=myhub.mydocker.com
-  echo "harbor仓库没设置，默认为myhub.mydocker.com"
+  echo "harbor仓库没设置" && exit
 fi
 namespace=$project-$env
 workdir=$(dirname $PWD)
 
-# #正式测试保持同一套密码
+#正式测试保持同一套密码
 # harbor_user="cmlfxz"
 # harbor_pass="DUgu16829987"
 # harbor_email="915613275@qq.com"
@@ -145,9 +144,6 @@ deploy_prod() {
             ab_canary_deploy
             $CLI get pod,svc,vs,dr,gateway -n $namespace
         ;;
-        # rollout)
-        #     rollout
-        # ;;
         *)
             echo "没有$type这种发布模式" && exit 1
         ;;

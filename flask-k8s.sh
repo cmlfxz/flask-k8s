@@ -9,10 +9,14 @@ if [ "$1" == "dev" ];then
     harbor_user="cmlfxz"
     harbor_pass="DUgu16829987"
     harbor_email="915613275@qq.com"
+    harbor_registry="myhub.mydocker.com"
+    CLI="/usr/bin/kubectl --kubeconfig /root/.kube/config"
 else 
     harbor_user="cmlfxz"
     harbor_pass="DUgu16829987"
     harbor_email="915613275@qq.com"
+    harbor_registry="myhub.mydocker.com"
+    CLI="/usr/bin/kubectl --kubeconfig /root/.kube/config"
 fi
 
 canary_weight=0
@@ -42,14 +46,14 @@ if [ "$1" == "dev" ];then
     echo "$commit"
     # 变量 环境 项目 服务名  副本数 仓库地址 (tag)
     docker login -u $harbor_user -p $harbor_pass $harbor_registry
-    sh  build.sh --action=build --env=dev --project=ms --service=flask-k8s --tag=$commit 
+    sh  build.sh --action=build --env=dev --project=ms --service=flask-k8s --tag=$commit --harbor_registry=$harbor_registry
     if [ "$?" -ne 0 ];then
         echo "build 失败" && exit 1
     fi
     namespace=ms-dev
-    kubectl create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user \
-               --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
-    sh  build.sh --action=deploy --env=dev --project=ms --service=flask-k8s --tag=$commit --replicas=1
+    $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user \
+               --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace 
+    sh  build.sh --action=deploy --env=dev --project=ms --service=flask-k8s --tag=$commit --replicas=1 --harbor_registry=$harbor_registry
 elif [ "$1" == "prod" ];then
     cd flask-k8s
     if [ ! -z "$2" ];then
@@ -62,7 +66,7 @@ elif [ "$1" == "prod" ];then
     git checkout $tag
     cd k8s
     docker login -u $harbor_user -p $harbor_pass $harbor_registry
-    sh  build.sh --action=build --env=prod --project=ms --service=flask-k8s --tag=$tag
+    sh  build.sh --action=build --env=prod --project=ms --service=flask-k8s --tag=$tag --harbor_registry=$harbor_registry
     if [ "$?" -ne 0 ];then
       echo "build 失败" && exit 1
     fi
@@ -84,7 +88,7 @@ elif [ "$1" == "prod" ];then
         ;;
     esac
     echo $type $canary_weight
-    kubectl create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user \
+    $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user \
                --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
-    sh -x   build.sh --action=deploy --env=prod  --project=ms --service=flask-k8s --tag=$tag --replicas=1 --type=$type --canary_weight=$canary_weight
+    sh -x   build.sh --action=deploy --env=prod  --project=ms --service=flask-k8s --tag=$tag --replicas=1 --type=$type --canary_weight=$canary_weight --harbor_registry=$harbor_registry
 fi
