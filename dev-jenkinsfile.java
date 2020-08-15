@@ -99,7 +99,7 @@ pipeline {
                 echo 'success'
                 dingTalk (
                     robot: '4def1f0b-4f7c-4793-b1d0-6f5394afa257',
-                    type: 'ACTION_CARD',
+                    type: 'MARKDOWN',
                     at: [ 
                         '18688376362'
                     ],
