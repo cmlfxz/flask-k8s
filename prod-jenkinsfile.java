@@ -42,9 +42,11 @@ pipeline {
     environment {
         TAG= sh(returnStdout: true,script: 'git describe --tags `git rev-list --tags --max-count=1`')
         ENV='prod'
+        CLI="/usr/bin/kubectl --kubeconfig /root/.kube/config"\
         // 正式对应修改
         HARBOR_REGISTRY = 'myhub.mydocker.com'
-        CLI="/usr/bin/kubectl --kubeconfig /root/.kube/config"
+        HARBOR_EMAIL = '915613275@qq.com'
+        DOCKER_HUB_ID='prod-dockerHub'
     }
     // 必须包含此步骤
     stages {
@@ -79,7 +81,7 @@ pipeline {
             }
             steps {
                 echo  "$TAG, $ENV" 
-                withCredentials([usernamePassword(credentialsId: 'prod-dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
+                withCredentials([usernamePassword(credentialsId: "DOCKER_HUB_ID", passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
                     sh '''
                         docker login -u ${dockerHubUser} -p ${dockerHubPassword} $HARBOR_REGISTRY
                         cd $WORKSPACE/k8s/
@@ -98,11 +100,11 @@ pipeline {
             }
             steps {
                  echo "$TYPE $CANARY_WEIGHT"
-                withCredentials([usernamePassword(credentialsId: 'prod-dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
+                withCredentials([usernamePassword(credentialsId: "DOCKER_HUB_ID", passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
                     sh '''
                         namespace="$PROJECT-$ENV"
-                        $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user \
-                            --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace 
+                        $CLI create secret docker-registry harborsecret --docker-server=$HARBOR_REGISTRY --docker-username=$dockerHubUser \
+                            --docker-password=$dockerHubPassword --docker-email=$HARBOR_EMAIL --namespace=$namespace || true
                         cd $WORKSPACE/k8s/
                         sh  build.sh --action=deploy --env=prod --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS  --type=$TYPE --canary_weight=$CANARY_WEIGHT --harbor_registry=$HARBOR_REGISTRY 
                     '''
