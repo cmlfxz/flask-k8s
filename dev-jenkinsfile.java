@@ -99,7 +99,7 @@ pipeline {
                 echo 'success'
                 dingTalk (
                     robot: '4def1f0b-4f7c-4793-b1d0-6f5394afa257',
-                    type: 'MARKDOWN',
+                    type: 'ACTION_CARD',
                     at: [ 
                         '18688376362'
                     ],
@@ -107,6 +107,7 @@ pipeline {
                     // title:'$PROJECT >> dev >> ${SERVICE} 更新成功', 
                     text:[
                         "$PROJECT >> dev >> ${SERVICE} 更新成功",
+                        '---',
                         "- 任务: $BUILD_DISPLAY_NAME",
                         "- 状态: <font color=red>成功</font>",
                         "- 持续时间: ${currentBuild.durationString}",
