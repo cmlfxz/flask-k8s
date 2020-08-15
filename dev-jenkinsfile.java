@@ -110,7 +110,7 @@ pipeline {
                         // "$PROJECT >> dev >> ${SERVICE} 更新成功",
                         '',
                         '---',
-                        "- 任务: [ $BUILD_DISPLAY_NAME ](${currentBuild.BUILD_URL})"
+                        "- 任务: [ $BUILD_DISPLAY_NAME ](${currentBuild.BUILD_URL})",
                         // "- 任务: $BUILD_DISPLAY_NAME",
                         "- 状态: <font color=#52c41a>成功</font>",
                         "- 持续时间: ${currentBuild.duration}/1000 秒",
