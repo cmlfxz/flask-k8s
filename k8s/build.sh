@@ -72,10 +72,10 @@ fi
 namespace=$project-$env
 workdir=$(dirname $PWD)
 
-#正式测试保持同一套密码
-harbor_user="cmlfxz"
-harbor_pass="DUgu16829987"
-harbor_email="915613275@qq.com"
+# #正式测试保持同一套密码
+# harbor_user="cmlfxz"
+# harbor_pass="DUgu16829987"
+# harbor_email="915613275@qq.com"
 CLI="/usr/bin/kubectl --kubeconfig /root/.kube/config"
 
 
@@ -84,14 +84,14 @@ build() {
    cd $workdir/
    image_name=$harbor_registry/$namespace/${service}:$tag
    docker build -t ${image_name} .
-   docker login -u $harbor_user -p $harbor_pass $harbor_registry
+   #    docker login -u $harbor_user -p $harbor_pass $harbor_registry
    docker push ${image_name} 
 }
 common_deploy() {
     $CLI create namespace $namespace
     $CLI label namespace $namespace istio-injection=enabled
-    $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
-               --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
+    # $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user\
+    #            --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
     kustomize edit set image $harbor_registry/$namespace/$service=$harbor_registry/$namespace/${service}:$tag
     kustomize edit set namespace $namespace
     #bug 副本数匹配的是deployment的名字，生产版本deployment name是带版本号的

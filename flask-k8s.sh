@@ -5,6 +5,16 @@ git clone https://cmlfxz:dugu16829987@gitee.com/cmlfxz/flask-k8s.git
 #git checkout release-0.2
 #git rev-parse --short HEAD
 
+if [ "$1" == "dev" ];then
+    harbor_user="cmlfxz"
+    harbor_pass="DUgu16829987"
+    harbor_email="915613275@qq.com"
+else 
+    harbor_user="cmlfxz"
+    harbor_pass="DUgu16829987"
+    harbor_email="915613275@qq.com"
+fi
+
 canary_weight=0
 input_canary() {
     for i in $(seq 1 5)
@@ -27,13 +37,18 @@ if [ "$1" == "dev" ];then
     cd flask-k8s
     git checkout develop
     cd k8s
+
     commit=$(git rev-parse --short HEAD)
     echo "$commit"
     # 变量 环境 项目 服务名  副本数 仓库地址 (tag)
+    docker login -u $harbor_user -p $harbor_pass $harbor_registry
     sh  build.sh --action=build --env=dev --project=ms --service=flask-k8s --tag=$commit 
     if [ "$?" -ne 0 ];then
         echo "build 失败" && exit 1
     fi
+    namespace=ms-dev
+    kubectl create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user \
+               --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
     sh  build.sh --action=deploy --env=dev --project=ms --service=flask-k8s --tag=$commit --replicas=1
 elif [ "$1" == "prod" ];then
     cd flask-k8s
@@ -46,6 +61,7 @@ elif [ "$1" == "prod" ];then
     echo "$tag"
     git checkout $tag
     cd k8s
+    docker login -u $harbor_user -p $harbor_pass $harbor_registry
     sh  build.sh --action=build --env=prod --project=ms --service=flask-k8s --tag=$tag
     if [ "$?" -ne 0 ];then
       echo "build 失败" && exit 1
@@ -68,5 +84,7 @@ elif [ "$1" == "prod" ];then
         ;;
     esac
     echo $type $canary_weight
+    kubectl create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$harbor_user \
+               --docker-password=$harbor_pass --docker-email=$harbor_email --namespace=$namespace
     sh -x   build.sh --action=deploy --env=prod  --project=ms --service=flask-k8s --tag=$tag --replicas=1 --type=$type --canary_weight=$canary_weight
 fi
