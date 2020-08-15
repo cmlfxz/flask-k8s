@@ -95,23 +95,48 @@ pipeline {
     }
 
     post {
+        // success {
+        //     emailext (
+        //         subject: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+        //         body: """<p>SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
+        //             <p>Check console output at "<a href="${env.BUILD_URL}">${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>"</p>""",
+        //         to: "18688376362@163.com",
+        //         from: "18688376362@163.com"
+        //     )
+        // }
+        // failure {
+        //     emailext (
+        //         subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
+        //         body: """<p>FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
+        //             <p>Check console output at "<a href="${env.BUILD_URL}">${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>"</p>""",
+        //         to: "18688376362@163.com",
+        //         from: "18688376362@163.com"
+        //     )
+        // }
         success {
-            emailext (
-                subject: "SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                body: """<p>SUCCESSFUL: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
-                    <p>Check console output at "<a href="${env.BUILD_URL}">${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>"</p>""",
-                to: "18688376362@163.com",
-                from: "18688376362@163.com"
+            //当此Pipeline成功时打印消息
+            echo 'success'
+            dingTalk (
+                accessToken:'bba613c1e866e921d3075c21c8eda6aac020d6a7f679974645ddd05cb33a59e8', 
+                imageUrl:'', 
+                jenkinsUrl:'http://http://192.168.11.142:8080/jenkins/', 
+                message:'构建成功', 
+                notifyPeople:'Administrator'
             )
         }
         failure {
-            emailext (
-                subject: "FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'",
-                body: """<p>FAILED: Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]':</p>
-                    <p>Check console output at "<a href="${env.BUILD_URL}">${env.JOB_NAME} [${env.BUILD_NUMBER}]</a>"</p>""",
-                to: "18688376362@163.com",
-                from: "18688376362@163.com"
+            //当此Pipeline失败时打印消息
+            echo 'failure'
+            dingTalk (
+                accessToken:'bba613c1e866e921d3075c21c8eda6aac020d6a7f679974645ddd05cb33a59e8', 
+                imageUrl:'', jenkinsUrl:'http://http://192.168.11.142:8080/jenkins/', 
+                message:'构建失败', 
+                notifyPeople:'Administrator'
             )
+        }
+        aborted {
+            //当此Pipeline 终止时打印消息
+            echo 'aborted'  
         }
     }
 
