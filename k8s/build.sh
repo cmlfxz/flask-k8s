@@ -83,7 +83,7 @@ build() {
    cd $workdir/
    image_name=$harbor_registry/$namespace/${service}:$tag
    docker build -t ${image_name} .
-   #    docker login -u $harbor_user -p $harbor_pass $harbor_registry
+   # docker login -u $harbor_user -p $harbor_pass $harbor_registry
    docker push ${image_name} 
 }
 common_deploy() {
