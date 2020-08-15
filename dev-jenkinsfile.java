@@ -98,7 +98,9 @@ pipeline {
                 //当此Pipeline成功时打印消息
                 echo 'success'
                 steps {
-                    env.TIME = ${currentBuild.duration}/1000
+                    script {
+                        env.TIME = ${currentBuild.duration}/1000
+                    }
                 }
                 
                 dingTalk (
