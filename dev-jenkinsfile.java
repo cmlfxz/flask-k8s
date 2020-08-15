@@ -120,23 +120,30 @@ pipeline {
                 robot: '4def1f0b-4f7c-4793-b1d0-6f5394afa257',
                 type: 'LINK',
                 messageUrl:'https://oapi.dingtalk.com/robot/send?access_token=bba613c1e866e921d3075c21c8eda6aac020d6a7f679974645ddd05cb33a59e8', 
-                text:["更新记录"],
-                picUrl:'', 
+                title:'${SERVICE}更新成功', 
+                text:["xxx"],
+                picUrl:'http://kmzsccfile.kmzscc.com/upload/2020/success.jpg',
                 // jenkinsUrl:'http://http://192.168.11.142:8080/jenkins/', 
-                title:'构建成功', 
+                
                 // notifyPeople:'Administrator'
             )
         }
-        // failure {
-        //     //当此Pipeline失败时打印消息
-        //     echo 'failure'
-        //     dingTalk (
-        //         messageUrl:'bba613c1e866e921d3075c21c8eda6aac020d6a7f679974645ddd05cb33a59e8', 
-        //         imageUrl:'', jenkinsUrl:'http://http://192.168.11.142:8080/jenkins/', 
-        //         message:'构建失败', 
-        //         notifyPeople:'Administrator'
-        //     )
-        // }
+        failure {
+            echo "上线失败"
+            dingtalk (
+                robot: '4def1f0b-4f7c-4793-b1d0-6f5394afa257',
+                type: 'LINK',
+                messageUrl:'https://oapi.dingtalk.com/robot/send?access_token=bba613c1e866e921d3075c21c8eda6aac020d6a7f679974645ddd05cb33a59e8', 
+                // at:["12333333333"],
+                // atAll: false,
+                title: "${SERVICE}上线失败!",
+                text:["请管理员及时处理！"],
+                picUrl:'http://kmzsccfile.kmzscc.com/upload/2020/error.jpg',
+                // singleTitle:'',
+                // btns: [],
+                // hideAvatar: false
+            )
+        }
         aborted {
             //当此Pipeline 终止时打印消息
             echo 'aborted'  
