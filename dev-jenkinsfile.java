@@ -117,11 +117,12 @@ pipeline {
             //当此Pipeline成功时打印消息
             echo 'success'
             dingTalk (
+                robot: '4def1f0b-4f7c-4793-b1d0-6f5394afa257',
                 messageUrl:'https://oapi.dingtalk.com/robot/send?access_token=bba613c1e866e921d3075c21c8eda6aac020d6a7f679974645ddd05cb33a59e8', 
-                imageUrl:'', 
-                jenkinsUrl:'http://http://192.168.11.142:8080/jenkins/', 
-                message:'构建成功', 
-                notifyPeople:'Administrator'
+                picUrl:'', 
+                // jenkinsUrl:'http://http://192.168.11.142:8080/jenkins/', 
+                title:'构建成功', 
+                // notifyPeople:'Administrator'
             )
         }
         // failure {
