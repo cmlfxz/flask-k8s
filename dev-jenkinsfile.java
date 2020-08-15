@@ -117,23 +117,23 @@ pipeline {
             //当此Pipeline成功时打印消息
             echo 'success'
             dingTalk (
-                accessToken:'bba613c1e866e921d3075c21c8eda6aac020d6a7f679974645ddd05cb33a59e8', 
+                messageUrl:'https://oapi.dingtalk.com/robot/send?access_token=bba613c1e866e921d3075c21c8eda6aac020d6a7f679974645ddd05cb33a59e8', 
                 imageUrl:'', 
                 jenkinsUrl:'http://http://192.168.11.142:8080/jenkins/', 
                 message:'构建成功', 
                 notifyPeople:'Administrator'
             )
         }
-        failure {
-            //当此Pipeline失败时打印消息
-            echo 'failure'
-            dingTalk (
-                accessToken:'bba613c1e866e921d3075c21c8eda6aac020d6a7f679974645ddd05cb33a59e8', 
-                imageUrl:'', jenkinsUrl:'http://http://192.168.11.142:8080/jenkins/', 
-                message:'构建失败', 
-                notifyPeople:'Administrator'
-            )
-        }
+        // failure {
+        //     //当此Pipeline失败时打印消息
+        //     echo 'failure'
+        //     dingTalk (
+        //         messageUrl:'bba613c1e866e921d3075c21c8eda6aac020d6a7f679974645ddd05cb33a59e8', 
+        //         imageUrl:'', jenkinsUrl:'http://http://192.168.11.142:8080/jenkins/', 
+        //         message:'构建失败', 
+        //         notifyPeople:'Administrator'
+        //     )
+        // }
         aborted {
             //当此Pipeline 终止时打印消息
             echo 'aborted'  
