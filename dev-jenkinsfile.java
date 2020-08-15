@@ -76,10 +76,10 @@ pipeline {
         stage('deploy dev'){
             steps {
                 withCredentials([usernamePassword(credentialsId: "$DOCKER_HUB_ID", passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
-                    configFileProvider([configFile('dev-k8s-config')]) {
+                    configFileProvider([configFile(fileId: 'dev-k8s-config', targetLocation: '/root/.kube/config')]) {
                         sh '''
                             namespace="$PROJECT-$ENV"
-                            kubectl --kubeconfig $dev-k8s-config create secret docker-registry harborsecret --docker-server=$HARBOR_REGISTRY --docker-username=$dockerHubUser \
+                            $CLI create secret docker-registry harborsecret --docker-server=$HARBOR_REGISTRY --docker-username=$dockerHubUser \
                                 --docker-password=$dockerHubPassword --docker-email=$HARBOR_EMAIL --namespace=$namespace || true
                         '''
                     }
