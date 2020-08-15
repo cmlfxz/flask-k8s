@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-k8s-0.8
+  namespace: ms-prod
+spec:
+  template:
+    spec:
+      containers:
+        - name: flask-k8s
+          livenessProbe:
+            #httpGet:
+            #  path: /
+            tcpSocket:
+              port: 8082
+            initialDelaySeconds: 10
+            periodSeconds: 20
+            timeoutSeconds: 5
+          readinessProbe:
+            #httpGet:
+            #  path: /
+            tcpSocket:
+              port: 8082
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+
