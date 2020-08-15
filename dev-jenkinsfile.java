@@ -114,11 +114,11 @@ pipeline {
                     btns: [
                             [
                                 title: '更改记录',
-                                actionUrl: '${currentBuild. BUILD_URL}/changes'
+                                actionUrl: '${currentBuild.BUILD_URL}/changes'
                             ],
                             [
                                 title: '控制台',
-                                actionUrl: '${currentBuild. BUILD_URL}/console'
+                                actionUrl: '${currentBuild.BUILD_URL}/console'
                             ]
                         ],
                     btnLayout: 'V'
