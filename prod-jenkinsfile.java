@@ -99,12 +99,16 @@ pipeline {
                 }
             }
             steps {
-                 echo "$TYPE $CANARY_WEIGHT"
+                echo "$TYPE $CANARY_WEIGHT"
                 withCredentials([usernamePassword(credentialsId: "DOCKER_HUB_ID", passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
+                    configFileProvider([configFile(fileId: 'dev-k8s-config', targetLocation: '/root/.kube/config')]) {
+                        sh '''
+                            namespace="$PROJECT-$ENV"
+                            $CLI create secret docker-registry harborsecret --docker-server=$HARBOR_REGISTRY --docker-username=$dockerHubUser \
+                                --docker-password=$dockerHubPassword --docker-email=$HARBOR_EMAIL --namespace=$namespace || true
+                        '''
+                    }
                     sh '''
-                        namespace="$PROJECT-$ENV"
-                        $CLI create secret docker-registry harborsecret --docker-server=$HARBOR_REGISTRY --docker-username=$dockerHubUser \
-                            --docker-password=$dockerHubPassword --docker-email=$HARBOR_EMAIL --namespace=$namespace || true
                         cd $WORKSPACE/k8s/
                         sh  build.sh --action=deploy --env=prod --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS  --type=$TYPE --canary_weight=$CANARY_WEIGHT --harbor_registry=$HARBOR_REGISTRY 
                     '''
