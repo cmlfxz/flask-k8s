@@ -53,10 +53,10 @@ pipeline {
         )
     }
     environment {
-        env.TAG= sh(returnStdout: true,script: 'git describe --tags `git rev-list --tags --max-count=1`')
-        env.ENV='prod'
+        TAG= sh(returnStdout: true,script: 'git describe --tags `git rev-list --tags --max-count=1`')
+        ENV='prod'
         // 正式应该是阿里云
-        env.HARBOR_REGISTRY = 'myhub.mydocker.com'
+        HARBOR_REGISTRY = 'myhub.mydocker.com'
     }
     // 必须包含此步骤
     stages {
