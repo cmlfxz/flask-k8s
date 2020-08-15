@@ -107,7 +107,7 @@ pipeline {
                     // title:'$PROJECT >> dev >> ${SERVICE} 更新成功', 
                     text:[
                         "$PROJECT >> dev >> ${SERVICE} 更新成功",
-                        "------------------------------------",
+                        "<hr>",
                         "- 任务: $BUILD_DISPLAY_NAME",
                         "- 状态: 成功",
                         "- 持续时间: ${currentBuild.durationString}",
