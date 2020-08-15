@@ -26,7 +26,7 @@ pipeline {
         TAG = sh(  returnStdout: true, script: 'git rev-parse --short HEAD')
         ENV='dev'
         CLI="/usr/bin/kubectl --kubeconfig /root/.kube/config"
-        
+
         HARBOR_REGISTRY = 'myhub.mydocker.com'
         HARBOR_EMAIL = '915613275@qq.com'
         // docker账号密码的保存在jenkins的Cred ID
@@ -78,7 +78,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: "$DOCKER_HUB_ID", passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]){
                     sh '''
                         namespace="$PROJECT-$ENV"
-                        $CLI create secret docker-registry harborsecret --docker-server=$harbor_registry --docker-username=$dockerHubUser \
+                        $CLI create secret docker-registry harborsecret --docker-server=$HARBOR_REGISTRY --docker-username=$dockerHubUser \
                             --docker-password=$dockerHubPassword --docker-email=$HARBOR_EMAIL --namespace=$namespace 
                         cd $WORKSPACE/k8s/
                         sh  build.sh --action=deploy --env=$ENV --project=$PROJECT --service=$SERVICE --tag=$TAG --replicas=$REPLICAS --harbor_registry=$HARBOR_REGISTRY 
