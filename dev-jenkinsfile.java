@@ -97,6 +97,7 @@ pipeline {
         success {
                 //当此Pipeline成功时打印消息
                 echo 'success'
+                env.TIME = ${currentBuild.duration}/1000
                 dingTalk (
                     robot: '4def1f0b-4f7c-4793-b1d0-6f5394afa257',
                     type: 'ACTION_CARD',
@@ -113,7 +114,7 @@ pipeline {
                         "- 任务: [ $BUILD_DISPLAY_NAME ](${BUILD_URL})",
                         // "- 任务: $BUILD_DISPLAY_NAME",
                         "- 状态: <font color=#52c41a>成功</font>",
-                        "- 持续时间: ${currentBuild.duration}/1000 秒",
+                        '- 持续时间: ${TIME} 秒',
                         "- 执行人：Administrator",
                     
                     ],
