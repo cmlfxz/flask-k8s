@@ -73,6 +73,7 @@ from kubernetes.client.models.v1_network_policy_ingress_rule import V1NetworkPol
 from kubernetes.client.models.v1_network_policy_peer import V1NetworkPolicyPeer
 from kubernetes.client.models.v1_network_policy_port import V1NetworkPolicyPort
 from kubernetes.client.models.v1_ip_block import V1IPBlock
+from kubernetes.client.models.v1_resource_field_selector import V1ResourceFieldSelector
 
 class MyEncoder(json.JSONEncoder):
     def default(self, obj):  
@@ -85,6 +86,11 @@ class MyEncoder(json.JSONEncoder):
             return {
                 "cidr": obj.cidr,
                 # "_except": obj._except,
+            }
+        elif isinstance(obj, V1ResourceFieldSelector):
+            return {
+                "container_name": obj.container_name,
+                "resource": obj.resource,
             }
         elif isinstance(obj, V1NetworkPolicyEgressRule):
             return {

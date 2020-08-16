@@ -1,0 +1,39 @@
+---
+apiVersion: "v1"
+kind: "Pod"
+metadata:
+  name: "jnlp-slave"
+  labels:
+    name: "jnlp-slave"
+spec:
+  imagePullSecrets:
+  - name: harborsecret 
+  containers:
+  - name: "jnlp-slave"
+    image: "myhub.mydocker.com/cnych/jenkins:jnlp7"
+    imagePullPolicy: "IfNotPresent"
+    workingDir: "/home/jenkins/agent"
+    env:
+      - name: "JENKINS_URL"
+        value: "http://jenkins.kube-ops.svc.cluster.local:8080/"
+    tty: true
+    volumeMounts:
+    - name: "docker-sock"
+      mountPath: "/var/run/docker.sock"
+      readOnly: false
+    - name: "k8s-config"
+      mountPath: "/root/.kube"
+      readOnly: false
+    - name: "workspace-volume"
+      mountPath: "/home/jenkins/agent"
+      readOnly: false
+  serviceAccount: "jenkins"
+  volumes:
+  - name: "docker-sock"
+    hosPath:
+      path: "/var/run/docker.sock"
+  - name: "k8s-config"
+    hostPath:
+      path: "/root/.kube"
+  - name: "workspace-volume"
+    emptyDir: {}
