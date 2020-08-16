@@ -2,9 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="3edec4b2-d54a-4ca3-972d-e91344879c01" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change beforePath="$PROJECT_DIR$/dev-jenkinsfile.java" afterPath="$PROJECT_DIR$/dev-jenkinsfile.java" />
-      <change beforePath="$PROJECT_DIR$/flask_k8s/k8s_decode.py" afterPath="$PROJECT_DIR$/flask_k8s/k8s_decode.py" />
+      <change beforePath="$PROJECT_DIR$/slave-pod.yaml" afterPath="$PROJECT_DIR$/slave-pod.yaml" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -139,7 +137,7 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds">
+  <component name="ProjectFrameBounds" extendedState="1">
     <option name="x" value="446" />
     <option name="width" value="1615" />
     <option name="height" value="1057" />
@@ -230,7 +228,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="446" y="0" width="1615" height="1057" extended-state="0" />
+    <frame x="446" y="0" width="1615" height="1057" extended-state="1" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.2428662" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />

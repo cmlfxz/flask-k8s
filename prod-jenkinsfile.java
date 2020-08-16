@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    agent {
+        label 'jnlp-slave'
+    }
     parameters {
         choice(
             description: '发布还是回滚，生产才有回滚操作',
@@ -69,7 +72,7 @@ pipeline {
                     extensions: [],
                     submoduleCfg: [], 
                     userRemoteConfigs: [[
-                        credentialsId: '7c6a16ea-308d-47aa-9d95-6487cc215c03',
+                        credentialsId: 'gitee_account',
                         url: "${params.URL}" ]]
                 ])
             }
