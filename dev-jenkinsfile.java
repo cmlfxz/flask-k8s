@@ -56,7 +56,7 @@ pipeline {
                     extensions: [],
                     submoduleCfg: [], 
                     userRemoteConfigs: [[
-                        credentialsId: '7c6a16ea-308d-47aa-9d95-6487cc215c03',
+                        credentialsId: 'gitee_account',
                         url: "${params.URL}" ]]
                 ])
             }

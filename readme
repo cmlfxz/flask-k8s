@@ -206,3 +206,7 @@ https://istio.io/latest/docs/concepts/traffic-management/
 8、路由(vs,dr,redirect)
 9、流量镜像
 10、链路跟踪
+
+
+1、添加agent 定义node label
+2、checkout的证书ID 换成m-s里面定义的  credentialsId: 'gitee_account',
