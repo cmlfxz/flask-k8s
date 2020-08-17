@@ -2,7 +2,23 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="3edec4b2-d54a-4ca3-972d-e91344879c01" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/k8s/prod/1.0/ab/flask-k8s-dr.yaml" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/k8s/prod/1.0/ab/flask-k8s-vs.yaml" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/k8s/prod/1.0/ab/kustomization.yaml" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/k8s/prod/1.0/ab/readme" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/k8s/prod/1.0/canary/flask-k8s-dr.yaml" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/k8s/prod/1.0/canary/flask-k8s-vs.yaml" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/k8s/prod/1.0/canary/kustomization.yaml" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/k8s/prod/1.0/configmap.yaml" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/k8s/prod/1.0/flask-k8s-deployment.yaml" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/k8s/prod/1.0/flask-k8s-service.yaml" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/k8s/prod/1.0/healthcheck_patch.yaml" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/k8s/prod/1.0/hpa.yaml" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/k8s/prod/1.0/kustomization.yaml" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/k8s/prod/1.0/readme" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/k8s/prod/1.0/rollout/flask-k8s-vs.yaml" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/k8s/prod/1.0/rollout/kustomization.yaml" />
+      <change beforePath="" afterPath="$PROJECT_DIR$/k8s/prod/1.0/sub.sh" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -13,14 +29,12 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="k8s.py" pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/flask_k8s/k8s.py">
+      <file leaf-file-name="readme" pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/k8s/prod/1.0/ab/readme">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-739">
-              <caret line="227" column="25" lean-forward="false" selection-start-line="227" selection-start-column="25" selection-end-line="227" selection-end-column="25" />
-              <folding>
-                <element signature="e#0#86#0" expanded="true" />
-              </folding>
+            <state relative-caret-position="0">
+              <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -183,22 +197,13 @@
             <path>
               <item name="flask-k8s" type="b2602c69:ProjectViewProjectNode" />
               <item name="flask-k8s" type="462c0819:PsiDirectoryNode" />
-              <item name="bak" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="flask-k8s" type="b2602c69:ProjectViewProjectNode" />
-              <item name="flask-k8s" type="462c0819:PsiDirectoryNode" />
-              <item name="flask_k8s" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="flask-k8s" type="b2602c69:ProjectViewProjectNode" />
-              <item name="flask-k8s" type="462c0819:PsiDirectoryNode" />
               <item name="k8s" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="flask-k8s" type="b2602c69:ProjectViewProjectNode" />
               <item name="flask-k8s" type="462c0819:PsiDirectoryNode" />
-              <item name="tmp" type="462c0819:PsiDirectoryNode" />
+              <item name="k8s" type="462c0819:PsiDirectoryNode" />
+              <item name="prod" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -213,17 +218,17 @@
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="G:\flask-k8s\k8s\prod" />
+      <recent name="G:\flask-k8s\bak" />
+      <recent name="G:\flask-k8s\k8s" />
+      <recent name="G:\flask-k8s\k8s\template" />
+      <recent name="G:\flask-k8s\instance" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="G:\flask-k8s\bak" />
       <recent name="G:\flask-k8s\flask_k8s" />
       <recent name="G:\flask-k8s\k8s\prod\0.1" />
-    </key>
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="G:\flask-k8s\bak" />
-      <recent name="G:\flask-k8s\k8s" />
-      <recent name="G:\flask-k8s\k8s\template" />
-      <recent name="G:\flask-k8s\k8s\prod" />
-      <recent name="G:\flask-k8s\instance" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -256,6 +261,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="2576" height="1066" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.22537431" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
@@ -264,16 +270,26 @@
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Terminal" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3290461" sideWeight="0.49842396" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.27224007" sideWeight="0.49842396" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.114683814" sideWeight="0.50157607" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Terminal" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3290461" sideWeight="0.49842396" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.22537431" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.301179" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
   <component name="VcsContentAnnotationSettings">
@@ -296,13 +312,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/k8s/dev/flask-k8s-dr.yaml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="270">
-          <caret line="10" column="10" lean-forward="true" selection-start-line="10" selection-start-column="10" selection-end-line="10" selection-end-column="10" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/k8s/dev/filebeat-configmap.yaml">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="0">
@@ -518,14 +527,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/bak/yaml/base.yaml">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="216">
-          <caret line="8" column="15" lean-forward="true" selection-start-line="8" selection-start-column="15" selection-end-line="8" selection-end-column="15" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/bak/yaml/base.yaml" />
     <entry file="file://$PROJECT_DIR$/flask_k8s/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="773">
@@ -551,7 +553,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="324">
           <caret line="87" column="13" lean-forward="true" selection-start-line="87" selection-start-column="13" selection-end-line="87" selection-end-column="13" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -559,7 +560,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="432">
           <caret line="31" column="8" lean-forward="false" selection-start-line="31" selection-start-column="2" selection-end-line="31" selection-end-column="8" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -567,7 +567,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="4431">
           <caret line="314" column="15" lean-forward="true" selection-start-line="314" selection-start-column="15" selection-end-line="314" selection-end-column="15" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -583,7 +582,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="405">
           <caret line="65" column="55" lean-forward="false" selection-start-line="65" selection-start-column="55" selection-end-line="65" selection-end-column="55" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -591,38 +589,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="449">
           <caret line="106" column="25" lean-forward="false" selection-start-line="106" selection-start-column="21" selection-end-line="106" selection-end-column="30" />
-          <folding>
-            <element signature="e#0#86#0" expanded="true" />
-            <element signature="e#1532#2083#0" expanded="false" />
-            <element signature="e#1549#2031#0" expanded="false" />
-            <element signature="e#1801#1854#0" expanded="false" />
-            <element signature="e#1889#2031#0" expanded="false" />
-            <element signature="e#2199#2468#0" expanded="false" />
-            <element signature="e#2216#2416#0" expanded="false" />
-            <element signature="e#2510#2891#0" expanded="true" />
-            <element signature="e#2929#3799#0" expanded="true" />
-            <element signature="e#3450#3776#0" expanded="false" />
-            <element signature="e#3491#3554#0" expanded="false" />
-            <element signature="e#3836#4106#0" expanded="true" />
-            <element signature="e#4479#6187#0" expanded="true" />
-            <element signature="e#7046#7372#0" expanded="true" />
-            <element signature="e#7609#7679#0" expanded="false" />
-            <element signature="e#7873#7965#0" expanded="false" />
-            <element signature="e#7916#7965#0" expanded="false" />
-            <element signature="e#8080#12192#0" expanded="true" />
-            <element signature="e#8093#8203#0" expanded="false" />
-            <element signature="e#8224#8260#0" expanded="false" />
-            <element signature="e#8679#9110#0" expanded="false" />
-            <element signature="e#8921#8989#0" expanded="false" />
-            <element signature="e#9043#9110#0" expanded="false" />
-            <element signature="e#9199#9214#0" expanded="false" />
-            <element signature="e#9634#9667#0" expanded="false" />
-            <element signature="e#10062#10138#0" expanded="false" />
-            <element signature="e#11188#11237#0" expanded="false" />
-            <element signature="e#12448#13219#0" expanded="false" />
-            <element signature="e#12471#13202#0" expanded="false" />
-            <element signature="e#12570#12577#0" expanded="false" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -659,14 +625,7 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/bak/bak_k8s.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="0">
-          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
+    <entry file="file://$PROJECT_DIR$/bak/bak_k8s.py" />
     <entry file="file://$PROJECT_DIR$/bak/build_bak1.sh">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-4091">
@@ -701,11 +660,19 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/flask_k8s/k8s.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-739">
+        <state relative-caret-position="1080">
           <caret line="227" column="25" lean-forward="false" selection-start-line="227" selection-start-column="25" selection-end-line="227" selection-end-column="25" />
           <folding>
-            <element signature="e#0#86#0" expanded="true" />
+            <element signature="e#9435#10642#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/k8s/prod/1.0/ab/readme">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
         </state>
       </provider>
     </entry>
