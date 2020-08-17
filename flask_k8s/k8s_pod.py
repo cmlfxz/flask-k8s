@@ -8,7 +8,7 @@ from .util import get_db_conn,my_decode,my_encode,str_to_int,str_to_float
 from .util import SingletonDBPool
 from .util import time_to_string,utc_to_local
 from .util import dir_path
-from .util import handle_input,handle_toleraion_seconds,string_to_int,handle_toleration_item
+from .util import handle_input,handle_toleraion_seconds,handle_toleration_item
 from .util import simple_error_handle,get_cluster_config
 from .util import handle_cpu,handle_memory,handle_disk_space
 from .k8s_op import get_event_list_by_name
@@ -475,20 +475,7 @@ def get_pod_list_by_node():
             pod_list.append(mypod)
     return json.dumps(pod_list, indent=4, cls=MyEncoder)
 
-@k8s_pod.route('/get_pod_num_by_node', methods=('GET', 'POST'))
-def get_pod_num_by_node(name):
-    # current_app.logger.debug(name)
-    if not name:
-        return simple_error_handle("必须要node name参数")
-    myclient = client.CoreV1Api()
-    # 在客户端筛选属于某个node的pod
-    pods = myclient.list_pod_for_all_namespaces(watch=False)
-    i = 0
-    for item in pods.items:
-        node_name = item.spec.node_name
-        if node_name == name:
-            i = i +1
-    return i
+
 @k8s_pod.route('/delete_pod', methods=('GET', 'POST'))
 def delete_pod():
     data = json.loads(request.get_data().decode('UTF-8'))

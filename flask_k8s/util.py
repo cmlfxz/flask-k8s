@@ -78,7 +78,7 @@ def str_to_int(str):
 def str_to_float(str):    
     return 1 if str=="" else float(str)
 
-# 处理接收的json数据，如果前端传的不是整形数据，进一步转化需要再调用str_to_int()
+# 处理接收的json数据
 def handle_input(obj):
     # print("{}数据类型{}".format(obj,type(obj)))
     if obj == None or obj=='null':
@@ -102,6 +102,7 @@ def handle_toleraion_seconds(toleration):
     else:
         return int(toleration)
 
+#deployment 处理weight还在用
 def string_to_int(string):
     print(string)
     if string == "" or string == 'null' or string== None:
