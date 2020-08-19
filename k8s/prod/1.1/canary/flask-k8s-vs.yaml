@@ -10,9 +10,13 @@ spec:
   - route:
     - destination:
         host: flask-k8s
+        port:
+            number: 8081
         subset: prod
       weight: $prod_weight
     - destination:
         host: flask-k8s
+        port:
+            number: 8081
         subset: canary
       weight: $canary_weight
