@@ -27,6 +27,14 @@ metadata:
   labels:
     app: flask-k8s
 spec:
+  minReadySeconds: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      #更新时允许最大激增的容器数
+      maxSurge: 1
+      #更新时允许最大unavailable的容器数
+      maxUnavailable: 0
   replicas: 1
   selector:
     matchLabels:
@@ -37,44 +45,6 @@ spec:
         app: flask-k8s
     spec:
       serviceAccountName: flask-k8s-sa
-      # tolerations:
-      #   - key: "key"
-      #     operator: "Exists"
-      #     effect: "NoSchedule" 
-      # tolerations:
-      #   - key: "server"
-      #     operator: "Equal"
-      #     value: "prometheus"
-      #     tolerationSeconds: 3600
-      #     effect: "NoExecute" 
-      # affinity:
-      #   podAntiAffinity:
-      #     requiredDuringSchedulingIgnoredDuringExecution:
-      #     - labelSelector:
-      #         matchExpressions:
-      #         - key: app
-      #           operator: In
-      #           values:
-      #           - flask-k8s
-      #       topologyKey: "kubernetes.io/hostname"
-      #      affinity:
-      #        nodeAffinity:
-      #          preferredDuringSchedulingIgnoredDuringExecution:
-      #          - weight: 1
-      #            preference:
-      #              matchExpressions:
-      #              - key: server
-      #                operator: In
-      #                values:
-      #                - elk
-      # nodeAffinity:
-      #   requiredDuringSchedulingIgnoredDuringExecution:
-      #   nodeSelectorTerms:
-      #   - matchExpressions:
-      #     - key: server
-      #       operator: In
-      #       values:
-      #       - elk
       affinity:
         podAntiAffinity:
           preferredDuringSchedulingIgnoredDuringExecution:
