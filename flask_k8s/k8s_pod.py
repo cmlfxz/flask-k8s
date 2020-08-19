@@ -155,8 +155,8 @@ def get_pod_usage_by_name(namespace,name):
 
 
 #pod详情页
-@k8s_pod.route('/get_pod_detail_by_name', methods=('GET', 'POST'))
-def get_pod_detail_by_name():
+@k8s_pod.route('/get_pod_detail', methods=('GET', 'POST'))
+def get_pod_detail():
     data = json.loads(request.get_data().decode("utf-8"))
     current_app.logger.debug("收到的数据:{}".format(data))
     namespace = handle_input(data.get("namespace"))

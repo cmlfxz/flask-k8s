@@ -59,34 +59,6 @@ def set_k8s_config(cluster_config):
         #这里需要一个文件
         config.load_kube_config(config_file=tmp_filename)
 
-@k8s_deployment.route('/create_deploy_by_yaml', methods=('GET', 'POST'))
-def create_deploy_by_yaml():
-    if request.method == "POST":
-        data = request.get_data()
-        json_data = json.loads(data.decode("utf-8"))
-        yaml_name = json_data.get("yaml_name")
-        if yaml_name == None or yaml_name == "":
-            msg = "需要提供yaml文件"
-            return jsonify({"error": "1001", "msg": msg})
-        yaml_dir = os.path.join(dir_path, "yaml")
-        file_path = os.path.join(yaml_dir, yaml_name)
-        if not os.path.exists(file_path):
-            msg = "找不到此文件{}".format(file_path)
-            return jsonify({"error": "1001", "msg": msg})
-
-        with open(file_path, encoding='utf-8') as f:
-            cfg = f.read()
-            obj = yaml.safe_load(cfg)  # 用load方法转字典
-            try:
-                myclient = client.AppsV1Api()
-                resp = myclient.create_namespaced_deployment(body=obj, namespace="default")
-                # print(resp)
-                print("Deployment created. name='%s' " % resp.metadata.name)
-            except ApiException as e:
-                return make_response(json.dumps({"error": "1001", "msg": str(e)}, indent=4, cls=MyEncoder), 1001)
-
-    return jsonify({"msg": "创建deployment成功"})
-
 def create_deployment_object(name=None,namespace=None,image=None,port=None,image_pull_policy=None,\
     imagePullSecret=None,labels=None,replicas=None,cpu=None,memory=None,liveness_probe=None,readiness_probe=None):
     #configure pod template container
@@ -854,8 +826,8 @@ def get_hpa_by_deployment_name(namespace,deploy_name):
             break
     return hpa
 
-@k8s_deployment.route('/get_deployment_detail_by_name', methods=('GET', 'POST'))
-def get_deployment_detail_by_name():
+@k8s_deployment.route('/get_deployment_detail', methods=('GET', 'POST'))
+def get_deployment_detail():
     data = json.loads(request.get_data().decode("utf-8"))
     current_app.logger.debug("收到的数据:{}".format(data))
     namespace = handle_input(data.get("namespace"))

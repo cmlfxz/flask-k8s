@@ -257,8 +257,8 @@ def get_configmap_list():
     # return jsonify({'a':1})
     
 
-@k8s.route('/get_cm_detail_by_name',methods=('GET','POST'))        
-def get_cm_detail_by_name():
+@k8s.route('/get_cm_detail',methods=('GET','POST'))        
+def get_cm_detail():
     data = json.loads(request.get_data().decode("utf-8"))
     current_app.logger.debug("收到的数据:{}".format(data))
     namespace =  handle_input(data.get("namespace"))
@@ -325,8 +325,8 @@ def get_secret_list():
         i = i +1
     return json.dumps(secret_list,indent=4,cls=MyEncoder)
 
-@k8s.route('/get_secret_detail_by_name',methods=('GET','POST'))        
-def get_secret_detail_by_name():
+@k8s.route('/get_secret_detail',methods=('GET','POST'))        
+def get_secret_detail():
     data = json.loads(request.get_data().decode("utf-8"))
     current_app.logger.debug("收到的数据:{}".format(data))
     namespace =  handle_input(data.get("namespace"))
@@ -553,9 +553,6 @@ def get_pv_list():
 #列出pvc
 @k8s.route('/get_pvc_list',methods=('GET','POST'))
 def get_pvc_list():
-    
-    # myclient = client.CoreV1Api()
-    # pvcs = myclient.list_persistent_volume_claim_for_all_namespaces()
     data = json.loads(request.get_data().decode("utf-8"))
     namespace = data.get("namespace").strip()
     myclient = client.CoreV1Api()
@@ -584,10 +581,17 @@ def get_pvc_list():
             # status = pvc.status
             phase = pvc.status.phase
             # volume_binding_mode = pvc.volume_binding_mode
-            mypvc = {"name":name,"pv":volume_name,"status":phase,"capacity":capacity,"resources":resources,"namespace":namespace,\
-                    "access_modes":access_modes,"storage_class_name":storage_class_name,"create_time":create_time}   
-
-            pvc_list.append(mypvc) 
+            my_pvc = {}
+            my_pvc["name"] = name
+            my_pvc["namespace"] = namespace
+            my_pvc["pv"] = volume_name
+            my_pvc["status"] = phase
+            my_pvc["capacity"] = capacity
+            my_pvc["resources"] = resources
+            my_pvc["access_modes"] = access_modes
+            my_pvc["storage_class_name"] = storage_class_name
+            my_pvc["create_time"] = create_time
+            pvc_list.append(my_pvc)
         i = i +1
     return json.dumps(pvc_list,indent=4,cls=MyEncoder)
 
@@ -719,27 +723,27 @@ def get_ingress_list():
         i = i +1
     return json.dumps(ingress_list,indent=4,cls=MyEncoder)
 
-@k8s.route('/get_virtualservice_name_list',methods=('GET','POST'))
-def get_virtualservice_name_list():
-    data = json.loads(request.get_data().decode("utf-8"))
-    namespace = data.get("namespace").strip()
-    myclient = client.CustomObjectsApi()
-    # print(namespace)
-    if namespace == "" or namespace == "all": 
-        virtualservices = myclient.list_cluster_custom_object(group="networking.istio.io",
-                                                          version="v1alpha3",
-                                                          plural="virtualservices")
-    else:
-        virtualservices = myclient.list_namespaced_custom_object(group="networking.istio.io",
-                                                          version="v1alpha3",
-                                                          plural="virtualservices",
-                                                          namespace=namespace)
-    print(type(virtualservices['items']))
-    virtualservice_names = []
-    for virtualservice in virtualservices['items']:
-        name = virtualservice['metadata']['name']
-        virtualservice_names.append(name)
-    return json.dumps(virtualservice_names)
+# @k8s.route('/get_virtualservice_name_list',methods=('GET','POST'))
+# def get_virtualservice_name_list():
+#     data = json.loads(request.get_data().decode("utf-8"))
+#     namespace = data.get("namespace").strip()
+#     myclient = client.CustomObjectsApi()
+#     # print(namespace)
+#     if namespace == "" or namespace == "all": 
+#         virtualservices = myclient.list_cluster_custom_object(group="networking.istio.io",
+#                                                           version="v1alpha3",
+#                                                           plural="virtualservices")
+#     else:
+#         virtualservices = myclient.list_namespaced_custom_object(group="networking.istio.io",
+#                                                           version="v1alpha3",
+#                                                           plural="virtualservices",
+#                                                           namespace=namespace)
+#     print(type(virtualservices['items']))
+#     virtualservice_names = []
+#     for virtualservice in virtualservices['items']:
+#         name = virtualservice['metadata']['name']
+#         virtualservice_names.append(name)
+#     return json.dumps(virtualservice_names)
 
 @k8s.route('/get_hpa_list',methods=('GET','POST'))
 def get_hpa_list():
