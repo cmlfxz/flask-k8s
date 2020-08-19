@@ -26,18 +26,15 @@ metadata:
   name: flask-k8s
   labels:
     app: flask-k8s
-    version: v1
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: flask-k8s 
-      version: v1
   template:
     metadata:
       labels:
         app: flask-k8s
-        version: v1
     spec:
       serviceAccountName: flask-k8s-sa
       # tolerations:
@@ -98,6 +95,13 @@ spec:
         imagePullPolicy: Always
         ports:
         - containerPort: 8082
+        resources:
+          limits:
+            cpu: 300m
+            memory: 300Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
         volumeMounts:
         - name: log
           mountPath: /opt/microservices/logs
@@ -114,6 +118,7 @@ spec:
         ]
         resources:
           limits:
+            cpu: 300m
             memory: 300Mi
           requests:
             cpu: 100m
@@ -121,15 +126,13 @@ spec:
         securityContext:
           runAsUser: 0
         volumeMounts:
-        # #挂载filebeat.yml(在configmap中)
+        # 挂载filebeat.yml(在configmap中)
         - name: filebeat-config
           mountPath: /etc/filebeat.yml
           subPath: filebeat.yml
         - name: log
           mountPath: /opt/microservices/logs
       volumes:
-      # - name: log
-      #   emptyDir: {}
       # - name: log
       #   persistentVolumeClaim:
       #     claimName: flask-k8s-pvc

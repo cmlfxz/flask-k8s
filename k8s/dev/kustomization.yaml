@@ -3,8 +3,8 @@ resources:
 # - namespace.yaml
 - flask-k8s-deployment.yaml
 # - flask-k8s-pvc.yaml
-- flask-k8s-vs.yaml
-- flask-k8s-dr.yaml
+# - flask-k8s-vs.yaml
+# - flask-k8s-dr.yaml
 # - hpa.yaml
 - configmap.yaml
 - filebeat-configmap.yaml
