@@ -10,7 +10,6 @@ spec:
   - route:
     - destination:
         host: flask-k8s
-        subset: v1
     # timeout: 5s
     # retries:
     #   attempts: 5
