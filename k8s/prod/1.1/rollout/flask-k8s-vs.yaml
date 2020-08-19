@@ -11,12 +11,12 @@ spec:
     - destination:
         host: flask-k8s
         port:
-            number: 8081
+            number: 8082
         subset: prod
       weight: 100
     - destination:
         host: flask-k8s
         port:
-            number: 8081
+            number: 8082
         subset: canary
       weight: 0
