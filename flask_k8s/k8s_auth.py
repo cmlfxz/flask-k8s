@@ -33,6 +33,7 @@ def load_header():
         pass
     if request.method == 'POST':
         try:
+            current_app.logger.debug("headers:{}".format(request.headers))
             cluster_name = request.headers.get('cluster_name').strip()
             # print("load_header: 集群名字:{}".format(cluster_name))
             if cluster_name == None:
@@ -42,6 +43,13 @@ def load_header():
                 g.cluster_name = cluster_name
                 cluster_config = get_cluster_config(cluster_name)
                 set_k8s_config(cluster_config)
+        except Exception as e:
+            print(e)
+    if request.method == "GET":
+        try:
+            current_app.logger.debug("headers:{}".format(request.headers))
+            # cluster_name = request.headers.get('cluster_name').strip()
+            # print("load_header: 集群名字:{}".format(cluster_name))
         except Exception as e:
             print(e)
 
