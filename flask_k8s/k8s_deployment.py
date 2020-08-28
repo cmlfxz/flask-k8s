@@ -19,45 +19,45 @@ from kubernetes.client.models.v1_namespace import V1Namespace
 k8s_deployment = Blueprint('k8s_deployment',__name__,url_prefix='/api/k8s/deployment')
 CORS(k8s_deployment, supports_credentials=True, resources={r'/*'})
 
-@k8s_deployment.after_request
-def after(resp):
-    # print("after is called,set cross")
-    resp = make_response(resp)
-    resp.headers['Access-Control-Allow-Origin'] = '*'
-    resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
-    resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name,user,user_id'
-    return resp
-
-@k8s_deployment.before_app_request
-def load_header():
-    if request.method == 'OPTIONS':
-        pass
-    if request.method == 'POST':
-        try:
-            cluster_name = request.headers.get('cluster_name')
-            user = request.headers.get('user')
-            print("集群名字:{},user:{}".format(cluster_name,user))
-            if cluster_name == None:
-                print("没有设置cluster_name header")
-                pass
-            else:
-                g.cluster_name = cluster_name
-                cluster_config = get_cluster_config(cluster_name)
-                set_k8s_config(cluster_config)
-        except Exception as e:
-            print(e)
-
-def set_k8s_config(cluster_config):
-    if cluster_config == None:
-        print("获取不到集群配置")
-    else:
-        cluster_config  = my_decode(cluster_config)
-        # print("集群配置: \n{}".format(cluster_config))
-        tmp_filename = "kubeconfig"
-        with open(tmp_filename,'w+',encoding='UTF-8') as file:
-            file.write(cluster_config)
-        #这里需要一个文件
-        config.load_kube_config(config_file=tmp_filename)
+# @k8s_deployment.after_request
+# def after(resp):
+#     # print("after is called,set cross")
+#     resp = make_response(resp)
+#     resp.headers['Access-Control-Allow-Origin'] = '*'
+#     resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
+#     resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name,user,user_id'
+#     return resp
+#
+# @k8s_deployment.before_request
+# def load_header():
+#     if request.method == 'OPTIONS':
+#         pass
+#     if request.method == 'POST':
+#         try:
+#             cluster_name = request.headers.get('cluster_name')
+#             user = request.headers.get('user')
+#             print("deployment 集群名字:{},user:{}".format(cluster_name,user))
+#             if cluster_name == None:
+#                 print("没有设置cluster_name header")
+#                 pass
+#             else:
+#                 g.cluster_name = cluster_name
+#                 cluster_config = get_cluster_config(cluster_name)
+#                 set_k8s_config(cluster_config)
+#         except Exception as e:
+#             print(e)
+#
+# def set_k8s_config(cluster_config):
+#     if cluster_config == None:
+#         print("获取不到集群配置")
+#     else:
+#         cluster_config  = my_decode(cluster_config)
+#         # print("集群配置: \n{}".format(cluster_config))
+#         tmp_filename = "kubeconfig"
+#         with open(tmp_filename,'w+',encoding='UTF-8') as file:
+#             file.write(cluster_config)
+#         #这里需要一个文件
+#         config.load_kube_config(config_file=tmp_filename)
 
 def create_deployment_object(name=None,namespace=None,image=None,port=None,image_pull_policy=None,\
     imagePullSecret=None,labels=None,replicas=None,cpu=None,memory=None,liveness_probe=None,readiness_probe=None):

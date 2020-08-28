@@ -18,10 +18,7 @@ k8s = Blueprint('k8s',__name__,url_prefix='/api/k8s')
 
 CORS(k8s, supports_credentials=True, resources={r'/*'})
 
-# from flask_opentracing import FlaskTracer
-# from .util import init_tracer
-# tracing = FlaskTracer(tracer=init_tracer('flask-k8s.ms-dev'))
-@k8s.after_request
+@k8s.after_app_request
 def after(resp):
     # print("after is called,set cross")
     resp = make_response(resp)
@@ -29,14 +26,6 @@ def after(resp):
     resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
     resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name,user,user_id,X-B3-TraceId,X-B3-SpanId,X-B3-Sampled'
     return resp
-
-def takename(e):
-    return e['name']
-def takeCreateTime(elem):
-    return elem['create_time']
-
-def format_float(num):
-    return  float("%.2f" % num)
 
 @k8s.before_app_request
 def load_header():
@@ -47,7 +36,7 @@ def load_header():
         try:
             # current_app.logger.debug("headers:{}".format(request.headers))
             cluster_name = request.headers.get('cluster_name').strip()
-            print("load_header: 集群名字:{}".format(cluster_name))
+            print("k8s load_header: 集群名字:{}".format(cluster_name))
             if cluster_name == None:
                 print("没有设置cluster_name header")
                 pass
@@ -70,13 +59,22 @@ def set_k8s_config(cluster_config):
     if cluster_config == None:
         print("获取不到集群配置")
     else:
-        cluster_config  = my_decode(cluster_config)
+        cluster_config = my_decode(cluster_config)
         # print("集群配置: \n{}".format(cluster_config))
         tmp_filename = "kubeconfig"
-        with open(tmp_filename,'w+',encoding='UTF-8') as file:
+        with open(tmp_filename, 'w+', encoding='UTF-8') as file:
             file.write(cluster_config)
-        #这里需要一个文件
+        # 这里需要一个文件
         config.load_kube_config(config_file=tmp_filename)
+
+def takename(e):
+    return e['name']
+def takeCreateTime(elem):
+    return elem['create_time']
+
+def format_float(num):
+    return  float("%.2f" % num)
+
 
 @k8s.route('/get_api_version',methods=['GET','POST'])
 def get_api_version():
@@ -111,7 +109,6 @@ def get_namespace_list():
     # return json.dumps(namespace_list,default=lambda obj: obj.__dict__,sort_keys=True,indent=4)
 
 @k8s.route('/get_namespace_name_list',methods=('GET','POST'))
-# @tracing.trace()
 def get_namespace_name_list():
     # current_app.logger.debug("get_namespace_name_list接收到的header:{}".format(request.headers))
     myclient = client.CoreV1Api()

@@ -18,52 +18,52 @@ k8s_auth = Blueprint('k8s_auth',__name__,url_prefix='/api/k8s/auth')
 
 CORS(k8s_auth, supports_credentials=True, resources={r'/*'})
 
-@k8s_auth.after_request
-def after(resp):
-    # print("after is called,set cross")
-    resp = make_response(resp)
-    resp.headers['Access-Control-Allow-Origin'] = '*'
-    resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
-    resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name,user,user_id'
-    return resp
-
-@k8s_auth.before_app_request
-def load_header():
-    if request.method == 'OPTIONS':
-        pass
-    if request.method == 'POST':
-        try:
-            current_app.logger.debug("headers:{}".format(request.headers))
-            cluster_name = request.headers.get('cluster_name').strip()
-            # print("load_header: 集群名字:{}".format(cluster_name))
-            if cluster_name == None:
-                print("没有设置cluster_name header")
-                pass
-            else:
-                g.cluster_name = cluster_name
-                cluster_config = get_cluster_config(cluster_name)
-                set_k8s_config(cluster_config)
-        except Exception as e:
-            print(e)
-    if request.method == "GET":
-        try:
-            current_app.logger.debug("headers:{}".format(request.headers))
-            # cluster_name = request.headers.get('cluster_name').strip()
-            # print("load_header: 集群名字:{}".format(cluster_name))
-        except Exception as e:
-            print(e)
-
-def set_k8s_config(cluster_config):
-    if cluster_config == None:
-        print("获取不到集群配置")
-    else:
-        cluster_config  = my_decode(cluster_config)
-        # print("集群配置: \n{}".format(cluster_config))
-        tmp_filename = "kubeconfig"
-        with open(tmp_filename,'w+',encoding='UTF-8') as file:
-            file.write(cluster_config)
-        #这里需要一个文件
-        config.load_kube_config(config_file=tmp_filename)
+# @k8s_auth.after_request
+# def after(resp):
+#     # print("after is called,set cross")
+#     resp = make_response(resp)
+#     resp.headers['Access-Control-Allow-Origin'] = '*'
+#     resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
+#     resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name,user,user_id'
+#     return resp
+#
+# @k8s_auth.before_request
+# def load_header():
+#     if request.method == 'OPTIONS':
+#         pass
+#     if request.method == 'POST':
+#         try:
+#             # current_app.logger.debug("headers:{}".format(request.headers))
+#             cluster_name = request.headers.get('cluster_name').strip()
+#             print("auth load_header: 集群名字:{}".format(cluster_name))
+#             if cluster_name == None:
+#                 print("没有设置cluster_name header")
+#                 pass
+#             else:
+#                 g.cluster_name = cluster_name
+#                 cluster_config = get_cluster_config(cluster_name)
+#                 set_k8s_config(cluster_config)
+#         except Exception as e:
+#             print(e)
+#     if request.method == "GET":
+#         try:
+#             current_app.logger.debug("headers:{}".format(request.headers))
+#             # cluster_name = request.headers.get('cluster_name').strip()
+#             # print("load_header: 集群名字:{}".format(cluster_name))
+#         except Exception as e:
+#             print(e)
+#
+# def set_k8s_config(cluster_config):
+#     if cluster_config == None:
+#         print("获取不到集群配置")
+#     else:
+#         cluster_config  = my_decode(cluster_config)
+#         # print("集群配置: \n{}".format(cluster_config))
+#         tmp_filename = "kubeconfig"
+#         with open(tmp_filename,'w+',encoding='UTF-8') as file:
+#             file.write(cluster_config)
+#         #这里需要一个文件
+#         config.load_kube_config(config_file=tmp_filename)
 
 @k8s_auth.route('get_service_account_list',methods=('GET','POST'))
 def get_service_account_list():

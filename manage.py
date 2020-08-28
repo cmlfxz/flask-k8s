@@ -8,6 +8,7 @@ from flask_k8s import create_app
 
 app = create_app()
 manager = Manager(app)
+
 # migrate = Migrate(app,models.db)
 
 #python manager.py server  取代runserver
