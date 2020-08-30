@@ -715,6 +715,7 @@ def get_deployment_name_list():
         deployment_names.append(name)
     return json.dumps(deployment_names)
 
+
 def create_single_deployment_object(deployment):
     meta = deployment.metadata
     deployment_name = meta.name
@@ -856,3 +857,25 @@ def get_deployment_detail():
     event_list = get_event_list_by_name(namespace=namespace, input_kind="Deployment", input_name=deployment_name)
     mydeployment["event_list"] = event_list
     return json.dumps(mydeployment,indent=4,cls=MyEncoder)
+
+
+@k8s_deployment.route('/get_deployment_toleration', methods=('GET', 'POST'))
+def get_deployment_toleration():
+    data = json.loads(request.get_data().decode("utf-8"))
+    current_app.logger.debug("收到的数据:{}".format(data))
+    namespace = handle_input(data.get("namespace"))
+    deployment_name = handle_input(data.get('name'))
+    myclient = client.AppsV1Api()
+    field_selector = "metadata.name={}".format(deployment_name)
+    deployments = myclient.list_namespaced_deployment(namespace=namespace, field_selector=field_selector)
+    deployment = None
+    print("items长度:{}".format(len(deployments.items)))
+    if(len(deployments.items)==1):
+        deployment=deployments.items[0]
+    if deployment == None:
+        return simple_error_handle("找不到deployment相关信息")
+    tolerations = deployment.spec.template.spec.tolerations
+    return json.dumps(deployment.spec.template.spec.tolerations,indent=4,cls=MyEncoder)
+
+
+
