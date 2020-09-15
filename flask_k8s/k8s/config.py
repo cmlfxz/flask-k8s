@@ -10,11 +10,11 @@ from kubernetes.client.rest import ApiException
 
 
 # 导入蓝图
-from flask_k8s.config import config
+from flask_k8s.k8s import k8s
 
 
 
-@config.route('/get_configmap_list',methods=('GET','POST'))
+@k8s.route('/get_configmap_list',methods=('GET','POST'))
 def get_configmap_list():  
     # myclient = client.AppsV1Api()
     # configmaps = myclient.list_namespaced_config_map(namespace="ms-prod")
@@ -47,7 +47,7 @@ def get_configmap_list():
     # return jsonify({'a':1})
     
 
-@config.route('/get_cm_detail',methods=('GET','POST'))        
+@k8s.route('/get_cm_detail',methods=('GET','POST'))        
 def get_cm_detail():
     data = json.loads(request.get_data().decode("utf-8"))
     current_app.logger.debug("收到的数据:{}".format(data))
@@ -85,7 +85,7 @@ def get_cm_detail():
     return json.dumps(mycm,indent=4,cls=MyEncoder)
 
 #列出namespace
-@config.route('/get_secret_list',methods=('GET','POST'))
+@k8s.route('/get_secret_list',methods=('GET','POST'))
 def get_secret_list():
     data = json.loads(request.get_data().decode("utf-8"))
     namespace = data.get("namespace").strip()
@@ -115,7 +115,7 @@ def get_secret_list():
         i = i +1
     return json.dumps(secret_list,indent=4,cls=MyEncoder)
 
-@config.route('/get_secret_detail',methods=('GET','POST'))        
+@k8s.route('/get_secret_detail',methods=('GET','POST'))        
 def get_secret_detail():
     data = json.loads(request.get_data().decode("utf-8"))
     current_app.logger.debug("收到的数据:{}".format(data))
@@ -167,7 +167,7 @@ def get_secret_detail():
     return json.dumps(mysecret,indent=4,cls=MyEncoder)
 
 
-@config.route('/delete_configmap',methods=('GET','POST'))
+@k8s.route('/delete_configmap',methods=('GET','POST'))
 def delete_configmap():
     data = json.loads(request.get_data().decode("utf-8"))
     current_app.logger.debug("接收到的数据:{}".format(data))
@@ -186,7 +186,7 @@ def delete_configmap():
         return jsonify({'error': '删除configmap异常',"msg":msg})
     return jsonify({"ok":"删除成功"})
 
-@config.route('/delete_secret', methods=('GET', 'POST'))
+@k8s.route('/delete_secret', methods=('GET', 'POST'))
 def delete_secret():
     data = json.loads(request.get_data().decode("utf-8"))
     current_app.logger.debug("接收到的数据:{}".format(data))

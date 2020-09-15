@@ -9,10 +9,10 @@ from kubernetes.client.rest import ApiException
 from kubernetes.client.models.v1_namespace import V1Namespace
 
 # 导入蓝图
-from flask_k8s.cluster import cluster
+from flask_k8s.k8s import k8s
 
 #列出namespace
-@cluster.route('/get_namespace_list',methods=('GET','POST'))
+@k8s.route('/get_namespace_list',methods=('GET','POST'))
 def get_namespace_list():
     myclient = client.CoreV1Api()
     namespace_list = []
@@ -26,7 +26,7 @@ def get_namespace_list():
     return json.dumps(namespace_list,indent=4)
     # return json.dumps(namespace_list,default=lambda obj: obj.__dict__,sort_keys=True,indent=4)
 
-@cluster.route('/get_namespace_name_list',methods=('GET','POST'))
+@k8s.route('/get_namespace_name_list',methods=('GET','POST'))
 def get_namespace_name_list():
     # current_app.logger.debug("get_namespace_name_list接收到的header:{}".format(request.headers))
     myclient = client.CoreV1Api()
@@ -64,7 +64,7 @@ def create_namespace_resource(name,labels=None):
             
         return jsonify({'ok': '创建成功'})
 
-@cluster.route('/create_namespace', methods=('GET', 'POST'))
+@k8s.route('/create_namespace', methods=('GET', 'POST'))
 def create_namespace():
     data = json.loads(request.get_data().decode('utf-8'))
     # {"project_name": "ms", "env_name": "dev", "cluster_name": "k8s_c1", "istio_inject": "on"}
@@ -93,7 +93,7 @@ def get_namespace_by_name(name):
             break
     return namespace
 
-@cluster.route('/update_namespace', methods=('GET', 'POST'))
+@k8s.route('/update_namespace', methods=('GET', 'POST'))
 def update_namespace():
     # {"name": name, "labels": labels, "action": "remove_istio_inject"}
     data = json.loads(request.get_data().decode('utf-8'))
@@ -130,7 +130,7 @@ def update_namespace():
         return jsonify({"error":"更新命名空间出现异常"})
     return jsonify({"ok":"更新命名空间成功"})
 
-@cluster.route('/delete_namespace', methods=('GET', 'POST'))
+@k8s.route('/delete_namespace', methods=('GET', 'POST'))
 def delete_namespace():
     data = json.loads(request.get_data().decode('utf-8'))
     name  = handle_input(data.get('name'))

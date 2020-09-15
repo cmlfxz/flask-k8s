@@ -9,20 +9,20 @@ import re
 import os
 
 # from .k8s import k8s
-from .k8s_pod import k8s_pod
-from .k8s_deployment import k8s_deployment
-from .k8s_auth import k8s_auth
+# from .k8s_pod import k8s_pod
+# from .k8s_deployment import k8s_deployment
+# from .k8s_auth import k8s_auth
 
 from concurrent_log_handler import ConcurrentRotatingFileHandler
 
-from flask_k8s.storage import storage
-from flask_k8s.config import config
-from flask_k8s.task import task
-from flask_k8s.workload import workload
-# from flask_k8s.service import service
-from flask_k8s.security import security
-from flask_k8s.cluster import cluster
-from flask_k8s.istio import istio
+# from flask_k8s.storage import storage
+# from flask_k8s.config import config
+# from flask_k8s.task import task
+# from flask_k8s.workload import workload
+# # from flask_k8s.service import service
+# from flask_k8s.security import security
+# from flask_k8s.cluster import cluster
+# from flask_k8s.istio import istio
 from flask_k8s.k8s import k8s
 
 from flask_cors import *
@@ -150,19 +150,19 @@ def create_app():
 
     # 加载蓝图
     # app.register_blueprint(k8s)
-    app.register_blueprint(k8s_deployment)
-    app.register_blueprint(k8s_pod)
-    app.register_blueprint(k8s_auth)
+    # app.register_blueprint(k8s_deployment)
+    # app.register_blueprint(k8s_pod)
+    # app.register_blueprint(k8s_auth)
     
-    app.register_blueprint(storage)
-    app.register_blueprint(config)
-    app.register_blueprint(task)
-    app.register_blueprint(workload)
+    # app.register_blueprint(storage)
+    # app.register_blueprint(config)
+    # app.register_blueprint(task)
+    # app.register_blueprint(workload)
     # app.register_blueprint(service)
     app.register_blueprint(k8s)
-    app.register_blueprint(security)
-    app.register_blueprint(cluster)
-    app.register_blueprint(istio)
+    # app.register_blueprint(security)
+    # app.register_blueprint(cluster)
+    # app.register_blueprint(istio)
     # app.add_url_rule('/',endpoint='index')
 
     # 调试信息

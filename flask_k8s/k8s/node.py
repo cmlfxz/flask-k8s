@@ -8,7 +8,7 @@ from kubernetes import client,config
 from kubernetes.client.rest import ApiException
 
 # 导入蓝图
-from flask_k8s.cluster import cluster
+from flask_k8s.k8s import k8s
 
 
 # @k8s_op.route('/get_node_by_name', methods=('GET', 'POST'))
@@ -28,7 +28,7 @@ def get_node_by_name(name=None):
             break
     return node
 
-@cluster.route('/update_node', methods=('GET', 'POST'))
+@k8s.route('/update_node', methods=('GET', 'POST'))
 def update_node():
     data=json.loads(request.get_data().decode('utf-8'))
     print("update_node接收到的数据是{}".format(data))

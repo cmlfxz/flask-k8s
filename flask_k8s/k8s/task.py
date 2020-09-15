@@ -10,9 +10,9 @@ from kubernetes.client.rest import ApiException
 # from kubernetes.client.models.v1_namespace import V1Namespace
 
 # 导入蓝图
-from flask_k8s.task import task
+from flask_k8s.k8s import k8s
 
-@task.route('/get_job_list',methods=('GET','POST'))
+@k8s.route('/get_job_list',methods=('GET','POST'))
 def get_job_list():
     data = json.loads(request.get_data().decode("utf-8"))
     namespace = data.get("namespace").strip()
@@ -49,7 +49,7 @@ def get_job_list():
     return json.dumps(job_list,indent=4,cls=MyEncoder)
 
 #列出job
-@task.route('/get_cronjob_list',methods=('GET','POST'))
+@k8s.route('/get_cronjob_list',methods=('GET','POST'))
 def get_cronjob_list():
     data = json.loads(request.get_data().decode("utf-8"))
     namespace = data.get("namespace").strip()
@@ -89,7 +89,7 @@ def get_cronjob_list():
 
 
 
-@task.route('/delete_job', methods=('GET', 'POST'))
+@k8s.route('/delete_job', methods=('GET', 'POST'))
 def delete_job():
     data = json.loads(request.get_data().decode('utf-8'))
     name  = handle_input(data.get('name'))
@@ -105,7 +105,7 @@ def delete_job():
         return jsonify({'error': '删除job异常',"msg":msg})
     return jsonify({"ok":"删除成功"})
 
-@task.route('/delete_cronjob', methods=('GET', 'POST'))
+@k8s.route('/delete_cronjob', methods=('GET', 'POST'))
 def delete_cronjob():
     data = json.loads(request.get_data().decode('utf-8'))
     name  = handle_input(data.get('name'))

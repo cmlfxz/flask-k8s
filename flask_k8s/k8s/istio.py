@@ -9,10 +9,10 @@ from kubernetes.client.rest import ApiException
 
 
 # 导入蓝图
-from flask_k8s.istio import istio
+from flask_k8s.k8s import k8s
 
 # 列出gateway
-@istio.route('/get_gateway_list', methods=('GET', 'POST'))
+@k8s.route('/get_gateway_list', methods=('GET', 'POST'))
 def get_gateway_list():
     # myclient = client.CustomObjectsApi()
     # obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="gateways")
@@ -63,7 +63,7 @@ def get_gateway_list():
     return json.dumps(gateway_list, indent=4, cls=MyEncoder)
 
 # 列出vs
-@istio.route('/get_virtual_service_list', methods=('GET', 'POST'))
+@k8s.route('/get_virtual_service_list', methods=('GET', 'POST'))
 def get_virtual_service_list():
     # myclient = client.CustomObjectsApi()
     # obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="virtualservices")
@@ -154,7 +154,7 @@ def update_virtual_service(vs_name, namespace, prod_weight, canary_weight):
 
     return jsonify({"update_status": status})
 
-@istio.route('/update_vs', methods=('GET', 'POST'))
+@k8s.route('/update_vs', methods=('GET', 'POST'))
 def update_vs():
     data = json.loads(request.get_data().decode('UTF-8'))
     print("接受到的数据:{}".format(data))
@@ -169,7 +169,7 @@ def update_vs():
                                   canary_weight=canary_weight)
 
 
-@istio.route('/delete_vs', methods=('GET', 'POST'))
+@k8s.route('/delete_vs', methods=('GET', 'POST'))
 def delete_vs():
     data = json.loads(request.get_data().decode('utf-8'))
     name  = handle_input(data.get('virtual_service_name'))
@@ -190,7 +190,7 @@ def delete_vs():
         return jsonify({'error': '删除vs异常',"msg":msg})
     return jsonify({"ok":"删除成功"})
 
-@istio.route('/get_destination_rule_list', methods=('GET', 'POST'))
+@k8s.route('/get_destination_rule_list', methods=('GET', 'POST'))
 def get_destination_rule_list():
     # myclient = client.CustomObjectsApi()
     # obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="destinationrules")

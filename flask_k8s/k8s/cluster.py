@@ -10,7 +10,7 @@ from kubernetes.client.rest import ApiException
 
 
 # 导入蓝图
-from flask_k8s.cluster import cluster
+from flask_k8s.k8s import k8s
 
 def takename(e):
     return e['name']

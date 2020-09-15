@@ -10,9 +10,9 @@ from kubernetes.client.rest import ApiException
 # from kubernetes.client.models.v1_namespace import V1Namespace
 
 # 导入蓝图
-from flask_k8s.storage import storage
+from flask_k8s.k8s import k8s
 #列出storageclass
-@storage.route('/get_storageclass_list',methods=('GET','POST'))
+@k8s.route('/get_storageclass_list',methods=('GET','POST'))
 def get_storageclass_list():
     myclient = client.StorageV1Api()
     storageclasss = myclient.list_storage_class()
@@ -39,7 +39,7 @@ def get_storageclass_list():
     return json.dumps(storageclass_list,indent=4,cls=MyEncoder)
 
 #列出pv
-@storage.route('/get_pv_list',methods=('GET','POST'))
+@k8s.route('/get_pv_list',methods=('GET','POST'))
 def get_pv_list():
     myclient = client.CoreV1Api()
     pvs = myclient.list_persistent_volume()
@@ -110,7 +110,7 @@ def get_pv_list():
     return json.dumps(pv_list,indent=4,cls=MyEncoder)
 
 #列出pvc
-@storage.route('/get_pvc_list',methods=('GET','POST'))
+@k8s.route('/get_pvc_list',methods=('GET','POST'))
 def get_pvc_list():
     data = json.loads(request.get_data().decode("utf-8"))
     namespace = data.get("namespace").strip()
@@ -194,7 +194,7 @@ def create_pv_object(name,**kwargs):
         spec=spec)
     return pv
 
-@storage.route('/create_pv',methods=('GET','POST'))
+@k8s.route('/create_pv',methods=('GET','POST'))
 def create_pv():
     data = json.loads(request.get_data().decode("utf-8"))
     current_app.logger.debug("接收到的数据:{}".format(data))
@@ -221,7 +221,7 @@ def create_pv():
     return jsonify({"ok":"创建pv成功"})
 
 
-@storage.route('/delete_pv', methods=('GET', 'POST'))
+@k8s.route('/delete_pv', methods=('GET', 'POST'))
 def delete_pv():
     data = json.loads(request.get_data().decode('utf-8'))
     name  = handle_input(data.get('name'))
@@ -236,7 +236,7 @@ def delete_pv():
         return jsonify({'error': '删除PVC异常',"msg":msg})
     return jsonify({"ok":"删除成功"})
 
-@storage.route('/delete_multi_pv', methods=('GET', 'POST'))
+@k8s.route('/delete_multi_pv', methods=('GET', 'POST'))
 def delete_multi_pv():
     data = json.loads(request.get_data().decode('utf-8'))
     try:
@@ -257,7 +257,7 @@ def delete_multi_pv():
             return jsonify({'error': '删除PV异常',"msg":msg})
     return jsonify({"ok":"删除成功"})
 
-@storage.route('/delete_pvc', methods=('GET', 'POST'))
+@k8s.route('/delete_pvc', methods=('GET', 'POST'))
 def delete_pvc():
     data = json.loads(request.get_data().decode('utf-8'))
     name  = handle_input(data.get('name'))

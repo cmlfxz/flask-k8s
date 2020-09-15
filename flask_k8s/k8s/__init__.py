@@ -1,13 +1,34 @@
-from flask import Blueprint
+from flask import Blueprint,request,current_app,jsonify
 from flask_cors import *
+# from flask import Flask,jsonify,Response,make_response,Blueprint,request,g,current_app
+
+# from .k8s_decode import MyEncoder
+# import json,os,math,requests,time,pytz,ssl,yaml
+from flask_k8s.util import *
+from kubernetes import client,config
+from kubernetes.client.rest import ApiException
+
 
 # 定义蓝图
 k8s = Blueprint('k8s',__name__,url_prefix='/api/k8s/')
 CORS(k8s, supports_credentials=True, resources={r'/*'})
 
 # 导入views
+from flask_k8s.k8s import auth
+from flask_k8s.k8s import cluster
+from flask_k8s.k8s import config
 from flask_k8s.k8s import service
-
+from flask_k8s.k8s import daemonSet
+from flask_k8s.k8s import deployment
+from flask_k8s.k8s import hpa
+from flask_k8s.k8s import istio
+from flask_k8s.k8s import namespace
+from flask_k8s.k8s import node
+from flask_k8s.k8s import pod
+from flask_k8s.k8s import service
+from flask_k8s.k8s import statefulSet
+from flask_k8s.k8s import storage
+from flask_k8s.k8s import task
 
 @k8s.after_app_request
 def after(resp):
