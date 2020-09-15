@@ -78,6 +78,9 @@ def str_to_int(str):
 def str_to_float(str):    
     return 1 if str=="" else float(str)
 
+def format_float(num):
+    return  float("%.2f" % num)
+
 # 处理接收的json数据
 def handle_input(obj):
     # print("{}数据类型{}".format(obj,type(obj)))
@@ -99,8 +102,13 @@ def handle_toleraion_seconds(toleration):
     print(toleration)
     if toleration == "" or toleration == 'null':
         return None
-    else:
+    elif isinstance(toleration,int):
+        return toleration
+    elif isinstance(toleration,str):
         return int(toleration)
+    else:
+        print("toleration格式不在规定范围内")
+        return None
 
 #deployment 处理weight还在用
 def string_to_int(string):
@@ -158,7 +166,8 @@ def simple_error_handle(msg):
     # return jsonify({"error":msg})
 
 def error_with_status(error=None,msg=None,status=None):
-    return make_response(jsonify({"error":error,"msg":msg}),status)
+    response = make_response(jsonify({"error":error,"msg":msg}))
+    return response,500
 #参数是datetime
 def time_to_string(dt):
     #修复bug

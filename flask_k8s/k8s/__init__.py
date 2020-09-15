@@ -1,22 +1,13 @@
-from flask import Flask,jsonify,Response,make_response,Blueprint,request,g,current_app
+from flask import Blueprint
 from flask_cors import *
-from dateutil import tz, zoneinfo
-from datetime import datetime,date
-from .k8s_decode import MyEncoder
-import json,os,math,requests,time,pytz,ssl,yaml
-from .util import get_db_conn,my_decode,my_encode,str_to_int,str_to_float
-from .util import SingletonDBPool
-from .util import time_to_string,utc_to_local
-from .util import dir_path
-from .util import handle_input,handle_toleraion_seconds,handle_toleration_item
-from .util import get_cluster_config,simple_error_handle
-from .util import handle_cpu,handle_memory,handle_disk_space
-from kubernetes import client,config
-from kubernetes.client.rest import ApiException
 
-k8s = Blueprint('k8s',__name__,url_prefix='/api/k8s')
-
+# 定义蓝图
+k8s = Blueprint('k8s',__name__,url_prefix='/api/k8s/')
 CORS(k8s, supports_credentials=True, resources={r'/*'})
+
+# 导入views
+from flask_k8s.k8s import service
+
 
 @k8s.after_app_request
 def after(resp):
@@ -66,4 +57,3 @@ def set_k8s_config(cluster_config):
             file.write(cluster_config)
         # 这里需要一个文件
         config.load_kube_config(config_file=tmp_filename)
-

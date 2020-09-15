@@ -2,62 +2,16 @@ from flask import Flask,jsonify,Response,make_response,Blueprint,request,g,curre
 from flask_cors import *
 from dateutil import tz, zoneinfo
 from datetime import datetime,date
-from .k8s_decode import MyEncoder,DateEncoder
+from .k8s_decode import MyEncoder
 import json,os,math,requests,time,pytz,ssl,yaml
-from .util import get_db_conn,my_decode,my_encode,str_to_int,str_to_float
-from .util import SingletonDBPool
-from .util import time_to_string,utc_to_local
-from .util import dir_path
-from .util import handle_input,handle_toleraion_seconds,string_to_int,handle_toleration_item
-from .util import simple_error_handle,get_cluster_config
-from .util import error_with_status
-from .k8s_op import get_event_list_by_name
+from .util import *
+from flask_k8s.cluster import get_event_list_by_name
 from kubernetes import client,config
 from kubernetes.client.rest import ApiException
-from kubernetes.client.models.v1_namespace import V1Namespace
 
 k8s_deployment = Blueprint('k8s_deployment',__name__,url_prefix='/api/k8s/deployment')
 CORS(k8s_deployment, supports_credentials=True, resources={r'/*'})
 
-# @k8s_deployment.after_request
-# def after(resp):
-#     # print("after is called,set cross")
-#     resp = make_response(resp)
-#     resp.headers['Access-Control-Allow-Origin'] = '*'
-#     resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
-#     resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name,user,user_id'
-#     return resp
-#
-# @k8s_deployment.before_request
-# def load_header():
-#     if request.method == 'OPTIONS':
-#         pass
-#     if request.method == 'POST':
-#         try:
-#             cluster_name = request.headers.get('cluster_name')
-#             user = request.headers.get('user')
-#             print("deployment 集群名字:{},user:{}".format(cluster_name,user))
-#             if cluster_name == None:
-#                 print("没有设置cluster_name header")
-#                 pass
-#             else:
-#                 g.cluster_name = cluster_name
-#                 cluster_config = get_cluster_config(cluster_name)
-#                 set_k8s_config(cluster_config)
-#         except Exception as e:
-#             print(e)
-#
-# def set_k8s_config(cluster_config):
-#     if cluster_config == None:
-#         print("获取不到集群配置")
-#     else:
-#         cluster_config  = my_decode(cluster_config)
-#         # print("集群配置: \n{}".format(cluster_config))
-#         tmp_filename = "kubeconfig"
-#         with open(tmp_filename,'w+',encoding='UTF-8') as file:
-#             file.write(cluster_config)
-#         #这里需要一个文件
-#         config.load_kube_config(config_file=tmp_filename)
 
 def create_deployment_object(name=None,namespace=None,image=None,port=None,image_pull_policy=None,\
     imagePullSecret=None,labels=None,replicas=None,cpu=None,memory=None,liveness_probe=None,readiness_probe=None):
@@ -592,14 +546,17 @@ def update_deploy_v2():
                 pod_anti_affinity=pod_anti_affinity,pod_affinity=pod_affinity,labels=labels)
 
 def delete_deployment(namespace,deploy_name=None):
-    api_response =  client.AppsV1Api().delete_namespaced_deployment(
-        name=deploy_name,
-        namespace=namespace,
-        body=client.V1DeleteOptions(propagation_policy='Foreground',grace_period_seconds=5)
-    )
-    # print("Deployment deleted. status='%s'\n" % str(api_response.status))
-    status="{}".format(api_response.status)
-    return jsonify({"update_status":status})
+    try:
+        result =  client.AppsV1Api().delete_namespaced_deployment(
+            name=deploy_name,
+            namespace=namespace,
+            body=client.V1DeleteOptions(propagation_policy='Foreground',grace_period_seconds=5)
+        )
+    except ApiException as e:
+        body = json.loads(e.body)
+        msg={"status":e.status,"reason":e.reason,"message":body['message']}
+        return jsonify({'error': '删除deployment异常',"msg":msg})
+    return jsonify({"ok":"删除成功"})
 
 @k8s_deployment.route('/delete_deploy',methods=['POST'])  
 def delete_deploy():

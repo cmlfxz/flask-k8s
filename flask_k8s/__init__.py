@@ -8,19 +8,26 @@ import logging
 import re
 import os
 
-from .k8s import k8s
-from .k8s_op import k8s_op
-#from .k8s_demo import k8s_demo
+# from .k8s import k8s
 from .k8s_pod import k8s_pod
 from .k8s_deployment import k8s_deployment
 from .k8s_auth import k8s_auth
-from .k8s_istio import k8s_istio
-from .k8s_cluster import k8s_cluster
+
 from concurrent_log_handler import ConcurrentRotatingFileHandler
 
+from flask_k8s.storage import storage
+from flask_k8s.config import config
+from flask_k8s.task import task
+from flask_k8s.workload import workload
+# from flask_k8s.service import service
+from flask_k8s.security import security
+from flask_k8s.cluster import cluster
+from flask_k8s.istio import istio
+from flask_k8s.k8s import k8s
+
 from flask_cors import *
-from kubernetes import config
-# from .models import db
+from kubernetes import config as k8s_config
+
 
 dir_path = os.path.dirname(os.path.abspath(__file__))
 def setup_config(loglevel):
@@ -38,7 +45,7 @@ def create_app():
     # filepath = os.path.join(dir_path, 'kubeconfig')
     #生产环境要手动导入，不允许从路径导入
     filepath = os.path.join(app.instance_path, 'kubeconfig')
-    config.load_kube_config(config_file=filepath)
+    k8s_config.load_kube_config(config_file=filepath)
 
     #  config.default(公共部分)=>config.[development|prod](环境私有部分)=>
     # [ intance/config.py(测试环境阿里云密钥,instance文件夹不能随git提交)   |   ENV(数据库账号密码，阿里云Secret)（生产环境私密部分） ]
@@ -142,14 +149,20 @@ def create_app():
     # migrate.init_app(app, db)
 
     # 加载蓝图
-    app.register_blueprint(k8s)
-    app.register_blueprint(k8s_op)
-    # app.register_blueprint(k8s_demo)
+    # app.register_blueprint(k8s)
     app.register_blueprint(k8s_deployment)
     app.register_blueprint(k8s_pod)
     app.register_blueprint(k8s_auth)
-    app.register_blueprint(k8s_istio)
-    app.register_blueprint(k8s_cluster)
+    
+    app.register_blueprint(storage)
+    app.register_blueprint(config)
+    app.register_blueprint(task)
+    app.register_blueprint(workload)
+    # app.register_blueprint(service)
+    app.register_blueprint(k8s)
+    app.register_blueprint(security)
+    app.register_blueprint(cluster)
+    app.register_blueprint(istio)
     # app.add_url_rule('/',endpoint='index')
 
     # 调试信息

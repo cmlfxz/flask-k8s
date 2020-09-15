@@ -2,7 +2,7 @@ from flask import Flask,jsonify,Response,make_response,Blueprint,request,g,curre
 from flask_cors import *
 from dateutil import tz, zoneinfo
 from datetime import datetime,date
-from .k8s_decode import MyEncoder,DateEncoder
+from .k8s_decode import MyEncoder
 import json,os,math,requests,time,pytz,ssl,yaml
 from .util import get_db_conn,my_decode,my_encode,str_to_int,str_to_float
 from .util import SingletonDBPool
@@ -11,55 +11,14 @@ from .util import dir_path
 from .util import handle_input,handle_toleraion_seconds,handle_toleration_item
 from .util import simple_error_handle,get_cluster_config
 from .util import handle_cpu,handle_memory,handle_disk_space
-from .k8s_op import get_event_list_by_name
+from flask_k8s.cluster import get_event_list_by_name
 from kubernetes import client,config
 from kubernetes.client.rest import ApiException
-from kubernetes.client.models.v1_namespace import V1Namespace
 
 k8s_pod = Blueprint('k8s_pod',__name__,url_prefix='/api/k8s/pod')
 
 CORS(k8s_pod, supports_credentials=True, resources={r'/*'})
 
-# @k8s_pod.after_request
-# def after(resp):
-#     # print("after is called,set cross")
-#     resp = make_response(resp)
-#     resp.headers['Access-Control-Allow-Origin'] = '*'
-#     resp.headers['Access-Control-Allow-Methods'] = 'GET,POST,OPTIONS,PATCH,DELETE'
-#     resp.headers['Access-Control-Allow-Headers'] = 'x-requested-with,content-type,cluster_name,user,user_id'
-#     return resp
-#
-# @k8s_pod.before_request
-# def load_header():
-#     if request.method == 'OPTIONS':
-#         # print('options请求方式')
-#         pass
-#     if request.method == 'POST':
-#         # print('POST请求方式')
-#         try:
-#             cluster_name = request.headers.get('cluster_name').strip()
-#             print("pod load_header: 集群名字:{}".format(cluster_name))
-#             if cluster_name == None:
-#                 print("没有设置cluster_name header")
-#                 pass
-#             else:
-#                 g.cluster_name = cluster_name
-#                 cluster_config = get_cluster_config(cluster_name)
-#                 set_k8s_config(cluster_config)
-#         except Exception as e:
-#             print(e)
-#
-# def set_k8s_config(cluster_config):
-#     if cluster_config == None:
-#         print("获取不到集群配置")
-#     else:
-#         cluster_config  = my_decode(cluster_config)
-#         # print("集群配置: \n{}".format(cluster_config))
-#         tmp_filename = "kubeconfig"
-#         with open(tmp_filename,'w+',encoding='UTF-8') as file:
-#             file.write(cluster_config)
-#         #这里需要一个文件
-#         config.load_kube_config(config_file=tmp_filename)
 
 #新增根据名字获取pod内存使用情况
 def get_pod_usage_by_name(namespace,name):
@@ -108,50 +67,6 @@ def get_pod_usage_by_name(namespace,name):
                 # current_app.logger.debug("整个pod的使用情况:{}".format(pod_usage))
                 break
     return pod_usage
-
-#前端集群下的pod_usage代码已移除
-# get_pod_usage_detail =>get_pod_usage_by_namespace
-# def get_pod_usage_by_namespace(namespace=None):
-#     myclient = client.CustomObjectsApi()
-#     if namespace == "" or namespace=='all':
-#         pods = myclient.list_cluster_custom_object(group="metrics.k8s.io",version="v1beta1",plural="pods")
-#     else:
-#         pods = myclient.list_namespaced_custom_object(namespace=namespace,group="metrics.k8s.io", version="v1beta1", plural="pods")
-#     i = 0
-#     pod_usage_list = []
-#     for pod in pods['items']:
-#         if i >= 0:
-#             # print(pod)
-#             namespace = pod['metadata']['namespace']
-#             pod_name = pod['metadata']['name']
-#
-#             containers =  pod['containers']
-#             container_list = []
-#             j = 0
-#             cpu_all = 0
-#             memory_all = 0
-#
-#             for container in containers:
-#                 container_name = container['name']
-#                 cpu = handle_cpu(container['usage']['cpu'] )
-#                 container_cpu_usage = "{}m".format(math.ceil(cpu))
-#                 memory = handle_memory(container['usage']['memory'])
-#                 container_memory_usage = "{}Mi".format(float('%.2f' % memory))
-#                 container_usage = {"name":container_name,"cpu":container_cpu_usage,"memory":container_memory_usage}
-#                 container_list.append(container_usage)
-#
-#                 #汇总容器数据
-#                 cpu_all = cpu_all + cpu
-#                 memory_all = memory_all + memory
-#                 cpu_all_usage =  "{}m".format(math.ceil(cpu_all))
-#                 memory_all_usage = "{}Mi".format(float('%.2f' % memory_all))
-#
-#                 j = j + 1
-#
-#             pod_usage = {"pod_name":pod_name,"namespace":namespace,"cpu_all_usage":cpu_all_usage,"memory_all_usage":memory_all_usage,"container_list":container_list}
-#             pod_usage_list.append(pod_usage)
-#         i = i +1
-#     return pod_usage_list
 
 
 #pod详情页
@@ -392,7 +307,7 @@ def get_namespaced_pod_list():
             if status.container_statuses:
                 restart_count = status.container_statuses[0].restart_count
             mypod = {"name": name, "namespace": namespace, "node": node, "pod_ip": pod_ip, "status": phase,
-                     "image": image, "restart": restart_count}
+                     "image": image, "restart_count": restart_count}
             # 以下4行修复rancher有些pod获取不到性能数据
             mypod['cpu_usage(m)'] = 0
             mypod['memory_usage(M)'] = 0

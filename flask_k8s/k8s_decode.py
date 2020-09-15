@@ -455,33 +455,7 @@ class MyEncoder(json.JSONEncoder):
                     "periodSeconds": obj.period_seconds,
                     "failureThreshold": obj.failure_threshold,
                     "timeoutSeconds": obj.timeout_seconds,                
-            }
-            # if obj.tcp_socket:
-            #     return {
-            #         "tcpSocket": obj.tcp_socket,
-            #         "initialDelaySeconds": obj.initial_delay_seconds,
-            #         "periodSeconds": obj.period_seconds,
-            #         "failureThreshold": obj.failure_threshold,
-            #         "timeoutSeconds": obj.timeout_seconds,
-            #     }      
-            # elif obj.http_get:
-            #     return {
-            #         "httpGet": obj.http_get,
-            #         "initialDelaySeconds": obj.initial_delay_seconds,
-            #         "periodSeconds": obj.period_seconds,
-            #         "failureThreshold": obj.failure_threshold,
-            #         "timeoutSeconds": obj.timeout_seconds,
-            #     }      
-            # elif obj._exec:
-            #     return {
-            #         "exec": obj._exec,
-            #         "initialDelaySeconds": obj.initial_delay_seconds,
-            #         "periodSeconds": obj.period_seconds,
-            #         "failureThreshold": obj.failure_threshold,
-            #         "timeoutSeconds": obj.timeout_seconds,
-            #     }      
-            # else:
-            #     pass   
+            } 
         elif isinstance(obj,V1TCPSocketAction):
             return {
                 # "host": obj.host,
