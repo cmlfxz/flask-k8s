@@ -10,7 +10,7 @@ from kubernetes.client.rest import ApiException
 
 
 # 定义蓝图
-k8s = Blueprint('k8s',__name__,url_prefix='/api/k8s/')
+k8s = Blueprint('k8s',__name__,url_prefix='/k8s/')
 CORS(k8s, supports_credentials=True, resources={r'/*'})
 
 # 导入views
