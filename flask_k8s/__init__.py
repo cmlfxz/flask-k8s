@@ -8,23 +8,10 @@ import logging
 import re
 import os
 
-# from .k8s import k8s
-# from .k8s_pod import k8s_pod
-# from .k8s_deployment import k8s_deployment
-# from .k8s_auth import k8s_auth
 
 from concurrent_log_handler import ConcurrentRotatingFileHandler
 
-# from flask_k8s.storage import storage
-# from flask_k8s.config import config
-# from flask_k8s.task import task
-# from flask_k8s.workload import workload
-# # from flask_k8s.service import service
-# from flask_k8s.security import security
-# from flask_k8s.cluster import cluster
-# from flask_k8s.istio import istio
 from flask_k8s.k8s import k8s
-
 from flask_cors import *
 from kubernetes import config as k8s_config
 
@@ -72,30 +59,17 @@ def create_app():
 
         # 测试从instance下config.py去读取私密信息
         if re.match(r'dev', env, re.M | re.I):
-            # 加载阿里云密钥 instance/config.py
-            # app.config.from_pyfile('config.py')
-            # access_id=app.config.get('ACCESS_ID')
-            # access_secret=app.config.get('ACCESS_SECRET')
-            # app.logger.info("测试环境 access_id:{},  access_secret:{}".format(access_id,access_secret))
             pass
 
         # 生产环境，要从环境变量加载私密信息，不再从instance下config.py去读取
         if re.match(r'prod', env, re.M | re.I):
             try:
-                # access_id=os.environ["ACCESS_ID"].strip("\'").replace("\n","")
-                # access_secret=os.environ["ACCESS_SECRET"].strip("\'").replace("\n","")
-                # app.logger.info("生产环境 access_id:{},access_secret:{}".format(access_id,access_secret))
-
-                # app.config['ACCESS_ID'] = access_id
-                # app.config['ACCESS_SECRET'] = access_secret
 
                 MYSQL_USERNAME = os.environ["MYSQL_USERNAME"].strip("\'").replace("\n", "")
                 MYSQL_PASSWORD = os.environ["MYSQL_PASSWORD"].strip("\'").replace("\n", "")
-                # REDIS_PASSWORD=str(os.environ["REDIS_PASSWORD"]).strip("\'")
 
                 app.config['MYSQL_USERNAME'] = MYSQL_USERNAME
                 app.config['MYSQL_PASSWORD'] = MYSQL_PASSWORD
-                # app.config['REDIS_PASSWORD'] = REDIS_PASSWORD
 
                 app.logger.info("生产环境 数据库账号:{},密码：{}".format(MYSQL_USERNAME, MYSQL_PASSWORD))
                 DIALECT = str(app.config.get('DIALECT'))
@@ -111,8 +85,6 @@ def create_app():
                 app.logger.info(app.config.get('SQLALCHEMY_DATABASE_URI'))
             except Exception as e:
                 app.logger.error("无法从环境变量获取到信息，请检查secrets.yaml,{}".format(e))
-            # app.config.from_pyfile('config.py')
-
     except KeyError as e:
         app.logger.info("获取不到环境变量:{}".format(e))
         app.config.from_object("config.development")
@@ -130,9 +102,6 @@ def create_app():
 
     Session(app)
     # Swagger(app)
-    # r'/*' 是通配符，让本服务器所有的URL 都允许跨域请求
-    CORS(app, supports_credentials=True,resources=r'/*')
-    # CORS(app, supports_credentials=True,resources=r'/*',methods='GET,POST,OPTIONS',allow_headers="cluster_name,x-requested-with,content-type")
 
     # # app初始化
     # db.init_app(app)
@@ -149,20 +118,7 @@ def create_app():
     # migrate.init_app(app, db)
 
     # 加载蓝图
-    # app.register_blueprint(k8s)
-    # app.register_blueprint(k8s_deployment)
-    # app.register_blueprint(k8s_pod)
-    # app.register_blueprint(k8s_auth)
-    
-    # app.register_blueprint(storage)
-    # app.register_blueprint(config)
-    # app.register_blueprint(task)
-    # app.register_blueprint(workload)
-    # app.register_blueprint(service)
     app.register_blueprint(k8s)
-    # app.register_blueprint(security)
-    # app.register_blueprint(cluster)
-    # app.register_blueprint(istio)
     # app.add_url_rule('/',endpoint='index')
 
     # 调试信息

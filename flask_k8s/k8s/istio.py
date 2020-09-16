@@ -17,7 +17,8 @@ def get_gateway_list():
     # myclient = client.CustomObjectsApi()
     # obj = myclient.list_cluster_custom_object(group="networking.istio.io",version="v1alpha3",plural="gateways")
     data = json.loads(request.get_data().decode("utf-8"))
-    namespace = data.get("namespace").strip()
+    # current_app.logger.debug("get_gateway_list收到的数据:{}".format(data))
+    namespace = handle_input(data.get("namespace"))
     myclient = client.CustomObjectsApi()
     try:
         if namespace == "" or namespace == "all":

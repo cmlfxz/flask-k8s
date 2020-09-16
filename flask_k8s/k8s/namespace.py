@@ -1,12 +1,12 @@
-from flask import Flask,jsonify,Response,make_response,Blueprint,request,g,current_app
+from flask import Flask,jsonify,Blueprint,request,current_app
 from flask_cors import *
-from dateutil import tz, zoneinfo
-from datetime import datetime,date
 from flask_k8s.k8s_decode import MyEncoder
 from flask_k8s.util import *
+from .cluster import get_event_list_by_name
+
 from kubernetes import client,config
 from kubernetes.client.rest import ApiException
-from kubernetes.client.models.v1_namespace import V1Namespace
+
 
 # 导入蓝图
 from flask_k8s.k8s import k8s
@@ -22,13 +22,10 @@ def get_namespace_list():
         status = ns.status.phase
         namespace= {"name":meta.name,"status":status,"labels":meta.labels,"create_time":create_time}
         namespace_list.append(namespace)
-    # return jsonify(namespace_list)
     return json.dumps(namespace_list,indent=4)
-    # return json.dumps(namespace_list,default=lambda obj: obj.__dict__,sort_keys=True,indent=4)
 
 @k8s.route('/get_namespace_name_list',methods=('GET','POST'))
 def get_namespace_name_list():
-    # current_app.logger.debug("get_namespace_name_list接收到的header:{}".format(request.headers))
     myclient = client.CoreV1Api()
     namespace_name_list = []
     for item in myclient.list_namespace().items:

@@ -1,4 +1,4 @@
-from flask import Blueprint,request,current_app,jsonify
+from flask import Blueprint,request,current_app,jsonify,g
 from flask_cors import *
 # from flask import Flask,jsonify,Response,make_response,Blueprint,request,g,current_app
 
