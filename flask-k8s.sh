@@ -16,7 +16,7 @@ if [ "$1" == "dev" ];then
     CLI="/usr/bin/kubectl --kubeconfig /root/.kube/config"
     env='dev'
     replicas=1
-elif [ "$1" == "prod" ] 
+elif [ "$1" == "prod" ];then
     harbor_user="cmlfxz"
     harbor_pass="DUgu16829987"
     harbor_email="915613275@qq.com"

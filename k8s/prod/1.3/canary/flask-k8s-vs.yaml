@@ -1,0 +1,22 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: flask-k8s-vs
+  namespace: ms-prod
+spec:
+  hosts:
+  - flask-k8s
+  http:
+  - route:
+    - destination:
+        host: flask-k8s
+        port:
+            number: 8082
+        subset: prod
+      weight: $prod_weight
+    - destination:
+        host: flask-k8s
+        port:
+            number: 8082
+        subset: canary
+      weight: $canary_weight

@@ -1,0 +1,8 @@
+namespace: ms-prod
+resources:
+- flask-k8s-deployment.yaml
+- flask-k8s-service.yaml
+- configmap.yaml
+- hpa.yaml
+patchesStrategicMerge:
+- deployment_patch.yaml
