@@ -16,7 +16,7 @@ CORS(k8s, supports_credentials=True, resources={r'/*'})
 # 导入views
 from flask_k8s.k8s import auth
 from flask_k8s.k8s import cluster
-from flask_k8s.k8s import config
+from flask_k8s.k8s import setting
 from flask_k8s.k8s import service
 from flask_k8s.k8s import daemonSet
 from flask_k8s.k8s import deployment
