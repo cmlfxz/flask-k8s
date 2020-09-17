@@ -173,7 +173,7 @@ def update_vs():
 @k8s.route('/delete_vs', methods=('GET', 'POST'))
 def delete_vs():
     data = json.loads(request.get_data().decode('utf-8'))
-    name  = handle_input(data.get('virtual_service_name'))
+    name  = handle_input(data.get('name'))
     namespace = handle_input(data.get('namespace'))
     myclient = client.CustomObjectsApi()
     try:
@@ -185,10 +185,18 @@ def delete_vs():
                                                             body=client.V1DeleteOptions(propagation_policy='Foreground',
                                                                                         grace_period_seconds=5))
     except Exception as e:
-        body = json.loads(e.body)
-        msg={"status":e.status,"reason":e.reason,"message":body['message']}
-        # return simple_error_handle(msg)
-        return jsonify({'error': '删除vs异常',"msg":msg})
+        if isinstance(e.body, dict):
+            body = json.loads(e.body)
+            message = body['message']
+        else:
+            message = e.body
+        msg = {"status": e.status, "reason": e.reason, "message": message}
+        current_app.logger.debug(msg)
+        return jsonify({'error': '删除vs异常', "msg": msg})
+        # body = json.loads(e.body)
+        # msg={"status":e.status,"reason":e.reason,"message":body['message']}
+        # # return simple_error_handle(msg)
+        # return jsonify({'error': '删除vs异常',"msg":msg})
     return jsonify({"ok":"删除成功"})
 
 @k8s.route('/get_destination_rule_list', methods=('GET', 'POST'))

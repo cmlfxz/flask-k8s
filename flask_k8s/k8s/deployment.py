@@ -559,9 +559,9 @@ def delete_deployment(namespace,deploy_name=None):
 def delete_deploy():
     data = json.loads(request.get_data().decode('UTF-8'))
     print("delete_deploy接受到的数据:{}".format(data))
-    namespace = data.get('namespace').strip()
-    deploy_name = data.get('deploy_name').strip()
-    return delete_deployment(deploy_name=deploy_name,namespace=namespace)
+    namespace = handle_input(data.get('namespace'))
+    name = handle_input(data.get('name'))
+    return delete_deployment(deploy_name=name,namespace=namespace)
 
 @k8s.route('/get_deployment_list', methods=('GET', 'POST'))
 def get_deployment_list():
@@ -629,19 +629,19 @@ def get_deployment_list():
             available_replicas = status.available_replicas
             updated_replicas = status.updated_replicas
             
-            info = {}
-            info["replicas"] = replicas
-            info["ready"] = ready
-            info["available_replicas"] = available_replicas
-            info["updated_replicas"] = updated_replicas
-            info["labels"] = labels
-            info["image"] = image
-            info["node_selector"] = node_selector
+            status = {}
+            status["replicas"] = replicas
+            status["ready"] = ready
+            status["available_replicas"] = available_replicas
+            status["updated_replicas"] = updated_replicas
             #构建deployment结构体
             my_deploy = {}
             my_deploy["name"] = name
             my_deploy["namespace"] = namespace
-            my_deploy["info"] = info
+            my_deploy["status"] = status
+            my_deploy["labels"] = labels
+            my_deploy["image"] = image
+            my_deploy["node_selector"] = node_selector
             my_deploy["tolerations"] = tolerations
             my_deploy["affinity"] = affinity
             # my_deploy["node_affinity"] = node_affinity

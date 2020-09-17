@@ -385,7 +385,7 @@ def delete_pod():
     data = json.loads(request.get_data().decode('UTF-8'))
     current_app.logger.debug("接受到的数据:{}".format(data))
     namespace = handle_input(data.get('namespace'))
-    pod_name = handle_input(data.get('pod_name'))
+    pod_name = handle_input(data.get('name'))
 
     try:
         api_response =  client.CoreV1Api().delete_namespaced_pod(

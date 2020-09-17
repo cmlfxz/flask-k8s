@@ -25,6 +25,7 @@ from flask_k8s.k8s import istio
 from flask_k8s.k8s import namespace
 from flask_k8s.k8s import node
 from flask_k8s.k8s import pod
+from flask_k8s.k8s import security
 from flask_k8s.k8s import service
 from flask_k8s.k8s import statefulSet
 from flask_k8s.k8s import storage
