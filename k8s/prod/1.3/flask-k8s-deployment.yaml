@@ -7,6 +7,14 @@ metadata:
     app: flask-k8s
     version: "1.3"
 spec:
+  minReadySeconds: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      #更新时允许最大激增的容器数
+      maxSurge: 1
+      #更新时允许最大unavailable的容器数
+      maxUnavailable: 0
   replicas: 1
   selector:
     matchLabels:
