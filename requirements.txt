@@ -1,6 +1,6 @@
 tornado==5.1.1
 flask==1.1.2
-flask_cors==3.0.8
+flask_cors==3.0.9
 flask_session==0.3.2
 redis==3.5.2
 gunicorn==20.0.4
